@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalapp - Sumbungan ng Bayan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* --- LIGHT MODE DEFAULTS --- */
+            --color-primary: #ff8c00;
+            --color-chat: #2563eb;
+            --text-main: #1e293b; 
+            --text-muted: #475569;
+            --glass-bg: rgba(255, 255, 255, 0.75); 
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-blur: blur(20px);
+            --bg-overlay: rgba(248, 250, 252, 0.4); 
+            --nav-bg: linear-gradient(to bottom, rgba(255,255,255,0.95), transparent);
+            --logo-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        body.dark {
+            /* --- DARK MODE OVERRIDES --- */
+            --text-main: #ffffff; 
+            --text-muted: #cbd5e1;
+            --glass-bg: rgba(15, 23, 42, 0.65); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg-overlay: rgba(15, 23, 42, 0.7); 
+            --nav-bg: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+            --logo-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--text-main); color: var(--text-main); overflow-x: hidden; transition: 0.3s; }
+
+        /* --- THE DEEP PARALLAX SYSTEM --- */
+        .parallax-section {
+            position: relative;
+            width: 100%; /* 🔧 FIX: Changed from 100vw to 100% to prevent horizontal overflow */
+            min-height: 120vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; 
+            background-color: #0f172a; /* 🔧 FIX: Locked to dark slate so images never look washed out */
+        }
+
+        /* The moving background images */
+        .parallax-bg {
+            position: absolute;
+            top: -20%; left: -5%;
+            width: 110%; height: 140%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-overlay); z-index: 1; transition: background 0.3s ease;
+        }
+
+        .wave-bottom {
+            position: absolute; bottom: -1px; left: 0; width: 100%;
+            z-index: 10; fill: var(--text-main); 
+            transform: translateY(1px);
+            transition: fill 0.3s ease;
+        }
+
+        .content-layer { 
+            position: relative; z-index: 5; width: 100%; max-width: 1200px; 
+            padding: 0 5%; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; padding: 1.5rem 5%;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 1000; background: var(--nav-bg); transition: background 0.3s ease;
+        }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; text-shadow: var(--logo-shadow);}
+        .nav-controls { display: flex; gap: 15px; align-items: center; }
+        
+        #mode-toggle {
+            background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border);
+            color: var(--text-main); padding: 10px; border-radius: 50%; cursor: pointer; transition: 0.3s;
+        }
+        #mode-toggle:hover { background: var(--color-primary); border-color: var(--color-primary); transform: rotate(15deg); color: white;}
+
+        .btn-login {
+            background: var(--color-primary); color: white; text-decoration: none;
+            padding: 10px 24px; border-radius: 30px; font-weight: 600; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+            white-space: nowrap; 
+        }
+        .btn-login:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(255, 140, 0, 0.6); }
+
+        /* 🔧 FIX: Re-added the btn-large class for proper mobile scaling */
+        .btn-large {
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* --- GLASSMORPHISM CARDS --- */
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 50px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            transition: background 0.3s ease, border 0.3s ease;
+        }
+
+        /* --- HERO CONTENT --- */
+        .hero-text { max-width: 800px; text-align: center; margin: 0 auto; }
+        .hero-text h1 { font-size: 5rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+        .hero-text p { font-size: 1.3rem; margin-bottom: 40px; color: var(--text-muted); }
+
+        /* --- LONG SCROLL FEATURE SHOWCASES --- */
+        .showcase-container { width: 100%; display: flex; align-items: center; gap: 80px; }
+        .showcase-container.reverse { flex-direction: row-reverse; }
+
+        .showcase-text { flex: 1; }
+        .feature-icon { font-size: 4rem; margin-bottom: 20px; display: inline-block; }
+        .showcase-text h2 { font-size: 3rem; margin-bottom: 20px; color: var(--text-main); font-weight: 800; line-height: 1.1;}
+        .showcase-text p { font-size: 1.2rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px;}
+
+        .showcase-image-wrapper {
+            flex: 1; border-radius: 24px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border); position: relative;
+        }
+        .showcase-image-wrapper img {
+            width: 100%; height: 100%; min-height: 500px; object-fit: cover; display: block;
+        }
+
+
+        /* ==========================================
+           🎬 THEMATIC SCROLL ANIMATIONS
+           ========================================== */
+
+        .anim-text { opacity: 0; transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .show .anim-text:nth-child(2) { transition-delay: 0.1s; } 
+        .show .anim-text:nth-child(3) { transition-delay: 0.3s; } 
+        .show .anim-text:nth-child(4) { transition-delay: 0.5s; } 
+
+        /* --- THEME 1: "Tracking" (Slide across) --- */
+        .track-slide { transform: translateX(-60px); }
+        .show .track-slide { opacity: 1; transform: translateX(0); }
+        
+        .show .icon-track { animation: radarSweep 2.5s ease-in-out infinite; }
+        @keyframes radarSweep { 
+            0% { transform: translateX(-15px) rotate(-15deg); } 
+            50% { transform: translateX(15px) rotate(15deg); } 
+            100% { transform: translateX(-15px) rotate(-15deg); } 
+        }
+
+        /* --- THEME 2: "AI Processing" (Jerky robotic pop-ups) --- */
+        .bot-pop { transform: scale(0.8) translateY(30px); }
+        .show .bot-pop { opacity: 1; transform: scale(1) translateY(0); }
+        
+        .show .icon-robot { animation: robotProcess 1.5s steps(4, end) infinite; transform-origin: bottom; }
+        @keyframes robotProcess { 
+            0% { transform: translateY(0) rotate(0); } 
+            25% { transform: translateY(-10px) rotate(-10deg); } 
+            50% { transform: translateY(0) rotate(10deg); } 
+            75% { transform: translateY(-5px) rotate(0); } 
+            100% { transform: translateY(0) rotate(0); } 
+        }
+
+        /* --- THEME 3: "Verified Shield" (Heavy Slam Down) --- */
+        .shield-drop { transform: translateY(-50px); }
+        .show .shield-drop { opacity: 1; transform: translateY(0); }
+        
+        .show .icon-shield { animation: shieldSlam 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; transform-origin: bottom; opacity: 0; }
+        @keyframes shieldSlam { 
+            0% { transform: translateY(-80px) scale(1.5); opacity: 0; } 
+            60% { opacity: 1; transform: translateY(10px) scale(0.9); }
+            100% { transform: translateY(0) scale(1); opacity: 1; } 
+        }
+
+        /* Standard image fades */
+        .hidden-img { opacity: 0; transition: all 1s ease; }
+        .fade-up { transform: translateY(50px); }
+        .show .hidden-img { opacity: 1; transform: translate(0); }
+
+
+        /* --- CHATBOT UI --- */
+        #chatbot-toggle { 
+            position: fixed; bottom: 30px; right: 30px; width: 75px; height: 75px; 
+            border-radius: 50%; background: var(--color-chat); color: white; font-size: 35px;
+            border: none; cursor: pointer; z-index: 1000; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6);
+            transition: 0.3s ease; display: flex; align-items: center; justify-content: center;
+        }
+        #chatbot-toggle:hover { transform: scale(1.1); background: var(--color-primary); }
+        .pulse-anim { animation: pulse 2s infinite; }
+        
+        #chatbot-window { 
+            position: fixed; bottom: 120px; right: 30px; width: 380px; height: 550px; 
+            max-width: calc(100% - 40px); z-index: 1000; overflow: hidden; 
+            display: flex; flex-direction: column;
+            transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        #chatbot-window.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+        
+        .chat-header { background: var(--color-chat); color: white; padding: 18px 24px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { background: none; border: none; color: white; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.2s;}
+        .close-btn:hover { transform: scale(1.2); color: var(--color-danger); }
+        
+        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: var(--glass-bg); backdrop-filter: var(--glass-blur);}
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; color: var(--text-main);}
+        .user-bubble { background: var(--color-chat); color: white; align-self: flex-end; border-bottom-right-radius: 4px;}
+        .ai-bubble { background: rgba(128,128,128,0.2); align-self: flex-start; border-bottom-left-radius: 4px;}
+        
+        .chat-input-area { padding: 15px; background: var(--glass-bg); display: flex; gap: 10px; border-top: 1px solid var(--glass-border); }
+        #chat-input { flex: 1; padding: 12px 20px; border-radius: 30px; border: 1px solid var(--glass-border); background: transparent; color: var(--text-main); outline: none; }
+        #send-chat { background: var(--color-chat); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        #send-chat:hover { background: var(--color-primary); transform: scale(1.05);}
+
+        /* ==========================================
+           📱 MOBILE RESPONSIVENESS OVERRIDES
+           ========================================== */
+        @media screen and (max-width: 768px) {
+            .hero-text h1 { font-size: 2.2rem; }
+            .hero-text p { font-size: 1rem; }
+
+            nav { padding: 0.8rem 15px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); }
+            .logo { font-size: 1.1rem; gap: 8px; }
+            .logo img { height: 26px !important; width: 26px !important; }
+            .nav-controls { gap: 8px; }
+            #mode-toggle { padding: 8px; font-size: 0.9rem; }
+            .btn-login { padding: 8px 12px; font-size: 0.8rem; }
+            
+            /* 🔧 FIX: Forces the buttons to stay inside the card and scale properly */
+            .btn-large { 
+                padding: 12px 20px; 
+                font-size: 1rem; 
+                width: 100%; 
+                display: block; 
+                box-sizing: border-box; 
+            }
+
+            .glass-card { padding: 25px; } 
+
+            .showcase-container, .showcase-container.reverse { flex-direction: column; text-align: center; gap: 40px; }
+            .showcase-text h2 { font-size: 2.2rem; }
+            .showcase-image-wrapper img { min-height: 250px; }
+            
+            #chatbot-window { height: 65vh; right: 15px; bottom: 90px; width: calc(100% - 30px);}
+            #chatbot-toggle { width: 60px; height: 60px; font-size: 26px; bottom: 20px; right: 15px; z-index: 1001;}
+            
+            .parallax-layer { transform: none !important; }
+        }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">
+            <img src="logokalapp.png" alt="Logo" style="height: 35px; width: 35px; border-radius: 8px;">
+            KALAPP
+        </div>
+        <div class="nav-controls">
+            <button id="mode-toggle" type="button" title="Toggle Theme">🌓</button>
+            <a href="login.html" class="btn-login">Citizen Login</a>
+        </div>
+    </nav>
+
+    <section class="parallax-section">
+        <img src="https://images.unsplash.com/photo-1518398046578-8cca57782e17?q=80&w=2000&auto=format&fit=crop" class="parallax-bg parallax-layer" data-speed="0.1" alt="City Background">
+        <div class="overlay"></div>
+        
+        <div class="content-layer scroll-trigger parallax-layer" data-speed="-0.15">
+            <div class="glass-card hero-text hidden-img fade-up">
+                <h1>Empowering the Community</h1>
+                <p>The Citywide Centralized Barangay Complaint Center. Organized, secure, and built for real-time resolution.</p>
+                <a href="login.html" class="btn-login btn-large">File a Complaint</a>
+            </div>
+        </div>
+
+        <svg class="wave-bottom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120"><path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path></svg>
+    </section>
+
+    <section class="parallax-section">
+        <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop" class="parallax-bg parallax-layer" data-speed="0.2" style="opacity: 0.3;" alt="Network">
+        <div class="overlay"></div>
+
+        <div class="content-layer showcase-container scroll-trigger">
+            <div class="showcase-text glass-card parallax-layer" data-speed="-0.1">
+                <div class="feature-icon icon-track">🔍</div>
+                <h2 class="anim-text track-slide">Real-Time Tracking</h2>
+                <p class="anim-text track-slide">Transparency at your fingertips. Follow your report from the moment you hit submit all the way to final resolution.</p>
+                <p class="anim-text track-slide">Every complaint is assigned a unique Tracking ID, ensuring you are never left in the dark about your community's progress. Watch as local officials update the status from 'Pending' to 'Resolved'.</p>
+            </div>
+            <div class="showcase-image-wrapper hidden-img fade-up parallax-layer" data-speed="0.05">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop" alt="Dashboard Tracking">
+            </div>
+        </div>
+
+        <svg class="wave-bottom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120"><path d="M0,32L80,48C160,64,320,96,480,101.3C640,107,800,85,960,69.3C1120,53,1280,43,1360,37.3L1440,32L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path></svg>
+    </section>
+
+    <section class="parallax-section">
+        <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2000&auto=format&fit=crop" class="parallax-bg parallax-layer" data-speed="0.15" style="opacity: 0.3;" alt="AI processing">
+        <div class="overlay"></div>
+
+        <div class="content-layer showcase-container reverse scroll-trigger">
+            <div class="showcase-text glass-card parallax-layer" data-speed="-0.12">
+                <div class="feature-icon icon-robot">🤖</div>
+                <h2 class="anim-text bot-pop">AI Prioritization</h2>
+                <p class="anim-text bot-pop">Powered by our custom Gemini 2.5 Flash integration, Kalapp doesn't just collect reports; it understands them.</p>
+                <p class="anim-text bot-pop">Smart sentiment analysis reads every submission in real-time. Critical life-safety hazards, like exposed wires or deep potholes, are automatically flagged as <strong>CRITICAL</strong> and bumped to the top of the LGU Dashboard for immediate action.</p>
+            </div>
+            <div class="showcase-image-wrapper hidden-img fade-up parallax-layer" data-speed="0.08">
+                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop" alt="AI Network">
+            </div>
+        </div>
+
+        <svg class="wave-bottom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120"><path d="M0,96L80,85.3C160,75,320,53,480,53C640,53,800,75,960,85.3C1120,96,1280,96,1360,96L1440,96L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path></svg>
+    </section>
+
+    <section class="parallax-section">
+        <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?q=80&w=2000&auto=format&fit=crop" class="parallax-bg parallax-layer" data-speed="0.25" style="opacity: 0.3;" alt="Security">
+        <div class="overlay"></div>
+
+        <div class="content-layer showcase-container scroll-trigger">
+            <div class="showcase-text glass-card parallax-layer" data-speed="-0.1">
+                <div class="feature-icon icon-shield">🛡️</div>
+                <h2 class="anim-text shield-drop">Verified Evidence</h2>
+                <p class="anim-text shield-drop">End-to-End Security blocks the trolls so your local government can focus on what matters.</p>
+                <p class="anim-text shield-drop">By analyzing hidden EXIF metadata, Kalapp actively rejects screenshots, downloaded images, and old photos. Only authentic, live camera photos taken within the last 48 hours make it to the dashboard, ensuring absolute data integrity.</p>
+            </div>
+            <div class="showcase-image-wrapper hidden-img fade-up parallax-layer" data-speed="0.15">
+                <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?q=80&w=1000&auto=format&fit=crop" alt="Security Shield">
+            </div>
+        </div>
+
+        <svg class="wave-bottom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120"><path d="M0,64L80,80C160,96,320,128,480,122.7C640,117,800,75,960,58.7C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path></svg>
+    </section>
+
+    <section class="parallax-section" style="min-height: 60vh;">
+        <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000&auto=format&fit=crop" class="parallax-bg parallax-layer" data-speed="0.1" style="opacity: 0.4;" alt="City Infrastructure">
+        <div class="overlay"></div>
+
+        <div class="content-layer scroll-trigger parallax-layer" data-speed="-0.15">
+            <div class="glass-card hidden-img fade-up" style="max-width: 620px; margin: 0 auto; text-align: center;">
+                <h2 style="font-size: 2.2rem; margin-bottom: 14px; font-weight: 800;">🔍 Track Your Report</h2>
+                <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 1rem;">No login needed. Enter your Report Code to check the status of your complaint.</p>
+                <div style="display:flex; gap:0.6rem; max-width:420px; margin:0 auto 1.2rem;">
+                    <input type="text" id="track-input" placeholder="Enter Report Code (e.g. KAL-6985)"
+                        style="flex:1; padding:0.9rem 1rem; border-radius:12px; border:none; background:rgba(255,255,255,0.12); color:white; font-family:inherit; font-size:0.95rem; backdrop-filter:blur(8px);">
+                    <button onclick="trackReport()"
+                        style="background:#4169E1; color:white; border:none; padding:0.9rem 1.4rem; border-radius:12px; cursor:pointer; font-weight:700; font-size:0.95rem; white-space:nowrap;">Track</button>
+                </div>
+                <div id="track-result" style="text-align:left; font-size:0.9rem;"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="parallax-section" style="min-height: 80vh;">
+        <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2000&auto=format&fit=crop" class="parallax-bg parallax-layer" data-speed="0.1" style="opacity: 0.5;" alt="City">
+        <div class="overlay"></div>
+
+        <div class="content-layer scroll-trigger parallax-layer" data-speed="-0.2">
+            <div class="glass-card hidden-img fade-up" style="max-width: 700px; margin: 0 auto; text-align: center;">
+                <h2 style="font-size: 3rem; margin-bottom: 20px; font-weight: 800;">A Safer City, Together.</h2>
+                <p style="color: var(--text-muted); margin-bottom: 40px; font-size: 1.2rem;">Connect directly with your Local Government Unit to build a better neighborhood today.</p>
+                <a href="login.html" class="btn-login btn-large">Access the Portal</a>
+                <div style="margin-top: 50px; font-size: 0.9rem; color: var(--text-muted);">&copy; 2026 Kalapp Team | Sumbungan ng Bayan</div>
+            </div>
+        </div>
+    </section>
+
+    <button id="chatbot-toggle" class="pulse-anim" type="button" title="Chat with Sumbong-Bot">💬</button>
+
+    <div id="chatbot-window" class="glass-card" style="padding: 0;">
+        <div class="chat-header">
+            <span>Sumbong-Bot 🤖</span>
+            <button id="close-chat" class="close-btn" type="button">✕</button>
+        </div>
+        <div id="chat-messages">
+            <div class="chat-bubble ai-bubble">Hello po! I am Sumbong-Bot, your AI assistant. Do you have any questions about the system or how to file a complaint?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-chat" type="button">✓</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. THE JAVASCRIPT DEEP PARALLAX ENGINE
+        // ==========================================
+        let ticking = false;
+
+        function updateParallax() {
+            if (window.innerWidth > 768) {
+                const windowCenter = window.innerHeight / 2;
+                
+                document.querySelectorAll('.parallax-layer').forEach(layer => {
+                    const speed = parseFloat(layer.getAttribute('data-speed')) || 0;
+                    const parent = layer.closest('.parallax-section');
+                    
+                    if(parent) {
+                        const rect = parent.getBoundingClientRect();
+                        const parentCenter = rect.top + (rect.height / 2);
+                        const offset = (parentCenter - windowCenter) * speed;
+                        
+                        layer.style.transform = `translateY(${offset}px)`;
+                    }
+                });
+            }
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                window.requestAnimationFrame(updateParallax);
+                ticking = true;
+            }
+        });
+
+        // ==========================================
+        // 2. SCROLL ANIMATION TRIGGER
+        // ==========================================
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                } else {
+                    entry.target.classList.remove('show');
+                }
+            });
+        }, { threshold: 0.25 });
+
+        document.querySelectorAll('.scroll-trigger').forEach((el) => observer.observe(el));
+
+        // ==========================================
+        // 3. THEME & CHAT LOGIC
+        // ==========================================
+        const savedTheme = localStorage.getItem('kalapp-theme');
+        if (savedTheme === 'dark') document.body.classList.add('dark');
+        
+        const toggleBtn = document.getElementById('mode-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                localStorage.setItem('kalapp-theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+                updateWaveColors(); 
+            });
+        }
+
+        function updateWaveColors() {
+            const isDark = document.body.classList.contains('dark');
+            const waveColor = isDark ? '#ffffff' : '#1e293b';
+            document.querySelectorAll('.wave-bottom').forEach(wave => {
+                wave.style.fill = waveColor;
+            });
+        }
+        updateWaveColors();
+
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const closeChat = document.getElementById('close-chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendChat = document.getElementById('send-chat');
+        const chatMessages = document.getElementById('chat-messages');
+
+        let chatHistory = [];
+
+        chatbotToggle.addEventListener('click', () => {
+            chatbotWindow.classList.add('active');
+            chatbotToggle.style.opacity = '0';
+            chatbotToggle.style.pointerEvents = 'none';
+        });
+        
+        closeChat.addEventListener('click', () => {
+            chatbotWindow.classList.remove('active');
+            chatbotToggle.style.opacity = '1';
+            chatbotToggle.style.pointerEvents = 'auto';
+        });
+
+        function appendMessage(text, className) {
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${className}`;
+            bubble.textContent = text;
+            const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+            bubble.id = id;
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
+            return id;
+        }
+
+        async function handleSendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendMessage(message, 'user-bubble');
+            chatInput.value = '';
+            const typingId = appendMessage('Thinking...', 'ai-bubble');
+
+            try {
+                const response = await fetch('https://kalapp-system.onrender.com/api/ai-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message, history: chatHistory }) 
+                });
+                
+                const data = await response.json();
+                document.getElementById(typingId).remove();
+                
+                if (response.ok) {
+                    appendMessage(data.reply || "Message received.", 'ai-bubble'); 
+                    chatHistory.push({ role: "user", parts: [{ text: message }] });
+                    chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
+                } else {
+                    appendMessage("Error: Could not reach Sumbong-Bot.", 'ai-bubble');
+                }
+            } catch (error) {
+                document.getElementById(typingId).remove();
+                appendMessage("Connection error. Is the Master Server running?", 'ai-bubble');
+            }
+        }
+
+        sendChat.addEventListener('click', handleSendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSendMessage();
+        });
+
+        // ==========================================
+        // 4. PUBLIC REPORT TRACKER
+        // ==========================================
+        async function trackReport() {
+            const id = document.getElementById('track-input').value.trim();
+            const resultEl = document.getElementById('track-result');
+            if (!id) return;
+            resultEl.innerHTML = '<p style="color:rgba(255,255,255,0.6);">🔍 Searching...</p>';
+            try {
+                const res = await fetch(`https://kalapp-system.onrender.com/api/complaints/track/${encodeURIComponent(id)}`);
+                if (!res.ok) {
+                    resultEl.innerHTML = `<p style="color:#ff6467;">❌ No report found with that code. Please check and try again.</p>`;
+                    return;
+                }
+                const { complaint: c } = await res.json();
+                const statusColors = { 'Pending': '#ff6467', 'In Progress': '#fe9a00', 'Resolved': '#00bc7d', 'Rejected & Flagged': '#9f9fa9', 'Referred to Lupon': '#fbbf24' };
+                const statusColor = statusColors[c.status] || '#aaa';
+                const lastUpdated = c.history && c.history.length ? new Date(c.history[c.history.length - 1].updatedAt).toLocaleString('en-PH') : 'N/A';
+                const timeline = (c.history || []).map(h => `
+                    <div style="display:flex; gap:0.8rem; margin-bottom:0.8rem; align-items:flex-start;">
+                        <div style="width:8px; height:8px; border-radius:50%; background:${statusColors[h.status]||'#aaa'}; margin-top:5px; flex-shrink:0;"></div>
+                        <div style="font-size:0.82rem; color:rgba(255,255,255,0.8);">
+                            <strong style="color:${statusColors[h.status]||'white'};">${h.status}</strong> — ${h.note || ''}<br>
+                            <small style="color:rgba(255,255,255,0.4);">by ${h.updatedBy||'System'} · ${new Date(h.updatedAt).toLocaleString('en-PH')}</small>
+                        </div>
+                    </div>
+                `).join('');
+                resultEl.innerHTML = `
+                    <div style="background:rgba(255,255,255,0.08); border-radius:14px; padding:1.2rem; margin-top:0.5rem; backdrop-filter:blur(8px);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; flex-wrap:wrap; gap:0.5rem;">
+                            <strong style="font-size:1rem; color:white;">${c.trackingId}</strong>
+                            <span style="background:${statusColor}22; color:${statusColor}; border:1px solid ${statusColor}; padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:700;">${c.status}</span>
+                        </div>
+                        <p style="color:rgba(255,255,255,0.7); margin-bottom:0.3rem;"><strong style="color:white;">Category:</strong> ${c.category}</p>
+                        <p style="color:rgba(255,255,255,0.7); margin-bottom:0.3rem;"><strong style="color:white;">Barangay:</strong> ${c.barangay}</p>
+                        ${c.lguNote ? `<p style="color:rgba(255,255,255,0.7); margin-bottom:0.3rem;"><strong style="color:white;">LGU Note:</strong> ${c.lguNote}</p>` : ''}
+                        <p style="color:rgba(255,255,255,0.5); font-size:0.8rem; margin-bottom:1rem;">Last updated: ${lastUpdated}</p>
+                        ${c.affidavitApproved ? `<p style="color:#00bc7d; font-size:0.85rem; margin-bottom:0.8rem;">✅ Affidavit approved. Please log in to download.</p>` : ''}
+                        ${timeline ? `<div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:0.8rem; margin-top:0.5rem;">${timeline}</div>` : ''}
+                    </div>
+                `;
+            } catch (e) {
+                resultEl.innerHTML = `<p style="color:#ff6467;">❌ Error connecting to server. Please try again.</p>`;
+            }
+        }
+
+        document.getElementById('track-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') trackReport();
+        });
+        
+        updateParallax();
+    </script>
+</body>
+</html>

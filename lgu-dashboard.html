@@ -1,0 +1,33 @@
+<!-- Leaflet MarkerCluster CDN Links -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<script>
+  // MarkerCluster initialization
+  var markerCluster = L.markerClusterGroup();
+
+  // Create Priority Marker function
+  function createPriorityMarker(priority, lat, lng) {
+      var color;
+      switch (priority) {
+          case 'CRITICAL': color = '#ff0000'; break;
+          case 'HIGH': color = '#ffa500'; break;
+          case 'MEDIUM': color = '#0000ff'; break;
+          case 'LOW': color = '#808080'; break;
+      }
+      return L.marker([lat, lng], { icon: L.divIcon({ className: 'priority-marker', style: `background-color: ${color};` }) });
+  }
+
+  // Build Complaint Popup function
+  function buildComplaintPopup(complaint) {
+      return `<h3>Complaint ID: ${complaint.id}</h3>\n              <p>Priority: ${complaint.priority}</p>\n              <p>Category: ${complaint.category}</p>\n              <p>Complainant: ${complaint.complainant}</p>`;
+  }
+
+  // Enable Mobile Gestures function
+  function enableMobileGestures(map) {
+      // Implement pinch-to-zoom and two-finger panning
+  }
+
+  // Additional existing dashboard code remains unchanged
+</script>
