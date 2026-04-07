@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalapp - Loading...</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Detect if the user is on a mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 900;
+            
+            // Redirect instantly
+            if (isMobile) {
+                window.location.replace("citizen-mobile.html");
+            } else {
+                window.location.replace("citizen-desktop.html");
+            }
+        });
+    </script>
+</head>
+<body style="background: #f6f6f9;"></body>
+</html>
