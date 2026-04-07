@@ -723,3 +723,540 @@
                         alertEl = document.createElement('div');
                         alertEl.id = alertId;
                         alertEl.style.cssText = 'padding:0.6rem; border-radius:8px; background:rgba(255,100,103,0.1); color:#ff6467; font-size:0.8rem; margin-top:0.4rem; border:1px solid rgba(255,100,103,0.3);';
+                        if (noteEl) noteEl.insertAdjacentElement('afterend', alertEl);
+                    }
+                    alertEl.textContent = data.message || 'Lupon referral rejected.';
+                    return;
+                }
+                loadInProgressComplaints();
+                loadComplaints();
+            } catch(err) { console.error('referToLupon error:', err); }
+        }
+
+        async function updateStatus(id, status, autoNote = '') {
+            const noteEl = document.getElementById(`note-${id}`);
+            const noteValue = (noteEl && noteEl.value) ? noteEl.value : autoNote;
+            
+            const photoInput = document.getElementById('progress-photo-input');
+            if (photoInput && photoInput.files && photoInput.files.length) {
+                const fd = new FormData();
+                fd.append('photo', photoInput.files[0]);
+                fd.append('note', noteValue || 'LGU progress photo attached with status update.');
+                fd.append('adminName', currentAdminName);
+                try {
+                    await fetch(`${BACKEND_URL}/api/complaints/${id}/progress-photo`, { method: 'POST', body: fd });
+                    photoInput.value = '';
+                    document.getElementById('progress-photo-preview').innerHTML = '';
+                } catch(e) { console.error('Inline photo upload error:', e); }
+            }
+            await fetch(`${BACKEND_URL}/api/complaints/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status, note: noteValue, adminName: currentAdminName })
+            });
+            closeModal();
+            loadComplaints();
+        }
+
+        function confirmAIPriority() {
+            document.getElementById('priority-confirm-row').style.display = 'none';
+            document.getElementById('priority-override-row').style.display = 'none';
+        }
+
+        function showPriorityOverride() {
+            const overrideRow = document.getElementById('priority-override-row');
+            overrideRow.style.display = overrideRow.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        async function applyPriorityOverride() {
+            if (!currentComplaint) return;
+            const newPriority = document.getElementById('priority-override-select').value;
+            await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: currentComplaint.status, note: `Priority overridden to ${newPriority} by LGU`, adminName: currentAdminName, priority: newPriority })
+            });
+            document.getElementById('modal-priority').innerText = newPriority;
+            document.getElementById('priority-confirm-row').style.display = 'none';
+            document.getElementById('priority-override-row').style.display = 'none';
+        }
+
+        async function approveAffidavit() {
+            if (!currentComplaint) return;
+            await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/approve-affidavit`, { method: 'POST' });
+            document.getElementById('affidavit-section').innerHTML = '<p style="color:#00bc7d;">✅ Affidavit approved and released to citizen.</p>';
+        }
+
+        async function uploadProgressPhoto() {
+            if (!currentComplaint) return;
+            const fileInput = document.getElementById('progress-photo-input');
+            const noteInput = document.getElementById('progress-photo-note');
+            if (!fileInput.files.length) return;
+            const fd = new FormData();
+            fd.append('photo', fileInput.files[0]);
+            fd.append('note', noteInput.value || 'LGU uploaded a progress photo.');
+            fd.append('adminName', currentAdminName);
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/progress-photo`, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('progress-photo-preview').innerHTML = `<img src="${data.photoUrl}" style="width:100%; border-radius:12px; margin-top:0.5rem; max-height:200px; object-fit:cover;">`;
+                    fileInput.value = '';
+                    noteInput.value = '';
+                }
+            } catch(e) { console.error('Photo upload error:', e); }
+        }
+
+        function downloadCSV() {
+            let csvContent = "Tracking ID,Priority,Date Submitted,Citizen User,Barangay,Issue,Description,Status,LGU Note\n";
+            currentFilteredData.forEach(c => {
+                const id = c.trackingId;
+                const priority = c.priority || 'MEDIUM';
+                const date = new Date(c.createdAt).toLocaleDateString();
+                const user = c.citizenName || 'Anonymous';
+                const brgy = c.barangay || '';
+                const issue = c.category || '';
+                const desc = (c.description || '').replace(/"/g, '""');
+                const status = c.status || 'Pending';
+                const note = (c.lguNote || '').replace(/"/g, '""');
+                csvContent += `"${id}","${priority}","${date}","${user}","${brgy}","${issue}","${desc}","${status}","${note}"\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", `Kalapp_Report_${new Date().toISOString().split('T')[0]}.csv`);
+            link.click();
+        }
+
+        function openReportDetails(complaint) {
+            currentComplaint = complaint;
+            document.getElementById('modal-id').innerText = complaint.trackingId;
+            document.getElementById('modal-citizen').innerText = complaint.citizenName || 'Guest';
+            document.getElementById('modal-issue').innerText = complaint.category;
+            document.getElementById('modal-barangay').innerText = complaint.barangay || 'N/A';
+            document.getElementById('modal-priority').innerText = complaint.priority || 'MEDIUM';
+            document.getElementById('modal-status').innerText = complaint.status || 'Pending';
+            document.getElementById('modal-desc').innerText = complaint.description || 'No details.';
+            document.getElementById('modal-note').innerText = complaint.lguNote || 'No feedback yet.';
+
+            const contactEl = document.getElementById('modal-contact');
+            if (complaint.contactNumber) {
+                contactEl.innerHTML = `<a href="tel:${complaint.contactNumber}" style="color:var(--color-primary)">${complaint.contactNumber}</a>`;
+            } else {
+                contactEl.innerHTML = '<span style="color:#9f9fa9">Not provided</span>';
+            }
+
+            const locEl = document.getElementById('modal-location');
+            const mapDiv = document.getElementById('modal-map');
+            if (complaint.locationLat && complaint.locationLng) {
+                const src = complaint.locationSource ? `<small style="color:#9f9fa9"> (${complaint.locationSource})</small>` : '';
+                const addr = complaint.locationAddress ? `<br><small>${complaint.locationAddress}</small>` : '';
+                locEl.innerHTML = `${complaint.locationLat}, ${complaint.locationLng}${src}${addr}
+                    <br><a href="https://www.google.com/maps?q=${complaint.locationLat},${complaint.locationLng}" target="_blank" style="color:var(--color-primary); font-size:0.82rem; font-weight:600;">🗺️ Open in Google Maps</a>`;
+                
+                mapDiv.style.display = 'block';
+                if (lguModalMap) { lguModalMap.remove(); lguModalMap = null; }
+                lguModalMap = L.map('modal-map', { zoomControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(lguModalMap);
+                lguModalMap.setView([complaint.locationLat, complaint.locationLng], 16);
+                const pinIcon = L.divIcon({ className: '', html: '<div style="font-size:2rem; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔶</div>', iconSize: [32, 32], iconAnchor: [16, 28] });
+                const popupText = complaint.locationAddress || `${complaint.locationLat}, ${complaint.locationLng}`;
+                L.marker([complaint.locationLat, complaint.locationLng], { icon: pinIcon, draggable: false }).addTo(lguModalMap).bindPopup(popupText).openPopup();
+            } else if (complaint.locationAddress) {
+                locEl.innerHTML = complaint.locationAddress;
+                mapDiv.style.display = 'none';
+            } else {
+                locEl.innerHTML = '<span style="color:#9f9fa9">Not provided</span>';
+                mapDiv.style.display = 'none';
+            }
+
+            document.getElementById('priority-confirm-row').style.display = 'flex';
+            document.getElementById('priority-override-row').style.display = 'none';
+            const prioritySelect = document.getElementById('priority-override-select');
+            prioritySelect.value = complaint.priority || 'MEDIUM';
+            
+            const upvoteEl = document.getElementById('modal-upvote-badge');
+            const upvotes = complaint.upvotes || 0;
+            upvoteEl.innerHTML = `👥 Community Confirmations: <strong>${upvotes}</strong>` +
+                (upvotes >= 5 ? ' <span style="background:rgba(251,191,36,0.2); color:#fbbf24; padding:2px 8px; border-radius:8px; font-size:0.75rem;">HIGH COMMUNITY CONCERN</span>' : '');
+            
+            const statusColors = { 'Pending': '#ff6467', 'In Progress': '#fe9a00', 'Resolved': '#00bc7d', 'Rejected & Flagged': '#9f9fa9', 'Referred to Lupon': '#fbbf24', 'Lupon: Scheduled': '#8b5cf6', 'Lupon: Settled': '#00bc7d', 'Lupon: Unresolved': '#ff6467', 'Progress Update': '#4169E1' };
+            const timeline = document.getElementById('modal-history-timeline');
+            if (complaint.history && complaint.history.length > 0) {
+                timeline.innerHTML = complaint.history.map(h => `
+                    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                        <div style="width:10px; height:10px; border-radius:50%; background:${statusColors[h.status] || '#9f9fa9'}; margin-top:5px; flex-shrink:0;"></div>
+                        <div style="font-size:0.85rem;">
+                            <strong style="color:${statusColors[h.status] || 'inherit'};">${h.status}</strong><br>
+                            <span style="color:#d1d1d1;">${h.note || ''}</span><br>
+                            <small style="color:#9f9fa9;">by ${h.updatedBy || 'System'} · ${new Date(h.updatedAt).toLocaleString('en-PH')}</small>
+                            ${h.photoUrl ? `<br><a href="${h.photoUrl.startsWith('http') ? h.photoUrl : BACKEND_URL + h.photoUrl}" target="_blank"><img src="${h.photoUrl.startsWith('http') ? h.photoUrl : BACKEND_URL + h.photoUrl}" style="width:100%; border-radius:10px; margin-top:0.5rem; max-height:180px; object-fit:cover;" onerror="this.style.display='none'"></a>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                timeline.innerHTML = '<p style="color:#9f9fa9; font-size:0.85rem;">No history yet.</p>';
+            }
+
+            const actionsDiv = document.getElementById('modal-actions-div');
+            const isClosedStatus = complaint.status === 'Resolved' || complaint.status === 'Rejected & Flagged' || complaint.status === 'Lupon: Settled' || complaint.status === 'Lupon: Unresolved';
+            const isLuponStage = complaint.status === 'Referred to Lupon' || complaint.status === 'Lupon: Scheduled';
+            const aiSection = document.getElementById('ai-priority-section');
+            const progressSection = document.getElementById('progress-photo-section');
+            const affidavitSection = document.getElementById('affidavit-section');
+
+            if (isClosedStatus) {
+                actionsDiv.innerHTML = `<div style="color:#9f9fa9; font-size:0.85rem;"><i>This complaint is closed.</i></div>`;
+                aiSection.style.display = 'none';
+                progressSection.style.display = 'none';
+            } else if (isLuponStage) {
+                aiSection.style.display = 'none';
+                progressSection.style.display = 'block';
+                let luponButtons = '';
+                if (complaint.status === 'Referred to Lupon') {
+                    luponButtons = `<button class="action-btn btn-lupon" onclick="updateStatus('${complaint.trackingId}', 'Lupon: Scheduled', 'Hearing has been scheduled by Lupon.')">📅 Schedule Hearing</button>
+                    <button class="action-btn" style="background:rgba(159,159,169,0.2);color:#9f9fa9;" onclick="returnToReports('${complaint.trackingId}')">🔙 Return to Reports</button>`;
+                } else if (complaint.status === 'Lupon: Scheduled') {
+                    luponButtons = `<button class="action-btn btn-resolve" onclick="updateStatus('${complaint.trackingId}', 'Lupon: Settled', 'Amicable settlement reached via Lupon mediation.')">✅ Mark as Settled</button>
+                    <button class="action-btn btn-reject" onclick="updateStatus('${complaint.trackingId}', 'Lupon: Unresolved', 'Lupon mediation failed to resolve the dispute.')">❌ Mark Unresolved</button>`;
+                }
+                actionsDiv.innerHTML = `
+                    <input type="text" id="note-${complaint.trackingId}" class="note-input" placeholder="LGU Feedback..." value="${complaint.lguNote || ''}" style="width:100%; margin-bottom:0.5rem;">
+                    <div id="lupon-modal-alert" style="display:none; margin-bottom:0.5rem; padding:0.8rem; border-radius:10px; background:rgba(255,100,103,0.1); color:#ff6467; font-size:0.85rem; border:1px solid rgba(255,100,103,0.3);"></div>
+                    ${luponButtons}
+                `;
+            } else {
+                aiSection.style.display = 'block';
+                progressSection.style.display = 'none'; 
+                actionsDiv.innerHTML = `
+                    <input type="text" id="note-${complaint.trackingId}" class="note-input" placeholder="LGU Feedback..." value="${complaint.lguNote || ''}" style="width:100%; margin-bottom:0.8rem;">
+                    <div id="lupon-modal-alert" style="display:none; margin-bottom:0.5rem; padding:0.8rem; border-radius:10px; background:rgba(255,100,103,0.1); color:#ff6467; font-size:0.85rem; border:1px solid rgba(255,100,103,0.3);"></div>
+                    <div style="background:rgba(255,255,255,0.04); border:var(--glass-border); border-radius:12px; padding:0.8rem; margin-bottom:0.8rem;">
+                        <label style="font-size:0.82rem; color:var(--color-info-dark); display:block; margin-bottom:0.5rem;">📸 Attach Progress Photo (optional)</label>
+                        <input type="file" id="progress-photo-input" accept="image/*" style="color:white; font-size:0.8rem; width:100%;" onchange="previewProgressPhoto(this)">
+                        <div id="progress-photo-preview" style="margin-top:0.5rem;"></div>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        <button class="action-btn btn-accept" onclick="updateStatus('${complaint.trackingId}', 'In Progress')">🔄 In Progress</button>
+                        <button class="action-btn btn-resolve" onclick="updateStatus('${complaint.trackingId}', 'Resolved')">✓ Resolve</button>
+                        <button class="action-btn btn-lupon" onclick="referToLupon('${complaint.trackingId}')">⚖️ Refer to Lupon</button>
+                        <button class="action-btn btn-reject" onclick="if(confirm('Flag as fake/spam? (Adds 1 strike to user)')) updateStatus('${complaint.trackingId}', 'Rejected & Flagged')">🚩 Flag as Fake</button>
+                    </div>
+                `;
+            }
+
+            if (complaint.affidavitRequested && !complaint.affidavitApproved) {
+                affidavitSection.style.display = 'block';
+                const date = new Date(complaint.createdAt).toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+                document.getElementById('affidavit-preview').innerHTML = `
+                    <strong>Complaint Reference:</strong> ${complaint.trackingId}<br>
+                    <strong>Citizen:</strong> ${complaint.citizenName}<br>
+                    <strong>Category:</strong> ${complaint.category}<br>
+                    <strong>Barangay:</strong> ${complaint.barangay}<br>
+                    <strong>Date Filed:</strong> ${date}<br>
+                    <strong>Description:</strong> ${complaint.description}
+                `;
+            } else {
+                affidavitSection.style.display = 'none';
+            }
+
+            const img = document.getElementById('modal-img');
+            img.src = complaint.imageUrl
+                ? (complaint.imageUrl.startsWith('http') ? complaint.imageUrl : `${BACKEND_URL}${complaint.imageUrl}`)
+                : 'https://via.placeholder.com/600x300?text=No+Photo+Evidence';
+            document.getElementById('reportModal').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('reportModal').style.display = 'none'; currentComplaint = null; if (lguModalMap) { lguModalMap.remove(); lguModalMap = null; } }
+        function logout() { localStorage.removeItem('kalapp_username'); window.location.href = '/login.html'; }
+
+        function previewProgressPhoto(input) {
+            const preview = document.getElementById('progress-photo-preview');
+            if (!preview) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.innerHTML = `<img src="${e.target.result}" style="width:100%; border-radius:10px; max-height:160px; object-fit:cover; margin-top:0.4rem;">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.innerHTML = '';
+            }
+        }
+
+        function switchTab(tabName) {
+            const analyticsSection = document.querySelector('.graph-section');
+            const reportsSection = document.querySelector('.recent-reports');
+            const insightsSection = document.querySelector('.insights');
+            const luponSection = document.getElementById('lupon-section');
+            const inprogressSection = document.getElementById('inprogress-section');
+            const feedSection = document.getElementById('feed-section');
+            
+            analyticsSection.style.display = 'none';
+            reportsSection.style.display = 'none';
+            insightsSection.style.display = 'none';
+            luponSection.style.display = 'none';
+            inprogressSection.style.display = 'none';
+            feedSection.style.display = 'none';
+            
+            if (tabName === 'analytics') {
+                analyticsSection.style.display = 'grid';
+                insightsSection.style.display = 'grid';
+            } else if (tabName === 'reports') {
+                reportsSection.style.display = 'block';
+                insightsSection.style.display = 'grid';
+            } else if (tabName === 'lupon') {
+                luponSection.style.display = 'block';
+                loadLuponCases();
+            } else if (tabName === 'inprogress') {
+                inprogressSection.style.display = 'block';
+                loadInProgressComplaints();
+            } else if (tabName === 'feed') {
+                feedSection.style.display = 'block';
+                feedPage = 1;
+                feedCards = [];
+                loadFeed();
+            } else {
+                analyticsSection.style.display = 'grid';
+                reportsSection.style.display = 'block';
+                insightsSection.style.display = 'grid';
+            }
+
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar a[onclick="switchTab('${tabName}')"]`);
+            if (activeLink) activeLink.classList.add('active');
+        }
+
+        // Close notification panel when clicking outside
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('notif-panel');
+            const bell = document.getElementById('notif-bell');
+            if (panel && !panel.contains(e.target) && !bell.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        });
+        
+        function toggleNotifPanel() {
+            const panel = document.getElementById('notif-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        let readNotifIds = JSON.parse(localStorage.getItem('kalapp_lgu_read_notifs') || '[]');
+        
+        function renderNotifications(complaints) {
+            const notifList = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            const notifs = [];
+
+            complaints.forEach(c => {
+                // NEW COMPLAINT NOTIFICATION LOGIC
+                if (c.status === 'Pending' || !c.status) {
+                    notifs.push({ 
+                        id: `new-${c.trackingId}`, 
+                        icon: '🚨', 
+                        text: `New Report: ${c.category} at ${c.barangay}`, 
+                        trackingId: c.trackingId 
+                    });
+                }
+                
+                if (c.affidavitRequested && !c.affidavitApproved) {
+                    notifs.push({ id: `affidavit-${c.trackingId}`, icon: '📄', text: `${c.citizenName || 'A citizen'} requested an affidavit for ${c.trackingId}`, trackingId: c.trackingId });
+                }
+                if (c.comments && c.comments.length > 0) {
+                    const lastComment = c.comments[c.comments.length - 1];
+                    notifs.push({ id: `comment-${c.trackingId}-${c.comments.length}`, icon: '💬', text: `New comment on ${c.trackingId}: "${lastComment.text.substring(0, 40)}..."`, trackingId: c.trackingId });
+                }
+                if (c.upvotes >= 5) {
+                    notifs.push({ id: `upvote-${c.trackingId}`, icon: '👍', text: `${c.trackingId} has been upvoted ${c.upvotes} times`, trackingId: c.trackingId });
+                }
+            });
+            
+            const unread = notifs.filter(n => !readNotifIds.includes(n.id));
+            const unreadCount = unread.length;
+            
+            if (unreadCount > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (!notifs.length) {
+                notifList.innerHTML = '<p style="color:#9f9fa9; font-size:0.82rem; text-align:center; padding:1rem;">No notifications</p>';
+                return;
+            }
+
+            notifList.innerHTML = notifs.map(n => {
+                const isRead = readNotifIds.includes(n.id);
+                return `<div style="display:flex; align-items:flex-start; gap:0.8rem; padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.06); ${isRead ? 'opacity:0.5;' : ''}">
+                    <span style="font-size:1.1rem; flex-shrink:0;">${n.icon}</span>
+                    <div style="flex:1; font-size:0.8rem; color:#d1d1d1; line-height:1.4;">${n.text}</div>
+                    ${!isRead ? `<button onclick="markRead('${n.id}')" style="background:none; border:none; color:var(--color-primary); cursor:pointer; font-size:0.72rem; font-family:'Poppins',sans-serif; white-space:nowrap; padding:2px 6px; border-radius:6px;">✓ Read</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function markRead(id) {
+            if (!readNotifIds.includes(id)) {
+                readNotifIds.push(id);
+                localStorage.setItem('kalapp_lgu_read_notifs', JSON.stringify(readNotifIds));
+            }
+            const allComplaints = currentFilteredData;
+            renderNotifications(allComplaints.length ? allComplaints : []);
+        }
+
+        function markAllRead() {
+            const list = allComplaintsCache.length ? allComplaintsCache : currentFilteredData;
+            list.forEach(c => {
+                readNotifIds.push(`new-${c.trackingId}`);
+                readNotifIds.push(`affidavit-${c.trackingId}`);
+                if (c.comments && c.comments.length) readNotifIds.push(`comment-${c.trackingId}-${c.comments.length}`);
+                readNotifIds.push(`upvote-${c.trackingId}`);
+            });
+            readNotifIds = [...new Set(readNotifIds)];
+            localStorage.setItem('kalapp_lgu_read_notifs', JSON.stringify(readNotifIds));
+            renderNotifications([]);
+            document.getElementById('notif-panel').style.display = 'none';
+        }
+
+        // --- COMMUNITY FEED ---
+        let feedPage = 1;
+        let feedCards = [];
+        let currentFeedCommentId = null;
+        const lguFeedCommentStore = {};
+        
+        async function loadFeed(append = false) {
+            const container = document.getElementById('feed-cards');
+            const loadMoreBtn = document.getElementById('feed-load-more');
+            if (!append) container.innerHTML = '<p style="opacity:0.4; text-align:center; grid-column:1/-1; padding:2rem;">Loading feed...</p>';
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${feedPage}&limit=9`);
+                const data = await res.json();
+                const items = data.feed || [];
+                if (!append) container.innerHTML = '';
+                if (!items.length && !append) {
+                    container.innerHTML = '<p style="opacity:0.4; text-align:center; grid-column:1/-1; padding:2rem;">No community reports yet.</p>';
+                    loadMoreBtn.style.display = 'none';
+                    return;
+                }
+                items.forEach(c => {
+                    lguFeedCommentStore[c.trackingId] = c.comments || [];
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background:var(--card-bg); border:var(--glass-border); border-radius:20px; overflow:hidden; box-shadow:var(--box-shadow); transition:0.3s;';
+                    const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
+                    const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const safeDesc = String(c.description || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const desc = safeDesc.substring(0, 100) + (safeDesc.length > 100 ? '...' : '');
+                    const commentCount = (c.comments || []).length;
+                    card.innerHTML = `
+                        ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:180px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                        <div style="padding:1rem;">
+                            <div style="font-weight:700; font-size:0.9rem; margin-bottom:0.3rem; color:var(--color-primary);">${escAttr(c.category||'')}</div>
+                            <div style="font-size:0.8rem; color:#9f9fa9; margin-bottom:0.5rem;">📍 ${escAttr(c.barangay||'')} · ${date}</div>
+                            <p style="font-size:0.82rem; color:#d1d1d1; line-height:1.5; margin-bottom:0.8rem;">${desc}</p>
+                            <div style="font-size:0.78rem; color:#9f9fa9; margin-bottom:0.8rem;">👤 ${escAttr(c.citizenName||'Anonymous')}</div>
+                            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                                <button onclick="feedUpvote('${escAttr(c.trackingId)}',this)" style="background:rgba(0,188,125,0.1); border:1px solid rgba(0,188,125,0.3); color:#00bc7d; padding:5px 12px; border-radius:8px; cursor:pointer; font-size:0.78rem; font-family:'Poppins',sans-serif;">👍 Vouch (${c.upvotes || 0})</button>
+                                <button onclick="openLguCommentModal('${escAttr(c.trackingId)}')" style="background:rgba(65,105,225,0.1); border:1px solid rgba(65,105,225,0.3); color:var(--color-primary); padding:5px 12px; border-radius:8px; cursor:pointer; font-size:0.78rem; font-family:'Poppins',sans-serif;">💬 ${commentCount}</button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                loadMoreBtn.style.display = data.pages > feedPage ? 'inline-block' : 'none';
+            } catch(e) { console.error('Feed error:', e); }
+        }
+
+        async function feedUpvote(trackingId, btn) {
+            try {
+                 const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/upvote`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentAdminName })
+                });
+                const data = await res.json();
+                btn.textContent = data.success ? `👍 Vouched (${data.upvotes})` : '✅ Already vouched';
+                btn.disabled = true;
+            } catch(e) { console.error(e); }
+        }
+
+        function loadMoreFeed() { feedPage++; loadFeed(true); }
+
+        function openLguCommentModal(trackingId) {
+            currentFeedCommentId = trackingId;
+            const list = document.getElementById('lgu-comments-list');
+            const arr = lguFeedCommentStore[trackingId] || [];
+            list.innerHTML = arr.length ? arr.map(c => `
+                <div style="padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <strong style="font-size:0.8rem; color:var(--color-primary);">${String(c.authorName||'Anonymous').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong>
+                    <p style="font-size:0.82rem; color:#d1d1d1; margin-top:0.2rem;">${String(c.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+                    <small style="color:#9f9fa9;">${new Date(c.createdAt).toLocaleDateString('en-PH')}</small>
+                </div>
+            `).join('') : '<p style="font-size:0.82rem; color:#9f9fa9; text-align:center; padding:1rem;">No comments yet.</p>';
+            document.getElementById('lgu-comment-modal').style.display = 'block';
+        }
+
+        function closeLguCommentModal() {
+            document.getElementById('lgu-comment-modal').style.display = 'none';
+            document.getElementById('lgu-comment-text').value = '';
+            currentFeedCommentId = null;
+        }
+
+        async function submitLguComment() {
+            if (!currentFeedCommentId) return;
+            const text = document.getElementById('lgu-comment-text').value.trim();
+            if (!text) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${currentFeedCommentId}/comment`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, authorName: currentAdminName + ' (LGU)' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    lguFeedCommentStore[currentFeedCommentId] = data.comments;
+                    openLguCommentModal(currentFeedCommentId);
+                    document.getElementById('lgu-comment-text').value = '';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // Close modal when clicking on the dark backdrop
+        document.getElementById('reportModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // --- WEBSOCKET LIVE UPDATES ---
+        let wsReconnectDelay = 1000;
+        function connectWebSocket() {
+            const wsUrl = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+            const badge = document.getElementById('ws-status-badge');
+            let ws;
+            try {
+                ws = new WebSocket(wsUrl);
+            } catch(e) { return; } // graceful degrade
+
+            ws.onopen = () => {
+                wsReconnectDelay = 1000;
+                badge.textContent = '🟢 Live';
+                badge.style.cssText = 'font-size:0.75rem; padding:4px 10px; border-radius:20px; background:rgba(0,188,125,0.15); color:#00bc7d; font-weight:600; display:inline-block;';
+            };
+            ws.onmessage = () => {
+                loadComplaints();
+                if (document.getElementById('lupon-section').style.display !== 'none') loadLuponCases();
+                if (document.getElementById('inprogress-section').style.display !== 'none') loadInProgressComplaints();
+                if (document.getElementById('feed-section').style.display !== 'none') { feedPage = 1; loadFeed(); }
+            };
+            ws.onclose = () => {
+                badge.textContent = '🔴 Reconnecting...';
+                badge.style.cssText = 'font-size:0.75rem; padding:4px 10px; border-radius:20px; background:rgba(255,100,103,0.12); color:#ff6467; font-weight:600; display:inline-block;';
+                const delay = Math.min(wsReconnectDelay, 30000);
+                wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30000);
+                setTimeout(connectWebSocket, delay);
+            };
+            ws.onerror = () => ws.close();
+        }
+        connectWebSocket();
+
+        loadComplaints();
+    </script>
+</body>
+</html>
