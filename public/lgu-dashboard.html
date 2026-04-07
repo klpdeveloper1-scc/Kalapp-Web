@@ -3,20 +3,1281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalapp LGU - Loading...</title>
+    <title>Kalapp - LGU Official Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+      :root {
+        --color-primary: #4169E1;
+        --color-danger: #ff6467; --color-success: #00bc7d; --color-warning: #fe9a00;
+        --color-white: rgba(255, 255, 255, 0.05);
+        --color-info-dark: #9f9fa9; --color-dark: #f8fafc;
+        --color-background: #09090b;
+        --card-bg: #121214;
+        --glass-border: 1px solid rgba(255,255,255,0.08);
+        --box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      * { margin: 0; padding: 0; outline: 0; border: 0; text-decoration: none; list-style: none; box-sizing: border-box; }
+
+      body {
+          font-family: 'Poppins', sans-serif; width: 100vw; height: 100vh; font-size: 0.88rem;
+          background-color: var(--color-background); color: var(--color-dark); overflow-x: hidden;
+          transition: all 0.3s ease;
+      }
+
+      .container { display: grid; width: 100%; margin: 0 auto; grid-template-columns: 16rem auto; min-height: 100vh; }
+
+      /* SIDEBAR STYLE */
+      aside { background: var(--card-bg); border-right: var(--glass-border); padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 2rem; }
+      aside .logo { display: flex; align-items: center; gap: 0.8rem; }
+      aside .logo .logo-container { width:35px; height:35px; border-radius:8px; background:#fff; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+      aside .sidebar { display: flex; flex-direction: column; gap: 0.5rem; flex-grow: 1; }
+      aside .sidebar a { display: flex; color: var(--color-info-dark); gap: 1rem; align-items: center; height: 3.5rem; transition: 0.3s ease; border-radius: 12px; padding-left: 1rem; cursor: pointer; }
+      aside .sidebar a.active { box-shadow: inset 4px 0 0 var(--color-primary); color: var(--color-primary); font-weight: 600; }
+      aside .sidebar a.active:active { transform: scale(0.95) translateX(5px); }
+      aside .sidebar a:hover { color: white; background: rgba(255, 255, 255, 0.03); transform: translateX(8px); }
+
+      /* MAIN CONTENT */
+      main { padding: 2rem; overflow-y: auto; }
+      .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+      .profile-info { display: flex; align-items: center; gap: 1rem; text-align: right; }
+      .profile-photo img { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 2px solid var(--color-primary); transition: 0.2s; }
+      .profile-photo img:hover { transform: scale(1.1); }
+
+      /* STATS CARDS */
+      .insights { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+      .insights > div { background: var(--card-bg); border: var(--glass-border); padding: 1.5rem; border-radius: 20px; box-shadow: var(--box-shadow); transition: 0.3s ease; cursor: pointer; }
+      .insights > div:hover { transform: translateY(-5px); border-color: var(--color-primary); box-shadow: 0 12px 40px rgba(65, 105, 225, 0.2); }
+      .insights h3 { color: var(--color-info-dark); font-size: 0.85rem; margin-top: 1rem; }
+      .insights .number { font-size: 2.2rem; font-weight: 700; margin-top: 0.3rem; letter-spacing: -1px; }
+
+      /* GRAPHS */
+      .graph-section { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+      .graph-card { background: var(--card-bg); border: var(--glass-border); padding: 1.8rem; border-radius: 24px; box-shadow: var(--box-shadow); position: relative; overflow: hidden; }
+      .graph-card h2 { font-size: 1rem; margin-bottom: 1.5rem; color: var(--color-info-dark); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+      canvas { width: 100% !important; height: 260px !important; }
+
+      /* TABLE UI */
+      .recent-reports { margin-top: 2rem; background: var(--card-bg); border: var(--glass-border); border-radius: 24px; padding: 2rem; box-shadow: var(--box-shadow); }
+      table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+      table thead th { text-align: left; padding: 1rem; color: var(--color-info-dark); font-size: 0.75rem; text-transform: uppercase; }
+      table tbody tr { background: rgba(255, 255, 255, 0.02); transition: background 0.3s; cursor: pointer; }
+
+      table tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+
+      table td { padding: 1.2rem 1rem; }
+      table td:first-child { border-radius: 15px 0 0 15px; }
+      table td:last-child { border-radius: 0 15px 15px 0; }
+
+      /* AI PRIORITY ANIMATIONS */
+      @keyframes pulse-critical {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+          70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
+      tr.critical-row { background-color: rgba(239, 68, 68, 0.1); }
+      tr.critical-row td:first-child { border-left: 4px solid #ef4444; }
+
+      /* STATUS BADGES */
+      .status-pill { padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; }
+      .status-pending { background: rgba(255, 100, 103, 0.1); color: var(--color-danger); }
+      .status-inprogress { background: rgba(254, 154, 0, 0.1); color: var(--color-warning); }
+      .status-resolved { background: rgba(0, 188, 125, 0.1); color: var(--color-success); }
+      .status-flagged { background: rgba(159, 159, 169, 0.1); color: var(--color-info-dark); text-decoration: line-through; }
+
+      /* ACTION BUTTONS & NOTES */
+      .note-input { width: 100%; padding: 0.5rem; border-radius: 8px; border: var(--glass-border); background: rgba(0,0,0,0.2); color: white; margin-bottom: 0.5rem; }
+      .action-row { display: flex; gap: 0.5rem; }
+      .action-btn { flex: 1; padding: 0.5rem; border-radius: 8px; cursor: pointer; color: white; font-weight: 600; font-size: 0.75rem; transition: 0.2s; }
+      .action-btn:hover { opacity: 0.8; }
+      .btn-accept { background: var(--color-warning); color: black; }
+      .btn-resolve { background: var(--color-success); color: black; }
+      .btn-reject { background: var(--color-danger); flex: 0.3 !important; }
+      .btn-download { background: var(--color-primary); color: white; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+      /* MODAL — FIX: Added max-height + overflow-y so full report is always visible and scrollable */
+      .modal { display: none; position: fixed; z-index: 2000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px); overflow-y: auto; }
+      .modal-content {
+          background: var(--card-bg);
+          margin: 3% auto;
+          padding: 2.5rem;
+          width: 90%;
+          max-width: 650px;
+          max-height: 90vh;
+          overflow-y: auto;
+          border-radius: 28px;
+          border: var(--glass-border);
+          position: relative;
+          animation: fadeInUp 0.5s ease;
+      }
+      .close-btn { position: absolute; top: 25px; right: 25px; color: #9f9fa9; cursor: pointer; font-size: 2rem; }
+      #modal-img { width: 100%; border-radius: 20px; margin-top: 1.5rem; max-height: 350px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
+      #modal-map { height: 220px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); margin-top: 0.8rem; margin-bottom: 0.5rem; z-index: 1; }
+      .leaflet-container { font-family: 'Poppins', sans-serif; }
+      .leaflet-pane { z-index: 1 !important; }
+      .leaflet-top, .leaflet-bottom { z-index: 2 !important; }
+      .modal-info { margin-top: 2rem; }
+      .modal-info h2 { color: var(--color-primary); font-size: 1.8rem; margin-bottom: 1rem; }
+      .modal-info p { color: #d1d1d1; font-size: 1rem; line-height: 1.8; margin-bottom: 0.5rem; }
+
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes cardAppear { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      .graph-card:nth-child(1) { animation: cardAppear 0.5s ease 0.1s both; }
+      .graph-card:nth-child(2) { animation: cardAppear 0.5s ease 0.2s both; }
+      .graph-card:nth-child(3) { animation: cardAppear 0.5s ease 0.3s both; }
+      @keyframes rowAppear { from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      .status-lupon { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+      .status-lupon-scheduled { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+      .status-lupon-settled { background: rgba(0, 188, 125, 0.1); color: #00bc7d; }
+      .status-lupon-unresolved { background: rgba(255, 100, 103, 0.1); color: #ff6467; text-decoration: line-through; }
+      .btn-lupon { background: rgba(251,191,36,0.2); color:#fbbf24; }
+      .mobile-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: var(--glass-border); justify-content: space-around; padding: 0.5rem; z-index: 1000; }
+      .mobile-bottom-nav button { background: none; border: none; color: var(--color-info-dark); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; cursor: pointer; gap: 0.2rem; padding: 0.3rem; }
+      @media screen and (max-width: 1024px) {
+          .container { grid-template-columns: 1fr; }
+          aside { display: none; }
+          .graph-section { grid-template-columns: 1fr; }
+          .insights { grid-template-columns: 1fr 1fr; }
+          .mobile-bottom-nav { display: flex; }
+          .modal-content { width: 95%; margin: 2% auto; }
+      }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside>
+            <div class="logo">
+                <div class="logo-container"><img src="logokalapp.png" alt="Kalapp Logo" style="width:100%; height:100%; object-fit:contain;"></div>
+                <h2 style="font-weight: 800; letter-spacing: -1px;">Kalapp</h2>
+            </div>
+            <div class="sidebar">
+                <a href="#" class="active" onclick="switchTab('dashboard')"><span class="material-icons-sharp">grid_view</span>Dashboard</a>
+                <a href="#" onclick="switchTab('analytics')"><span class="material-icons-sharp">bar_chart</span>Analytics</a>
+                <a href="#" onclick="switchTab('reports')"><span class="material-icons-sharp">description</span>Reports</a>
+                <a href="#" onclick="switchTab('inprogress')"><span class="material-icons-sharp">cached</span>In Progress</a>
+                <a href="#" onclick="switchTab('lupon')"><span class="material-icons-sharp">gavel</span>Lupon</a>
+                <a href="#" onclick="switchTab('feed')"><span class="material-icons-sharp">dynamic_feed</span>Feed</a>
+                <a href="#" onclick="logout()" style="margin-top: auto;"><span class="material-icons-sharp">logout</span>Logout</a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="header-area">
+                <h1 style="font-size: 1.8rem; font-weight: 700;">Dashboard Overview</h1>
+                <div class="profile-info">
+                    <span id="ws-status-badge" style="font-size:0.75rem; padding:4px 10px; border-radius:20px; background:rgba(0,188,125,0.15); color:#00bc7d; font-weight:600; display:none;">🟢 Live</span>
+                    <!-- NOTIFICATION BELL -->
+                    <div style="position:relative;">
+                        <button id="notif-bell" onclick="toggleNotifPanel()" style="background:rgba(255,255,255,0.07); border:var(--glass-border); color:var(--color-dark); cursor:pointer; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; position:relative; transition:0.2s;" title="Notifications">
+                            🔔
+                            <span id="notif-badge" style="display:none; position:absolute; top:-4px; right:-4px; background:#ff6467; color:white; border-radius:50%; width:18px; height:18px; font-size:0.65rem; font-weight:700; align-items:center; justify-content:center; line-height:18px; text-align:center;">0</span>
+                        </button>
+                        <!-- Notification Dropdown -->
+                        <div id="notif-panel" style="display:none; position:absolute; top:50px; right:0; width:340px; max-height:400px; overflow-y:auto; background:var(--card-bg); border:var(--glass-border); border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.5); z-index:3000; padding:1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                                <strong style="font-size:0.9rem;">🔔 Notifications</strong>
+                                <button onclick="markAllRead()" style="background:none; border:none; color:var(--color-primary); cursor:pointer; font-size:0.75rem; font-family:'Poppins',sans-serif;">Mark all read</button>
+                            </div>
+                            <div id="notif-list"><p style="color:#9f9fa9; font-size:0.82rem; text-align:center; padding:1rem;">No notifications</p></div>
+                        </div>
+                    </div>
+                    <div class="info">
+                        <p style="font-weight: 600;" id="lgu-name-display">Admin User</p>
+                        <small class="text-muted" style="color: var(--color-info-dark);">LGU Officer</small>
+                    </div>
+                    <div class="profile-photo"><img src="https://via.placeholder.com/45" style="border-radius:50%; border: 2px solid var(--color-primary);"></div>
+                </div>
+            </div>
+
+            <div class="insights">
+                <div>
+                    <span class="material-icons-sharp" style="color:var(--color-primary); background:rgba(65,105,225,0.1); padding:10px; border-radius:12px;">file_copy</span>
+                    <h3>Total Reports</h3><div class="number" id="count-total">0</div>
+                </div>
+                <div>
+                    <span class="material-icons-sharp" style="color:var(--color-danger); background:rgba(255,100,103,0.1); padding:10px; border-radius:12px;">emergency_share</span>
+                    <h3>Pending</h3><div class="number" id="count-pending">0</div>
+                </div>
+                <div>
+                    <span class="material-icons-sharp" style="color:var(--color-warning); background:rgba(254,154,0,0.1); padding:10px; border-radius:12px;">cached</span>
+                    <h3>In Progress</h3><div class="number" id="count-progress">0</div>
+                </div>
+                <div>
+                    <span class="material-icons-sharp" style="color:var(--color-success); background:rgba(0,188,125,0.1); padding:10px; border-radius:12px;">check_circle</span>
+                    <h3>Resolved</h3><div class="number" id="count-resolved">0</div>
+                </div>
+            </div>
+
+            <div class="graph-section">
+                <div class="graph-card"><h2>Daily Activity</h2><canvas id="activityChart"></canvas></div>
+                <div class="graph-card"><h2>Weekly Trend</h2><canvas id="weeklyChart"></canvas></div>
+                <div class="graph-card"><h2>Case Summary</h2><canvas id="categoryChart"></canvas></div>
+            </div>
+
+            <div class="recent-reports">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h2 style="font-size:1.3rem; font-weight: 600;">Recent Complaints</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="statusFilter" onchange="loadComplaints()" style="background:var(--color-background); color:white; border:var(--glass-border); padding:8px 15px; border-radius:10px; cursor:pointer;">
+                            <option value="All">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Referred to Lupon">Referred to Lupon</option>
+                            <option value="Lupon: Scheduled">Lupon: Scheduled</option>
+                            <option value="Lupon: Settled">Lupon: Settled</option>
+                            <option value="Lupon: Unresolved">Lupon: Unresolved</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Rejected &amp; Flagged">Rejected &amp; Flagged</option>
+                        </select>
+                        <button class="btn-download" onclick="downloadCSV()">📥 Export CSV</button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Report ID</th>
+                                <th>Date</th>
+                                <th>Citizen</th>
+                                <th>Issue</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-table-body">
+                            <tr><td colspan="6" style="text-align:center; padding:3rem; opacity:0.4;">Loading reports...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- LUPON SECTION -->
+            <div id="lupon-section" style="display:none; margin-top:2rem; background:var(--card-bg); border:var(--glass-border); border-radius:24px; padding:2rem; box-shadow:var(--box-shadow);">
+                <h2 style="font-size:1.3rem; font-weight:600; margin-bottom:1.5rem;">⚖️ Lupon Tagapamayapa Cases</h2>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Report ID</th><th>Date Referred</th><th>Citizen</th><th>Category</th><th>Barangay</th><th>Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lupon-table-body">
+                            <tr><td colspan="6" style="text-align:center; padding:2rem; opacity:0.4;">Loading Lupon cases...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- IN PROGRESS SECTION -->
+            <div id="inprogress-section" style="display:none; margin-top:2rem;">
+                <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+                    <!-- Active Cases Panel -->
+                    <div style="flex:1; min-width:300px; background:var(--card-bg); border:var(--glass-border); border-radius:24px; padding:2rem; box-shadow:var(--box-shadow);">
+                        <h2 style="font-size:1.1rem; font-weight:600; margin-bottom:1.2rem; color:var(--color-warning);">🔄 Active Cases</h2>
+                        <div id="active-cases-list"><p style="opacity:0.4; text-align:center; padding:2rem;">Loading...</p></div>
+                    </div>
+                    <!-- Lupon Queue Panel -->
+                    <div style="flex:1; min-width:300px; background:var(--card-bg); border:var(--glass-border); border-radius:24px; padding:2rem; box-shadow:var(--box-shadow);">
+                        <h2 style="font-size:1.1rem; font-weight:600; margin-bottom:1.2rem; color:#fbbf24;">⚖️ Lupon Queue</h2>
+                        <div id="lupon-cases-list"><p style="opacity:0.4; text-align:center; padding:2rem;">Loading...</p></div>
+                    </div>
+                </div>
+            </div>
+            <!-- FEED SECTION -->
+            <div id="feed-section" style="display:none; margin-top:2rem;">
+                <h2 style="font-size:1.3rem; font-weight:600; margin-bottom:1.5rem;">📢 Community Feed</h2>
+                <div id="feed-cards" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem;"></div>
+                <div style="text-align:center; margin-top:1.5rem;">
+                    <button id="feed-load-more" onclick="loadMoreFeed()" style="background:rgba(255,255,255,0.07); border:var(--glass-border); color:var(--color-dark); padding:0.7rem 2rem; border-radius:12px; cursor:pointer; font-family:'Poppins',sans-serif; font-size:0.88rem; display:none;">Load More</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- COMMENT MODAL (LGU) -->
+    <div id="lgu-comment-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:4000; overflow-y:auto; padding:1rem;">
+        <div style="background:var(--card-bg); border:var(--glass-border); max-width:480px; width:100%; margin:5% auto; padding:2rem; border-radius:20px; position:relative;">
+            <span onclick="closeLguCommentModal()" style="position:absolute; top:1rem; right:1.2rem; cursor:pointer; font-size:1.5rem; color:#9f9fa9;">&times;</span>
+            <h3 style="margin-bottom:1.2rem; font-size:1rem;">💬 Comments</h3>
+            <div id="lgu-comments-list" style="max-height:220px; overflow-y:auto; margin-bottom:1rem;"></div>
+            <textarea id="lgu-comment-text" rows="3" placeholder="Write a comment..." style="width:100%; background:rgba(255,255,255,0.05); border:var(--glass-border); color:white; border-radius:10px; padding:0.8rem; font-family:'Poppins',sans-serif; font-size:0.85rem; resize:vertical;"></textarea>
+            <button onclick="submitLguComment()" style="margin-top:0.6rem; width:100%; background:var(--color-primary); color:white; border:none; padding:0.7rem; border-radius:10px; cursor:pointer; font-family:'Poppins',sans-serif; font-weight:600;">💬 Post Comment</button>
+        </div>
+    </div>
+
+    <nav class="mobile-bottom-nav">
+        <button onclick="switchTab('dashboard')"><span class="material-icons-sharp" style="font-size:1.4rem;">grid_view</span><span>Dashboard</span></button>
+        <button onclick="switchTab('analytics')"><span class="material-icons-sharp" style="font-size:1.4rem;">bar_chart</span><span>Analytics</span></button>
+        <button onclick="switchTab('reports')"><span class="material-icons-sharp" style="font-size:1.4rem;">description</span><span>Reports</span></button>
+        <button onclick="switchTab('inprogress')"><span class="material-icons-sharp" style="font-size:1.4rem;">cached</span><span>Progress</span></button>
+        <button onclick="switchTab('lupon')"><span class="material-icons-sharp" style="font-size:1.4rem;">gavel</span><span>Lupon</span></button>
+        <button onclick="switchTab('feed')"><span class="material-icons-sharp" style="font-size:1.4rem;">dynamic_feed</span><span>Feed</span></button>
+        <button onclick="logout()"><span class="material-icons-sharp" style="font-size:1.4rem;">logout</span><span>Logout</span></button>
+    </nav>
+
+    <!-- MODAL: Full Report Details -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-info">
+                <h2 id="modal-id">#KAL-0000</h2>
+                <p><strong>Resident:</strong> <span id="modal-citizen"></span></p>
+                <p><strong>Category:</strong> <span id="modal-issue"></span></p>
+                <p><strong>Barangay:</strong> <span id="modal-barangay"></span></p>
+                <p><strong>📞 Contact:</strong> <span id="modal-contact"></span></p>
+                <p><strong>📍 Location:</strong> <span id="modal-location"></span></p>
+                <div id="modal-map" style="display:none;"></div>
+                <p><strong>Status:</strong> <span id="modal-status"></span></p>
+                <img id="modal-img" src="" alt="Evidence Photo">
+                <p id="modal-upvote-badge" style="margin-top:0.5rem;"></p>
+                <p style="margin-top: 1.5rem;"><strong>Description:</strong></p>
+                <p id="modal-desc" style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);"></p>
+
+                <!-- AI PRIORITY REVIEW SECTION -->
+                <div id="ai-priority-section" style="margin-top:1.5rem; background:rgba(65,105,225,0.08); border:1px solid rgba(65,105,225,0.3); border-radius:15px; padding:1.2rem;">
+                    <p style="font-weight:700; margin-bottom:0.8rem;">🤖 AI Suggested Priority: <span id="modal-priority" style="color:var(--color-primary); font-size:1.1rem;"></span></p>
+                    <div id="priority-confirm-row" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button class="action-btn" onclick="confirmAIPriority()" style="background:rgba(0,188,125,0.2); color:#00bc7d; flex:1;">✅ Confirm AI Priority</button>
+                        <button class="action-btn" onclick="showPriorityOverride()" style="background:rgba(255,255,255,0.1); color:white; flex:1;">✍️ Override Priority</button>
+                    </div>
+                    <div id="priority-override-row" style="display:none; margin-top:0.8rem; gap:0.5rem; flex-wrap:wrap;">
+                        <select id="priority-override-select" style="flex:1; background:var(--color-background); color:white; border:var(--glass-border); padding:8px; border-radius:8px;">
+                            <option value="CRITICAL">CRITICAL</option>
+                            <option value="HIGH">HIGH</option>
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="LOW">LOW</option>
+                        </select>
+                        <button class="action-btn" onclick="applyPriorityOverride()" style="background:var(--color-primary); color:white; flex:0.5;">Apply</button>
+                    </div>
+                </div>
+
+                <p style="margin-top: 1rem;"><strong>LGU Note:</strong></p>
+                <p id="modal-note" style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); color: var(--color-warning);"></p>
+
+                <!-- MAIN ACTIONS -->
+                <div class="modal-actions" id="modal-actions-div" style="margin-top:1.5rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
+
+                <!-- PROGRESS PHOTO UPLOAD -->
+                <div id="progress-photo-section" style="margin-top:1.5rem; display:none;">
+                    <h3 style="color:var(--color-info-dark); font-size:0.9rem; margin-bottom:0.8rem;">📸 Upload Progress Photo</h3>
+                    <label style="font-size:0.82rem; color:var(--color-info-dark); display:block; margin-bottom:0.4rem;">📸 Attach Progress Photo (optional)</label>
+                    <input type="file" id="progress-photo-input" accept="image/*" style="color:white; margin-bottom:0.5rem; width:100%;" onchange="previewProgressPhoto(this)">
+                    <div id="progress-photo-preview" style="margin-top:0.5rem;"></div>
+                    <input type="text" id="progress-photo-note" class="note-input" placeholder="Photo description (optional)">
+                    <button onclick="uploadProgressPhoto()" class="action-btn" style="background:var(--color-primary); color:white; margin-top:0.5rem; width:100%;">📤 Upload Photo</button>
+                </div>
+
+                <!-- AFFIDAVIT SECTION -->
+                <div id="affidavit-section" style="margin-top:1.5rem; display:none;">
+                    <h3 style="color:var(--color-warning); font-size:0.9rem; margin-bottom:0.8rem;">📄 Affidavit Request</h3>
+                    <div id="affidavit-preview" style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; font-size:0.85rem; color:#d1d1d1; line-height:1.7; margin-bottom:0.8rem;"></div>
+                    <button onclick="approveAffidavit()" class="action-btn" style="background:rgba(0,188,125,0.2); color:#00bc7d; width:100%;">✅ Approve &amp; Release Affidavit</button>
+                </div>
+
+                <div style="margin-top:1.5rem;">
+                    <h3 style="color:var(--color-info-dark); font-size:0.9rem; margin-bottom:1rem;">📋 Complaint History</h3>
+                    <div id="modal-history-timeline"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // Detect if the user is on a mobile device
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 1024;
-            
-            // Redirect instantly to the correct layout
-            if (isMobile) {
-                window.location.replace("lgu-mobile.html");
+        const BACKEND_URL = 'https://kalapp-system.onrender.com';
+        const currentAdminName = localStorage.getItem('kalapp_username') || 'Official';
+
+        function escAttr(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        document.getElementById('lgu-name-display').innerText = currentAdminName;
+
+        let activityChart, weeklyChart, categoryChart;
+        let currentFilteredData = [];
+        let allComplaintsCache = [];
+        let currentComplaint = null;
+        let lguModalMap = null;
+
+        function initCharts(complaints, stats) {
+            const ctxActivity = document.getElementById('activityChart').getContext('2d');
+            const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+            const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+
+            // Real data: count per day of week
+            const dayCounts = [0,0,0,0,0,0,0];
+            complaints.forEach(c => { dayCounts[new Date(c.createdAt).getDay()]++; });
+            // Reorder Mon-Sun (JS: 0=Sun)
+            const dayData = [dayCounts[1],dayCounts[2],dayCounts[3],dayCounts[4],dayCounts[5],dayCounts[6],dayCounts[0]];
+
+            activityChart = new Chart(ctxActivity, {
+                type: 'bar',
+                data: {
+                    labels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+                    datasets: [{ data: dayData, backgroundColor: '#4169E1', borderRadius: 8, barThickness: 15 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, animation: { duration: 2000, easing: 'easeOutQuart' }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9f9fa9' } }, x: { grid: { display: false }, ticks: { color: '#9f9fa9' } } } }
+            });
+
+            // Real data: count per month for last 6 months
+            const now = new Date();
+            const monthLabels = [];
+            const monthData = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                monthLabels.push(d.toLocaleDateString('en-US', { month: 'short' }));
+                const count = complaints.filter(c => {
+                    const cd = new Date(c.createdAt);
+                    return cd.getFullYear() === d.getFullYear() && cd.getMonth() === d.getMonth();
+                }).length;
+                monthData.push(count);
+            }
+
+            const lineGrad = ctxWeekly.createLinearGradient(0, 0, 0, 300);
+            lineGrad.addColorStop(0, 'rgba(65, 105, 225, 0.4)');
+            lineGrad.addColorStop(1, 'rgba(65, 105, 225, 0)');
+            weeklyChart = new Chart(ctxWeekly, {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{ data: monthData, borderColor: '#4169E1', backgroundColor: lineGrad, fill: true, tension: 0.4, pointRadius: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, animation: { duration: 2500, easing: 'easeInOutQuad' }, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#9f9fa9' } } } }
+            });
+
+            categoryChart = new Chart(ctxCategory, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Resolved'],
+                    datasets: [{ data: [stats.pending || 0, stats.resolved || 0], backgroundColor: ['#ff6467', '#00bc7d'], borderWidth: 0, hoverOffset: 12 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '82%', animation: { animateRotate: true, duration: 1500 }, plugins: { legend: { position: 'bottom', labels: { color: '#9f9fa9', font: { size: 10 } } } } }
+            });
+        }
+
+        async function loadComplaints() {
+            const filterValue = document.getElementById('statusFilter').value;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints`);
+                const data = await res.json();
+
+                const stats = {
+                    pending: data.complaints.filter(c => c.status === 'Pending' || !c.status).length,
+                    progress: data.complaints.filter(c => c.status === 'In Progress').length,
+                    resolved: data.complaints.filter(c => c.status === 'Resolved').length
+                };
+
+                document.getElementById('count-total').innerText = data.complaints.length;
+                document.getElementById('count-pending').innerText = stats.pending;
+                document.getElementById('count-progress').innerText = stats.progress;
+                document.getElementById('count-resolved').innerText = stats.resolved;
+
+                if (!categoryChart) initCharts(data.complaints, stats);
+                allComplaintsCache = data.complaints;
+                renderNotifications(data.complaints);
+
+                currentFilteredData = data.complaints.filter(c => {
+                    const currentStatus = c.status || 'Pending';
+                    if (filterValue === 'All') return true;
+                    return currentStatus === filterValue;
+                });
+
+                // AI SORTING LOGIC
+                const statusWeights = { 'Pending': 3, 'In Progress': 2, 'Resolved': 1, 'Referred to Lupon': 1, 'Lupon: Scheduled': 1, 'Lupon: Settled': 0, 'Lupon: Unresolved': 0, 'Rejected & Flagged': 0 };
+                const priorityWeights = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+
+                currentFilteredData.sort((a, b) => {
+                    const statA = statusWeights[a.status || 'Pending'] || 0;
+                    const statB = statusWeights[b.status || 'Pending'] || 0;
+                    if (statA !== statB) return statB - statA;
+                    const weightA = priorityWeights[a.priority || 'MEDIUM'] || 2;
+                    const weightB = priorityWeights[b.priority || 'MEDIUM'] || 2;
+                    if (weightA !== weightB) return weightB - weightA;
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
+
+                const tableBody = document.getElementById('dashboard-table-body');
+                tableBody.innerHTML = '';
+
+                if (currentFilteredData.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:3rem;">No records found.</td></tr>`;
+                    return;
+                }
+
+                currentFilteredData.forEach((c, index) => {
+                    const isResolvedOrFlagged = c.status === 'Resolved' || c.status === 'Rejected & Flagged' || c.status === 'Referred to Lupon' || c.status === 'Lupon: Settled' || c.status === 'Lupon: Unresolved';
+                    const priorityValue = c.priority || 'MEDIUM';
+                    const isCriticalPending = priorityValue === 'CRITICAL' && !isResolvedOrFlagged;
+
+                    const row = document.createElement('tr');
+                    if (isCriticalPending) row.className = 'critical-row';
+                    row.style.animation = `rowAppear 0.3s ease calc(${index} * 0.05s) both`;
+
+                    let statusClass = 'status-pending';
+                    let statusDisplay = c.status || 'Pending';
+                    if (c.status === 'In Progress') statusClass = 'status-inprogress';
+                    if (c.status === 'Resolved') statusClass = 'status-resolved';
+                    if (c.status === 'Rejected & Flagged') { statusClass = 'status-flagged'; statusDisplay = 'Flagged'; }
+                    if (c.status === 'Referred to Lupon') { statusClass = 'status-lupon'; statusDisplay = 'Lupon'; }
+                    if (c.status === 'Lupon: Scheduled') { statusClass = 'status-lupon-scheduled'; statusDisplay = 'Lupon: Scheduled'; }
+                    if (c.status === 'Lupon: Settled') { statusClass = 'status-lupon-settled'; statusDisplay = 'Lupon: Settled'; }
+                    if (c.status === 'Lupon: Unresolved') { statusClass = 'status-lupon-unresolved'; statusDisplay = 'Lupon: Unresolved'; }
+
+                    let priorityBadge = '';
+                    if (priorityValue === 'CRITICAL') priorityBadge = `<span style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; animation: pulse-critical 1.5s infinite; display: inline-block;">CRITICAL</span>`;
+                    else if (priorityValue === 'HIGH') priorityBadge = `<span style="background: #f97316; color: white; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; display: inline-block;">HIGH</span>`;
+                    else if (priorityValue === 'MEDIUM') priorityBadge = `<span style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; display: inline-block;">MEDIUM</span>`;
+                    else priorityBadge = `<span style="background: #94a3b8; color: white; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: bold; display: inline-block;">LOW</span>`;
+
+                    row.onclick = () => openReportDetails(c);
+
+                    row.innerHTML = `
+                        <td>
+                            <div style="font-weight:700; color:white; font-size: 1rem; margin-bottom: 5px;">${c.trackingId}</div>
+                            ${priorityBadge}
+                        </td>
+                        <td>${new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}</td>
+                        <td>
+                            <div style="color: white; font-weight: 600;">${c.citizenName || 'Anonymous'}</div>
+                            <div style="color: var(--color-info-dark); font-size: 0.8rem;">${c.barangay}</div>
+                        </td>
+                        <td style="color: var(--color-primary); font-size: 0.85rem;">${c.category}</td>
+                        <td><span class="status-pill ${statusClass}">${statusDisplay}</span></td>
+                        <td>
+                            ${isResolvedOrFlagged ? '<small style="color:var(--color-info-dark);">Closed</small>' :
+                              `<button class="action-btn btn-resolve" style="font-size:0.75rem;" onclick="event.stopPropagation(); updateStatus('${c.trackingId}', 'Resolved')">Finish ✓</button>`}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (err) { console.error("Database Fetch error:", err); }
+        }
+
+        async function loadLuponCases() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints`);
+                const data = await res.json();
+                const luponStatuses = ['Referred to Lupon', 'Lupon: Scheduled', 'Lupon: Settled', 'Lupon: Unresolved'];
+                const luponCases = data.complaints.filter(c => luponStatuses.includes(c.status));
+                const tbody = document.getElementById('lupon-table-body');
+                tbody.innerHTML = '';
+                if (!luponCases.length) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; opacity:0.4;">No Lupon cases found.</td></tr>`;
+                    return;
+                }
+                luponCases.forEach(c => {
+                    const row = document.createElement('tr');
+                    const referredDate = c.history && c.history.find(h => h.status === 'Referred to Lupon');
+                    const dateStr = referredDate ? new Date(referredDate.updatedAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) : 'N/A';
+                    const isClosed = c.status === 'Lupon: Settled' || c.status === 'Lupon: Unresolved';
+                    let luponButtons = '';
+                    if (isClosed) {
+                        const closedClass = c.status === 'Lupon: Settled' ? 'status-lupon-settled' : 'status-lupon-unresolved';
+                        luponButtons = `<span class="status-pill ${closedClass}">${c.status}</span>`;
+                    } else if (c.status === 'Referred to Lupon') {
+                        luponButtons = `<button class="action-btn btn-lupon" style="font-size:0.7rem;" onclick="luponStage('${c.trackingId}','Lupon: Scheduled','Hearing has been scheduled by Lupon.')">📅 Schedule Hearing</button>
+                            <button class="action-btn" style="background:rgba(159,159,169,0.2);color:#9f9fa9;font-size:0.7rem;" onclick="returnToReports('${c.trackingId}')">🔙 Return</button>`;
+                    } else if (c.status === 'Lupon: Scheduled') {
+                        luponButtons = `<button class="action-btn btn-resolve" style="font-size:0.7rem;" onclick="luponStage('${c.trackingId}','Lupon: Settled','Amicable settlement reached via Lupon mediation.')">✅ Settled</button>
+                            <button class="action-btn btn-reject" style="font-size:0.7rem;" onclick="luponStage('${c.trackingId}','Lupon: Unresolved','Lupon mediation failed to resolve the dispute.')">❌ Unresolved</button>`;
+                    }
+                    row.innerHTML = `
+                        <td style="font-weight:700; color:white;">${c.trackingId}</td>
+                        <td>${dateStr}</td>
+                        <td>${c.citizenName || 'Anonymous'}</td>
+                        <td style="color:var(--color-primary);">${c.category}</td>
+                        <td>${c.barangay}</td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+                                <input type="text" placeholder="Mediator notes..." id="lupon-note-${c.trackingId}" class="note-input" style="font-size:0.75rem; padding:0.4rem;">
+                                <input type="date" id="lupon-date-${c.trackingId}" class="note-input" style="font-size:0.75rem; padding:0.4rem; color:#9f9fa9;">
+                                <div style="display:flex; gap:0.3rem; flex-wrap:wrap;">${luponButtons}</div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch(err) { console.error('Lupon load error:', err); }
+        }
+
+        async function luponStage(trackingId, newStatus, defaultNote) {
+            const noteEl = document.getElementById(`lupon-note-${trackingId}`);
+            const dateEl = document.getElementById(`lupon-date-${trackingId}`);
+            const note = (noteEl && noteEl.value) ? `${noteEl.value}${dateEl && dateEl.value ? ' | Hearing: ' + dateEl.value : ''}` : (dateEl && dateEl.value ? 'Hearing: ' + dateEl.value : defaultNote);
+            await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus, note: note, adminName: currentAdminName })
+            });
+            loadLuponCases();
+            if (document.getElementById('inprogress-section').style.display !== 'none') {
+                loadInProgressComplaints();
+            }
+        }
+
+        async function referToLupon(trackingId) {
+            const noteEl = document.getElementById(`note-${trackingId}`);
+            const noteValue = noteEl ? noteEl.value : '';
+            const alertEl = document.getElementById('lupon-modal-alert');
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/refer-lupon`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: noteValue, adminName: currentAdminName })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    if (alertEl) {
+                        alertEl.style.display = 'block';
+                        alertEl.textContent = data.message || 'Lupon referral rejected.';
+                    }
+                    return;
+                }
+                closeModal();
+                loadComplaints();
+            } catch(err) {
+                if (alertEl) { alertEl.style.display = 'block'; alertEl.textContent = 'Network error. Please try again.'; }
+            }
+        }
+
+        async function returnToReports(trackingId) {
+            await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Pending', note: 'Returned to reports queue by LGU.', adminName: currentAdminName })
+            });
+            closeModal();
+            loadComplaints();
+            loadLuponCases();
+        }
+
+        async function loadInProgressComplaints() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints`);
+                const data = await res.json();
+                const inProgress = data.complaints.filter(c => c.status === 'In Progress');
+                const luponStatuses = ['Referred to Lupon', 'Lupon: Scheduled'];
+                const luponCases = data.complaints.filter(c => luponStatuses.includes(c.status));
+
+                // Render Active Cases
+                const activeList = document.getElementById('active-cases-list');
+                if (!inProgress.length) {
+                    activeList.innerHTML = '<p style="opacity:0.4; text-align:center; padding:1rem;">No active cases.</p>';
+                } else {
+                    activeList.innerHTML = inProgress.map(c => {
+                        const priorityColors = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#3b82f6', LOW: '#94a3b8' };
+                        const pColor = priorityColors[c.priority || 'MEDIUM'] || '#3b82f6';
+                        return `<div style="background:rgba(255,255,255,0.03); border:var(--glass-border); border-radius:16px; padding:1.2rem; margin-bottom:1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                                <span style="font-weight:700; color:white; font-size:0.95rem;">${c.trackingId}</span>
+                                <span style="background:${pColor}22; color:${pColor}; padding:3px 10px; border-radius:8px; font-size:0.7rem; font-weight:700;">${c.priority || 'MEDIUM'}</span>
+                            </div>
+                            <div style="color:#d1d1d1; font-size:0.85rem; margin-bottom:0.3rem;">👤 ${c.citizenName || 'Anonymous'} · ${c.barangay}</div>
+                            <div style="color:var(--color-primary); font-size:0.82rem; margin-bottom:0.8rem;">📁 ${c.category}</div>
+                            <textarea id="inprog-note-${c.trackingId}" class="note-input" rows="2" placeholder="LGU update note..." style="font-size:0.8rem; resize:vertical;">${c.lguNote || ''}</textarea>
+                            <div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">
+                                <button class="action-btn btn-resolve" style="font-size:0.75rem;" onclick="updateStatusFromInProgress('${c.trackingId}', 'Resolved')">✓ Resolve</button>
+                                <button class="action-btn btn-lupon" style="font-size:0.75rem;" onclick="referToLuponFromInProgress('${c.trackingId}')">⚖️ Refer to Lupon</button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+
+                // Render Lupon Queue
+                const luponList = document.getElementById('lupon-cases-list');
+                if (!luponCases.length) {
+                    luponList.innerHTML = '<p style="opacity:0.4; text-align:center; padding:1rem;">No Lupon cases.</p>';
+                } else {
+                    luponList.innerHTML = luponCases.map(c => {
+                        const statusClassMap = { 'Referred to Lupon': 'status-lupon', 'Lupon: Scheduled': 'status-lupon-scheduled' };
+                        const sc = statusClassMap[c.status] || 'status-lupon';
+                        let stageButtons = '';
+                        if (c.status === 'Referred to Lupon') {
+                            stageButtons = `<button class="action-btn btn-lupon" style="font-size:0.75rem;" onclick="luponStage('${c.trackingId}','Lupon: Scheduled','Hearing has been scheduled.')">📅 Schedule Hearing</button>
+                                <button class="action-btn" style="background:rgba(159,159,169,0.2);color:#9f9fa9;font-size:0.75rem;" onclick="returnToReports('${c.trackingId}')">🔙 Return</button>`;
+                        } else if (c.status === 'Lupon: Scheduled') {
+                            stageButtons = `<button class="action-btn btn-resolve" style="font-size:0.75rem;" onclick="luponStage('${c.trackingId}','Lupon: Settled','Amicable settlement reached.')">✅ Settled</button>
+                                <button class="action-btn btn-reject" style="font-size:0.75rem;" onclick="luponStage('${c.trackingId}','Lupon: Unresolved','Mediation failed.')">❌ Unresolved</button>`;
+                        }
+                        return `<div style="background:rgba(255,255,255,0.03); border:var(--glass-border); border-radius:16px; padding:1.2rem; margin-bottom:1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                                <span style="font-weight:700; color:white; font-size:0.95rem;">${c.trackingId}</span>
+                                <span class="status-pill ${sc}" style="font-size:0.7rem;">${c.status}</span>
+                            </div>
+                            <div style="color:#d1d1d1; font-size:0.85rem; margin-bottom:0.3rem;">👤 ${c.citizenName || 'Anonymous'} · ${c.barangay}</div>
+                            <div style="color:var(--color-primary); font-size:0.82rem; margin-bottom:0.8rem;">📁 ${c.category}</div>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">${stageButtons}</div>
+                        </div>`;
+                    }).join('');
+                }
+            } catch(err) { console.error('loadInProgressComplaints error:', err); }
+        }
+
+        async function updateStatusFromInProgress(trackingId, status) {
+            const noteEl = document.getElementById(`inprog-note-${trackingId}`);
+            const noteValue = noteEl ? noteEl.value : '';
+            await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status, note: noteValue, adminName: currentAdminName })
+            });
+            loadInProgressComplaints();
+            loadComplaints();
+        }
+
+        async function referToLuponFromInProgress(trackingId) {
+            const noteEl = document.getElementById(`inprog-note-${trackingId}`);
+            const noteValue = noteEl ? noteEl.value : '';
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/refer-lupon`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note: noteValue, adminName: currentAdminName })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    const alertId = `lupon-alert-${trackingId}`;
+                    let alertEl = document.getElementById(alertId);
+                    if (!alertEl) {
+                        alertEl = document.createElement('div');
+                        alertEl.id = alertId;
+                        alertEl.style.cssText = 'padding:0.6rem; border-radius:8px; background:rgba(255,100,103,0.1); color:#ff6467; font-size:0.8rem; margin-top:0.4rem; border:1px solid rgba(255,100,103,0.3);';
+                        if (noteEl) noteEl.insertAdjacentElement('afterend', alertEl);
+                    }
+                    alertEl.textContent = data.message || 'Lupon referral rejected.';
+                    return;
+                }
+                loadInProgressComplaints();
+                loadComplaints();
+            } catch(err) { console.error('referToLupon error:', err); }
+        }
+
+        async function updateStatus(id, status, autoNote = '') {
+            const noteEl = document.getElementById(`note-${id}`);
+            const noteValue = (noteEl && noteEl.value) ? noteEl.value : autoNote;
+            // Upload inline photo first if one is selected
+            const photoInput = document.getElementById('progress-photo-input');
+            if (photoInput && photoInput.files && photoInput.files.length) {
+                const fd = new FormData();
+                fd.append('photo', photoInput.files[0]);
+                fd.append('note', noteValue || 'LGU progress photo attached with status update.');
+                fd.append('adminName', currentAdminName);
+                try {
+                    await fetch(`${BACKEND_URL}/api/complaints/${id}/progress-photo`, { method: 'POST', body: fd });
+                    photoInput.value = '';
+                    document.getElementById('progress-photo-preview').innerHTML = '';
+                } catch(e) { console.error('Inline photo upload error:', e); }
+            }
+            await fetch(`${BACKEND_URL}/api/complaints/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status, note: noteValue, adminName: currentAdminName })
+            });
+            closeModal();
+            loadComplaints();
+        }
+
+        function confirmAIPriority() {
+            document.getElementById('priority-confirm-row').style.display = 'none';
+            document.getElementById('priority-override-row').style.display = 'none';
+        }
+
+        function showPriorityOverride() {
+            const overrideRow = document.getElementById('priority-override-row');
+            overrideRow.style.display = overrideRow.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        async function applyPriorityOverride() {
+            if (!currentComplaint) return;
+            const newPriority = document.getElementById('priority-override-select').value;
+            await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: currentComplaint.status, note: `Priority overridden to ${newPriority} by LGU`, adminName: currentAdminName, priority: newPriority })
+            });
+            document.getElementById('modal-priority').innerText = newPriority;
+            document.getElementById('priority-confirm-row').style.display = 'none';
+            document.getElementById('priority-override-row').style.display = 'none';
+        }
+
+        async function approveAffidavit() {
+            if (!currentComplaint) return;
+            await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/approve-affidavit`, { method: 'POST' });
+            document.getElementById('affidavit-section').innerHTML = '<p style="color:#00bc7d;">✅ Affidavit approved and released to citizen.</p>';
+        }
+
+        async function uploadProgressPhoto() {
+            if (!currentComplaint) return;
+            const fileInput = document.getElementById('progress-photo-input');
+            const noteInput = document.getElementById('progress-photo-note');
+            if (!fileInput.files.length) return;
+            const fd = new FormData();
+            fd.append('photo', fileInput.files[0]);
+            fd.append('note', noteInput.value || 'LGU uploaded a progress photo.');
+            fd.append('adminName', currentAdminName);
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/progress-photo`, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('progress-photo-preview').innerHTML = `<img src="${data.photoUrl}" style="width:100%; border-radius:12px; margin-top:0.5rem; max-height:200px; object-fit:cover;">`;
+                    fileInput.value = '';
+                    noteInput.value = '';
+                }
+            } catch(e) { console.error('Photo upload error:', e); }
+        }
+
+        function downloadCSV() {
+            let csvContent = "Tracking ID,Priority,Date Submitted,Citizen User,Barangay,Issue,Description,Status,LGU Note\n";
+            currentFilteredData.forEach(c => {
+                const id = c.trackingId;
+                const priority = c.priority || 'MEDIUM';
+                const date = new Date(c.createdAt).toLocaleDateString();
+                const user = c.citizenName || 'Anonymous';
+                const brgy = c.barangay || '';
+                const issue = c.category || '';
+                const desc = (c.description || '').replace(/"/g, '""');
+                const status = c.status || 'Pending';
+                const note = (c.lguNote || '').replace(/"/g, '""');
+                csvContent += `"${id}","${priority}","${date}","${user}","${brgy}","${issue}","${desc}","${status}","${note}"\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", `Kalapp_Report_${new Date().toISOString().split('T')[0]}.csv`);
+            link.click();
+        }
+
+        function openReportDetails(complaint) {
+            currentComplaint = complaint;
+            document.getElementById('modal-id').innerText = complaint.trackingId;
+            document.getElementById('modal-citizen').innerText = complaint.citizenName || 'Guest';
+            document.getElementById('modal-issue').innerText = complaint.category;
+            document.getElementById('modal-barangay').innerText = complaint.barangay || 'N/A';
+            document.getElementById('modal-priority').innerText = complaint.priority || 'MEDIUM';
+            document.getElementById('modal-status').innerText = complaint.status || 'Pending';
+            document.getElementById('modal-desc').innerText = complaint.description || 'No details.';
+            document.getElementById('modal-note').innerText = complaint.lguNote || 'No feedback yet.';
+
+            // Contact number
+            const contactEl = document.getElementById('modal-contact');
+            if (complaint.contactNumber) {
+                contactEl.innerHTML = `<a href="tel:${complaint.contactNumber}" style="color:var(--color-primary)">${complaint.contactNumber}</a>`;
             } else {
-                window.location.replace("lgu-desktop.html");
+                contactEl.innerHTML = '<span style="color:#9f9fa9">Not provided</span>';
+            }
+
+            // Location
+            const locEl = document.getElementById('modal-location');
+            const mapDiv = document.getElementById('modal-map');
+            if (complaint.locationLat && complaint.locationLng) {
+                const src = complaint.locationSource ? `<small style="color:#9f9fa9"> (${complaint.locationSource})</small>` : '';
+                const addr = complaint.locationAddress ? `<br><small>${complaint.locationAddress}</small>` : '';
+                locEl.innerHTML = `${complaint.locationLat}, ${complaint.locationLng}${src}${addr}
+                    <br><a href="https://www.google.com/maps?q=${complaint.locationLat},${complaint.locationLng}"
+                       target="_blank"
+                       style="color:var(--color-primary); font-size:0.82rem; font-weight:600;">
+                       🗺️ Open in Google Maps
+                    </a>`;
+                mapDiv.style.display = 'block';
+                if (lguModalMap) { lguModalMap.remove(); lguModalMap = null; }
+                lguModalMap = L.map('modal-map', { zoomControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(lguModalMap);
+                lguModalMap.setView([complaint.locationLat, complaint.locationLng], 16);
+                const pinIcon = L.divIcon({ className: '', html: '<div style="font-size:2rem; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔶</div>', iconSize: [32, 32], iconAnchor: [16, 28] });
+                const popupText = complaint.locationAddress || `${complaint.locationLat}, ${complaint.locationLng}`;
+                L.marker([complaint.locationLat, complaint.locationLng], { icon: pinIcon, draggable: false }).addTo(lguModalMap).bindPopup(popupText).openPopup();
+            } else if (complaint.locationAddress) {
+                locEl.innerHTML = complaint.locationAddress;
+                mapDiv.style.display = 'none';
+            } else {
+                locEl.innerHTML = '<span style="color:#9f9fa9">Not provided</span>';
+                mapDiv.style.display = 'none';
+            }
+
+            // Reset priority UI
+            document.getElementById('priority-confirm-row').style.display = 'flex';
+            document.getElementById('priority-override-row').style.display = 'none';
+            const prioritySelect = document.getElementById('priority-override-select');
+            prioritySelect.value = complaint.priority || 'MEDIUM';
+
+            // Upvote badge
+            const upvoteEl = document.getElementById('modal-upvote-badge');
+            const upvotes = complaint.upvotes || 0;
+            upvoteEl.innerHTML = `👥 Community Confirmations: <strong>${upvotes}</strong>` +
+                (upvotes >= 5 ? ' <span style="background:rgba(251,191,36,0.2); color:#fbbf24; padding:2px 8px; border-radius:8px; font-size:0.75rem;">HIGH COMMUNITY CONCERN</span>' : '');
+
+            // History timeline
+            const statusColors = { 'Pending': '#ff6467', 'In Progress': '#fe9a00', 'Resolved': '#00bc7d', 'Rejected & Flagged': '#9f9fa9', 'Referred to Lupon': '#fbbf24', 'Lupon: Scheduled': '#8b5cf6', 'Lupon: Settled': '#00bc7d', 'Lupon: Unresolved': '#ff6467', 'Progress Update': '#4169E1' };
+            const timeline = document.getElementById('modal-history-timeline');
+            if (complaint.history && complaint.history.length > 0) {
+                timeline.innerHTML = complaint.history.map(h => `
+                    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                        <div style="width:10px; height:10px; border-radius:50%; background:${statusColors[h.status] || '#9f9fa9'}; margin-top:5px; flex-shrink:0;"></div>
+                        <div style="font-size:0.85rem;">
+                            <strong style="color:${statusColors[h.status] || 'inherit'};">${h.status}</strong><br>
+                            <span style="color:#d1d1d1;">${h.note || ''}</span><br>
+                            <small style="color:#9f9fa9;">by ${h.updatedBy || 'System'} · ${new Date(h.updatedAt).toLocaleString('en-PH')}</small>
+                            ${h.photoUrl ? `<br><a href="${h.photoUrl.startsWith('http') ? h.photoUrl : BACKEND_URL + h.photoUrl}" target="_blank"><img src="${h.photoUrl.startsWith('http') ? h.photoUrl : BACKEND_URL + h.photoUrl}" style="width:100%; border-radius:10px; margin-top:0.5rem; max-height:180px; object-fit:cover;" onerror="this.style.display='none'"></a>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                timeline.innerHTML = '<p style="color:#9f9fa9; font-size:0.85rem;">No history yet.</p>';
+            }
+
+            // Action buttons in modal
+            const actionsDiv = document.getElementById('modal-actions-div');
+            const isClosedStatus = complaint.status === 'Resolved' || complaint.status === 'Rejected & Flagged' || complaint.status === 'Lupon: Settled' || complaint.status === 'Lupon: Unresolved';
+            const isLuponStage = complaint.status === 'Referred to Lupon' || complaint.status === 'Lupon: Scheduled';
+            const aiSection = document.getElementById('ai-priority-section');
+            const progressSection = document.getElementById('progress-photo-section');
+            const affidavitSection = document.getElementById('affidavit-section');
+
+            if (isClosedStatus) {
+                actionsDiv.innerHTML = `<div style="color:#9f9fa9; font-size:0.85rem;"><i>This complaint is closed.</i></div>`;
+                aiSection.style.display = 'none';
+                progressSection.style.display = 'none';
+            } else if (isLuponStage) {
+                aiSection.style.display = 'none';
+                progressSection.style.display = 'block';
+                let luponButtons = '';
+                if (complaint.status === 'Referred to Lupon') {
+                    luponButtons = `<button class="action-btn btn-lupon" onclick="updateStatus('${complaint.trackingId}', 'Lupon: Scheduled', 'Hearing has been scheduled by Lupon.')">📅 Schedule Hearing</button>
+                    <button class="action-btn" style="background:rgba(159,159,169,0.2);color:#9f9fa9;" onclick="returnToReports('${complaint.trackingId}')">🔙 Return to Reports</button>`;
+                } else if (complaint.status === 'Lupon: Scheduled') {
+                    luponButtons = `<button class="action-btn btn-resolve" onclick="updateStatus('${complaint.trackingId}', 'Lupon: Settled', 'Amicable settlement reached via Lupon mediation.')">✅ Mark as Settled</button>
+                    <button class="action-btn btn-reject" onclick="updateStatus('${complaint.trackingId}', 'Lupon: Unresolved', 'Lupon mediation failed to resolve the dispute.')">❌ Mark Unresolved</button>`;
+                }
+                actionsDiv.innerHTML = `
+                    <input type="text" id="note-${complaint.trackingId}" class="note-input" placeholder="LGU Feedback..." value="${complaint.lguNote || ''}" style="width:100%; margin-bottom:0.5rem;">
+                    <div id="lupon-modal-alert" style="display:none; margin-bottom:0.5rem; padding:0.8rem; border-radius:10px; background:rgba(255,100,103,0.1); color:#ff6467; font-size:0.85rem; border:1px solid rgba(255,100,103,0.3);"></div>
+                    ${luponButtons}
+                `;
+            } else {
+                aiSection.style.display = 'block';
+                progressSection.style.display = 'none'; // photo is now inline in actionsDiv
+                actionsDiv.innerHTML = `
+                    <input type="text" id="note-${complaint.trackingId}" class="note-input" placeholder="LGU Feedback..." value="${complaint.lguNote || ''}" style="width:100%; margin-bottom:0.8rem;">
+                    <div id="lupon-modal-alert" style="display:none; margin-bottom:0.5rem; padding:0.8rem; border-radius:10px; background:rgba(255,100,103,0.1); color:#ff6467; font-size:0.85rem; border:1px solid rgba(255,100,103,0.3);"></div>
+                    <div style="background:rgba(255,255,255,0.04); border:var(--glass-border); border-radius:12px; padding:0.8rem; margin-bottom:0.8rem;">
+                        <label style="font-size:0.82rem; color:var(--color-info-dark); display:block; margin-bottom:0.5rem;">📸 Attach Progress Photo (optional)</label>
+                        <input type="file" id="progress-photo-input" accept="image/*" style="color:white; font-size:0.8rem; width:100%;" onchange="previewProgressPhoto(this)">
+                        <div id="progress-photo-preview" style="margin-top:0.5rem;"></div>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+                        <button class="action-btn btn-accept" onclick="updateStatus('${complaint.trackingId}', 'In Progress')">🔄 In Progress</button>
+                        <button class="action-btn btn-resolve" onclick="updateStatus('${complaint.trackingId}', 'Resolved')">✓ Resolve</button>
+                        <button class="action-btn btn-lupon" onclick="referToLupon('${complaint.trackingId}')">⚖️ Refer to Lupon</button>
+                        <button class="action-btn btn-reject" onclick="if(confirm('Flag as fake/spam? (Adds 1 strike to user)')) updateStatus('${complaint.trackingId}', 'Rejected & Flagged')">🚩 Flag as Fake</button>
+                    </div>
+                `;
+            }
+
+            // Affidavit section
+            if (complaint.affidavitRequested && !complaint.affidavitApproved) {
+                affidavitSection.style.display = 'block';
+                const date = new Date(complaint.createdAt).toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+                document.getElementById('affidavit-preview').innerHTML = `
+                    <strong>Complaint Reference:</strong> ${complaint.trackingId}<br>
+                    <strong>Citizen:</strong> ${complaint.citizenName}<br>
+                    <strong>Category:</strong> ${complaint.category}<br>
+                    <strong>Barangay:</strong> ${complaint.barangay}<br>
+                    <strong>Date Filed:</strong> ${date}<br>
+                    <strong>Description:</strong> ${complaint.description}
+                `;
+            } else {
+                affidavitSection.style.display = 'none';
+            }
+
+            const img = document.getElementById('modal-img');
+            img.src = complaint.imageUrl
+                ? (complaint.imageUrl.startsWith('http') ? complaint.imageUrl : `${BACKEND_URL}${complaint.imageUrl}`)
+                : 'https://via.placeholder.com/600x300?text=No+Photo+Evidence';
+
+            document.getElementById('reportModal').style.display = 'block';
+        }
+
+        function closeModal() { document.getElementById('reportModal').style.display = 'none'; currentComplaint = null; if (lguModalMap) { lguModalMap.remove(); lguModalMap = null; } }
+        function logout() { localStorage.removeItem('kalapp_username'); window.location.href = '/login.html'; }
+
+        function previewProgressPhoto(input) {
+            const preview = document.getElementById('progress-photo-preview');
+            if (!preview) return;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.innerHTML = `<img src="${e.target.result}" style="width:100%; border-radius:10px; max-height:160px; object-fit:cover; margin-top:0.4rem;">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.innerHTML = '';
+            }
+        }
+
+        function switchTab(tabName) {
+            const analyticsSection = document.querySelector('.graph-section');
+            const reportsSection = document.querySelector('.recent-reports');
+            const insightsSection = document.querySelector('.insights');
+            const luponSection = document.getElementById('lupon-section');
+            const inprogressSection = document.getElementById('inprogress-section');
+            const feedSection = document.getElementById('feed-section');
+
+            analyticsSection.style.display = 'none';
+            reportsSection.style.display = 'none';
+            insightsSection.style.display = 'none';
+            luponSection.style.display = 'none';
+            inprogressSection.style.display = 'none';
+            feedSection.style.display = 'none';
+
+            if (tabName === 'analytics') {
+                analyticsSection.style.display = 'grid';
+                insightsSection.style.display = 'grid';
+            } else if (tabName === 'reports') {
+                reportsSection.style.display = 'block';
+                insightsSection.style.display = 'grid';
+            } else if (tabName === 'lupon') {
+                luponSection.style.display = 'block';
+                loadLuponCases();
+            } else if (tabName === 'inprogress') {
+                inprogressSection.style.display = 'block';
+                loadInProgressComplaints();
+            } else if (tabName === 'feed') {
+                feedSection.style.display = 'block';
+                feedPage = 1;
+                feedCards = [];
+                loadFeed();
+            } else {
+                analyticsSection.style.display = 'grid';
+                reportsSection.style.display = 'block';
+                insightsSection.style.display = 'grid';
+            }
+
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar a[onclick="switchTab('${tabName}')"]`);
+            if (activeLink) activeLink.classList.add('active');
+        }
+
+        // Close notification panel when clicking outside
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('notif-panel');
+            const bell = document.getElementById('notif-bell');
+            if (panel && !panel.contains(e.target) && !bell.contains(e.target)) {
+                panel.style.display = 'none';
             }
         });
+
+        function toggleNotifPanel() {
+            const panel = document.getElementById('notif-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        let readNotifIds = JSON.parse(localStorage.getItem('kalapp_lgu_read_notifs') || '[]');
+
+        function renderNotifications(complaints) {
+            const notifList = document.getElementById('notif-list');
+            const badge = document.getElementById('notif-badge');
+            const notifs = [];
+
+            complaints.forEach(c => {
+                if (c.affidavitRequested && !c.affidavitApproved) {
+                    notifs.push({ id: `affidavit-${c.trackingId}`, icon: '📄', text: `${c.citizenName || 'A citizen'} requested an affidavit for ${c.trackingId}`, trackingId: c.trackingId });
+                }
+                if (c.comments && c.comments.length > 0) {
+                    const lastComment = c.comments[c.comments.length - 1];
+                    notifs.push({ id: `comment-${c.trackingId}-${c.comments.length}`, icon: '💬', text: `New comment on ${c.trackingId}: "${lastComment.text.substring(0, 40)}..."`, trackingId: c.trackingId });
+                }
+                if (c.upvotes >= 5) {
+                    notifs.push({ id: `upvote-${c.trackingId}`, icon: '👍', text: `${c.trackingId} has been upvoted ${c.upvotes} times`, trackingId: c.trackingId });
+                }
+            });
+
+            const unread = notifs.filter(n => !readNotifIds.includes(n.id));
+            const unreadCount = unread.length;
+
+            if (unreadCount > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (!notifs.length) {
+                notifList.innerHTML = '<p style="color:#9f9fa9; font-size:0.82rem; text-align:center; padding:1rem;">No notifications</p>';
+                return;
+            }
+
+            notifList.innerHTML = notifs.map(n => {
+                const isRead = readNotifIds.includes(n.id);
+                return `<div style="display:flex; align-items:flex-start; gap:0.8rem; padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.06); ${isRead ? 'opacity:0.5;' : ''}">
+                    <span style="font-size:1.1rem; flex-shrink:0;">${n.icon}</span>
+                    <div style="flex:1; font-size:0.8rem; color:#d1d1d1; line-height:1.4;">${n.text}</div>
+                    ${!isRead ? `<button onclick="markRead('${n.id}')" style="background:none; border:none; color:var(--color-primary); cursor:pointer; font-size:0.72rem; font-family:'Poppins',sans-serif; white-space:nowrap; padding:2px 6px; border-radius:6px;">✓ Read</button>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function markRead(id) {
+            if (!readNotifIds.includes(id)) {
+                readNotifIds.push(id);
+                localStorage.setItem('kalapp_lgu_read_notifs', JSON.stringify(readNotifIds));
+            }
+            const allComplaints = currentFilteredData;
+            renderNotifications(allComplaints.length ? allComplaints : []);
+        }
+
+        function markAllRead() {
+            const list = allComplaintsCache.length ? allComplaintsCache : currentFilteredData;
+            list.forEach(c => {
+                readNotifIds.push(`affidavit-${c.trackingId}`);
+                if (c.comments && c.comments.length) readNotifIds.push(`comment-${c.trackingId}-${c.comments.length}`);
+                readNotifIds.push(`upvote-${c.trackingId}`);
+            });
+            readNotifIds = [...new Set(readNotifIds)];
+            localStorage.setItem('kalapp_lgu_read_notifs', JSON.stringify(readNotifIds));
+            renderNotifications([]);
+            document.getElementById('notif-panel').style.display = 'none';
+        }
+
+        // --- COMMUNITY FEED ---
+        let feedPage = 1;
+        let feedCards = [];
+        let currentFeedCommentId = null;
+        const lguFeedCommentStore = {};
+
+        async function loadFeed(append = false) {
+            const container = document.getElementById('feed-cards');
+            const loadMoreBtn = document.getElementById('feed-load-more');
+            if (!append) container.innerHTML = '<p style="opacity:0.4; text-align:center; grid-column:1/-1; padding:2rem;">Loading feed...</p>';
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${feedPage}&limit=9`);
+                const data = await res.json();
+                const items = data.feed || [];
+                if (!append) container.innerHTML = '';
+                if (!items.length && !append) {
+                    container.innerHTML = '<p style="opacity:0.4; text-align:center; grid-column:1/-1; padding:2rem;">No community reports yet.</p>';
+                    loadMoreBtn.style.display = 'none';
+                    return;
+                }
+                items.forEach(c => {
+                    lguFeedCommentStore[c.trackingId] = c.comments || [];
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background:var(--card-bg); border:var(--glass-border); border-radius:20px; overflow:hidden; box-shadow:var(--box-shadow); transition:0.3s;';
+                    const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
+                    const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const safeDesc = String(c.description || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const desc = safeDesc.substring(0, 100) + (safeDesc.length > 100 ? '...' : '');
+                    const commentCount = (c.comments || []).length;
+                    card.innerHTML = `
+                        ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:180px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                        <div style="padding:1rem;">
+                            <div style="font-weight:700; font-size:0.9rem; margin-bottom:0.3rem; color:var(--color-primary);">${escAttr(c.category||'')}</div>
+                            <div style="font-size:0.8rem; color:#9f9fa9; margin-bottom:0.5rem;">📍 ${escAttr(c.barangay||'')} · ${date}</div>
+                            <p style="font-size:0.82rem; color:#d1d1d1; line-height:1.5; margin-bottom:0.8rem;">${desc}</p>
+                            <div style="font-size:0.78rem; color:#9f9fa9; margin-bottom:0.8rem;">👤 ${escAttr(c.citizenName||'Anonymous')}</div>
+                            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+                                <button onclick="feedUpvote('${escAttr(c.trackingId)}',this)" style="background:rgba(0,188,125,0.1); border:1px solid rgba(0,188,125,0.3); color:#00bc7d; padding:5px 12px; border-radius:8px; cursor:pointer; font-size:0.78rem; font-family:'Poppins',sans-serif;">👍 Vouch (${c.upvotes || 0})</button>
+                                <button onclick="openLguCommentModal('${escAttr(c.trackingId)}')" style="background:rgba(65,105,225,0.1); border:1px solid rgba(65,105,225,0.3); color:var(--color-primary); padding:5px 12px; border-radius:8px; cursor:pointer; font-size:0.78rem; font-family:'Poppins',sans-serif;">💬 ${commentCount}</button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                loadMoreBtn.style.display = data.pages > feedPage ? 'inline-block' : 'none';
+            } catch(e) { console.error('Feed error:', e); }
+        }
+
+        async function feedUpvote(trackingId, btn) {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/upvote`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentAdminName })
+                });
+                const data = await res.json();
+                btn.textContent = data.success ? `👍 Vouched (${data.upvotes})` : '✅ Already vouched';
+                btn.disabled = true;
+            } catch(e) { console.error(e); }
+        }
+
+        function loadMoreFeed() { feedPage++; loadFeed(true); }
+
+        function openLguCommentModal(trackingId) {
+            currentFeedCommentId = trackingId;
+            const list = document.getElementById('lgu-comments-list');
+            const arr = lguFeedCommentStore[trackingId] || [];
+            list.innerHTML = arr.length ? arr.map(c => `
+                <div style="padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <strong style="font-size:0.8rem; color:var(--color-primary);">${String(c.authorName||'Anonymous').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</strong>
+                    <p style="font-size:0.82rem; color:#d1d1d1; margin-top:0.2rem;">${String(c.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+                    <small style="color:#9f9fa9;">${new Date(c.createdAt).toLocaleDateString('en-PH')}</small>
+                </div>
+            `).join('') : '<p style="font-size:0.82rem; color:#9f9fa9; text-align:center; padding:1rem;">No comments yet.</p>';
+            document.getElementById('lgu-comment-modal').style.display = 'block';
+        }
+
+        function closeLguCommentModal() {
+            document.getElementById('lgu-comment-modal').style.display = 'none';
+            document.getElementById('lgu-comment-text').value = '';
+            currentFeedCommentId = null;
+        }
+
+        async function submitLguComment() {
+            if (!currentFeedCommentId) return;
+            const text = document.getElementById('lgu-comment-text').value.trim();
+            if (!text) return;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints/${currentFeedCommentId}/comment`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, authorName: currentAdminName + ' (LGU)' })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    lguFeedCommentStore[currentFeedCommentId] = data.comments;
+                    openLguCommentModal(currentFeedCommentId);
+                    document.getElementById('lgu-comment-text').value = '';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // Close modal when clicking on the dark backdrop
+        document.getElementById('reportModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // --- WEBSOCKET LIVE UPDATES ---
+        let wsReconnectDelay = 1000;
+        function connectWebSocket() {
+            const wsUrl = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+            const badge = document.getElementById('ws-status-badge');
+            let ws;
+            try {
+                ws = new WebSocket(wsUrl);
+            } catch(e) { return; } // graceful degrade
+
+            ws.onopen = () => {
+                wsReconnectDelay = 1000;
+                badge.textContent = '🟢 Live';
+                badge.style.cssText = 'font-size:0.75rem; padding:4px 10px; border-radius:20px; background:rgba(0,188,125,0.15); color:#00bc7d; font-weight:600; display:inline-block;';
+            };
+            ws.onmessage = () => {
+                loadComplaints();
+                if (document.getElementById('lupon-section').style.display !== 'none') loadLuponCases();
+                if (document.getElementById('inprogress-section').style.display !== 'none') loadInProgressComplaints();
+                if (document.getElementById('feed-section').style.display !== 'none') { feedPage = 1; loadFeed(); }
+            };
+            ws.onclose = () => {
+                badge.textContent = '🔴 Reconnecting...';
+                badge.style.cssText = 'font-size:0.75rem; padding:4px 10px; border-radius:20px; background:rgba(255,100,103,0.12); color:#ff6467; font-weight:600; display:inline-block;';
+                const delay = Math.min(wsReconnectDelay, 30000);
+                wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30000);
+                setTimeout(connectWebSocket, delay);
+            };
+            ws.onerror = () => ws.close();
+        }
+        connectWebSocket();
+
+        loadComplaints();
     </script>
-</head>
-<body style="background: #0f172a;"></body>
+</body>
 </html>
