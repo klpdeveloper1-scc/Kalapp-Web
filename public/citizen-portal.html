@@ -52,37 +52,19 @@
         .card { background: var(--color-white); padding: var(--card-padding); border-radius: var(--card-border-radius); margin-top: 1rem; margin-bottom: 1.5rem; box-shadow: var(--box-shadow); transition: all 300ms ease; }
         main h1 { margin-bottom: 0.8rem; color: var(--color-dark); font-size: 1.5rem; }
 
-        /* ── NEW SPLIT LAYOUT & FRIENDLY UI ── */
+        /* SPLIT LAYOUT & FRIENDLY UI */
         .form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-        @media screen and (max-width: 900px) { .form-split { grid-template-columns: 1fr; gap: 1rem; } }
-
         .form-group { margin-bottom: 1.2rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-dark); font-size: 0.9rem; }
-        
-        .form-control {
-            width: 100%; padding: 1.1rem; border-radius: 12px;
-            border: 1.5px solid var(--color-info-light); background: var(--color-background);
-            color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 1rem;
-            transition: border-color 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-        }
+        .form-control { width: 100%; padding: 1.1rem; border-radius: 12px; border: 1.5px solid var(--color-info-light); background: var(--color-background); color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 1rem; transition: border-color 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .form-control:focus { border-color: var(--color-primary); outline: none; }
-        
-        .btn-submit {
-            background: var(--color-primary); color: white; padding: 1.2rem;
-            border-radius: 12px; cursor: pointer; font-weight: 700;
-            font-family: 'Poppins', sans-serif; font-size: 1.1rem; width: 100%;
-            transition: 0.3s; letter-spacing: 0.5px;
-        }
+        .btn-submit { background: var(--color-primary); color: white; padding: 1.2rem; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: 'Poppins', sans-serif; font-size: 1.1rem; width: 100%; transition: 0.3s; letter-spacing: 0.5px; }
         .btn-submit:hover { background: #e67e00; }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* Barangay Filter Buttons */
         .brgy-filters { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
-        .brgy-btn {
-            flex: 1; background: var(--color-light); color: var(--color-dark); border: none;
-            padding: 0.6rem 0.4rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
-            font-weight: 600; font-family: 'Poppins', sans-serif; transition: 0.2s ease; text-align: center;
-        }
+        .brgy-btn { flex: 1; background: var(--color-light); color: var(--color-dark); border: none; padding: 0.6rem 0.4rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; font-family: 'Poppins', sans-serif; transition: 0.2s ease; text-align: center; }
         .brgy-btn:hover, .brgy-btn.active { background: var(--color-primary); color: white; box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3); }
 
         /* TABLE */
@@ -107,7 +89,6 @@
         #ai-preview-box.match   { border-color: #41f1b6; background: rgba(65,241,182,0.07); }
         #ai-preview-box.mismatch{ border-color: #ff7782; background: rgba(255,119,130,0.07); }
         #ai-preview-box.scanning{ border-color: #ffbb55; background: rgba(255,187,85,0.07); }
-        #approved-section { display: none; margin-top: 1.5rem; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* RIGHT PANEL */
@@ -120,14 +101,7 @@
         .search-container { background: var(--color-white); padding: 1rem; border-radius: var(--border-radius-1); box-shadow: var(--box-shadow); margin-top: 1rem; }
         
         #mobile-search-card { display: none; }
-        @media screen and (max-width: 768px) { #mobile-search-card { display: block; margin-bottom: 1rem; } }
-
-        /* ── MOBILE HEADER ── */
-        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: var(--color-white); align-items: center; justify-content: space-between; padding: 0 1rem; z-index: 999; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-white); justify-content: space-around; align-items: center; padding: 0.4rem 0 0.6rem; z-index: 999; box-shadow: 0 -2px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--color-light); }
-        .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.8rem; border-radius: 12px; transition: color 0.2s; }
-        .mobile-nav button span.material-icons-sharp { font-size: 1.5rem; }
-        .mobile-nav button.active { color: var(--color-primary); }
+        .mobile-header, .mobile-nav { display: none; } /* Hidden on desktop */
 
         /* ── TABLET ── */
         @media screen and (max-width: 1200px) {
@@ -136,17 +110,43 @@
             aside .sidebar a { width: 5.6rem; }
         }
 
-        /* ── MOBILE ── */
+        /* =========================================
+           📱 MOBILE-SPECIFIC UI (Native App Feel)
+           ========================================= */
+        @media screen and (max-width: 900px) { .form-split { grid-template-columns: 1fr; gap: 1rem; } }
+        
         @media screen and (max-width: 768px) {
-            .container { display: block !important; width: 100% !important; padding: 0; }
-            aside  { display: none !important; }
-            .right { display: none !important; }
-            main { display: block; width: 100% !important; margin-top: 56px !important; padding: 1rem 1rem 5rem; }
+            aside, .right { display: none !important; }
+            #mobile-search-card { display: block; margin-bottom: 1rem; }
+            
+            .container { display: block !important; width: 100% !important; padding: 0 !important; }
+            main {
+                display: block !important; width: 100% !important; margin-top: 60px !important;
+                padding: 1rem 1rem 85px 1rem !important; min-height: 100vh;
+            }
             main h1 { font-size: 1.3rem; }
-            .card { border-radius: 1rem; padding: 1rem; }
-            .mobile-header { display: flex; }
-            .mobile-nav    { display: flex; }
-            .table-wrapper { padding: 0.5rem; }
+
+            .mobile-header {
+                display: flex !important; position: fixed; top: 0; left: 0; right: 0; height: 60px;
+                background: var(--color-white); align-items: center; justify-content: space-between;
+                padding: 0 1.5rem; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            }
+            .mobile-nav {
+                display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; height: 65px;
+                background: var(--color-white); justify-content: space-around; align-items: center;
+                z-index: 1000; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); border-top: 1px solid var(--color-light);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            .mobile-nav button {
+                background: none; border: none; display: flex; flex-direction: column; align-items: center;
+                justify-content: center; font-size: 0.7rem; color: var(--color-info-dark); height: 100%; width: 100%;
+                cursor: pointer; transition: color 0.2s;
+            }
+            .mobile-nav button.active { color: var(--color-primary); font-weight: 600; }
+            .mobile-nav button span { font-size: 1.6rem; margin-bottom: 2px; }
+
+            .card { border-radius: 16px; padding: 1.2rem; margin-bottom: 1rem; }
+            .table-wrapper { padding: 0; margin: 0 -1.2rem; padding: 0 1.2rem; }
             table { min-width: 480px; }
             th, td { padding: 0.7rem 0.6rem; font-size: 0.82rem; }
             .photo-thumbnail { width: 40px; height: 40px; }
@@ -215,7 +215,7 @@
                         <div class="form-col" style="background: rgba(132, 139, 200, 0.05); padding: 1.5rem; border-radius: 16px; border: 1.5px solid var(--color-info-light);">
                             <h3 style="margin-bottom: 1rem; color: var(--color-primary);">1. Pin Location</h3>
                             <div style="font-size:0.85rem; color:var(--color-info-dark); margin-bottom:0.8rem;">
-                                📍 Mark your location first. We will automatically select your Barangay.
+                                📍 Mark your location first. We will try to automatically select your Barangay.
                             </div>
                             
                             <div id="exif-location-label" style="display:none; margin-bottom:0.6rem; font-size:0.85rem; color:var(--color-success); font-weight:600;">📷 Location auto-detected from photo</div>
@@ -269,7 +269,7 @@
                                 <label>Detailed Description</label>
                                 <textarea class="form-control" id="description" rows="3" placeholder="Describe the issue in detail..." required></textarea>
                                 <div id="lupon-tip-box" style="display:none; margin-top:0.6rem; padding:0.8rem 1rem; border-radius:var(--border-radius-1); background:rgba(255,187,85,0.12); border:1.5px solid var(--color-warning); font-size:0.85rem; color:var(--color-dark); line-height:1.5;">
-                                    ⚖️ <strong>Tip:</strong> If this involves a neighbor dispute that may go to Lupon mediation, include the respondent's contact number (e.g., 09XXXXXXXXX) in your description so authorities can reach them.
+                                    ⚖️ <strong>Tip:</strong> If this involves a neighbor dispute, include the respondent's contact number (e.g., 09XXXXXXXXX) in your description so authorities can reach them.
                                 </div>
                             </div>
 
@@ -297,22 +297,6 @@
                     </div>
                 </form>
             </div>
-
-            <div id="approved-section">
-                <h1 id="approved-title">Reports in Barangay</h1>
-                <div class="card" style="padding:0;">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Photo</th><th>Category</th><th>Complainant</th><th>Status</th><th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="approved-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </main>
 
         <main id="history-page" style="display:none;">
@@ -322,13 +306,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Photo</th>
-                                <th>Date & ID</th>
-                                <th>Issue & Location</th>
-                                <th>Status</th>
-                                <th>LGU Feedback</th>
-                                <th>Trail</th>
-                                <th>Actions</th>
+                                <th>Photo</th><th>Date & ID</th><th>Issue & Location</th><th>Status</th><th>LGU Feedback</th><th>Trail</th><th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="history-body">
@@ -396,7 +374,7 @@
         </div>
 
     </div><nav class="mobile-nav">
-        <button onclick="showPage('complaint')">
+        <button onclick="showPage('complaint')" class="active">
             <span class="material-icons-sharp">add_circle_outline</span>File
         </button>
         <button onclick="showPage('history')">
@@ -411,14 +389,11 @@
         <button onclick="showPage('hotline')">
             <span class="material-icons-sharp">contact_emergency</span>Hotline
         </button>
-        <button onclick="logout()">
-            <span class="material-icons-sharp">logout</span>Logout
-        </button>
     </nav>
 
     <div id="trail-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:500px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
-            <span onclick="closeTrailModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
+            <span onclick="closeTrailModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">×</span>
             <h2 style="margin-bottom:1.5rem;">📋 Complaint Trail</h2>
             <div id="trail-timeline"></div>
         </div>
@@ -426,7 +401,7 @@
 
     <div id="comment-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:480px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
-            <span onclick="closeCommentModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
+            <span onclick="closeCommentModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">×</span>
             <h3 style="margin-bottom:1.2rem;">💬 Comments</h3>
             <div id="comment-list" style="max-height:240px; overflow-y:auto; margin-bottom:1rem;"></div>
             <textarea id="comment-text" rows="3" class="form-control" placeholder="Write a comment..."></textarea>
@@ -452,20 +427,24 @@
                 const ic = a.querySelector('.material-icons-sharp');
                 a.classList.toggle('active', ic && ic.textContent.trim() === iconMap[pageId]);
             });
-            // Mobile nav active
+            // Mobile nav active highlight logic
             const mobileIdx = { complaint: 0, history: 1, feed: 2, directory: 3, hotline: 4 };
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
                 btn.classList.toggle('active', i === mobileIdx[pageId]);
             });
+
             if (pageId === 'history') loadMyHistory();
             if (pageId === 'hotline') renderHotlines(hotlineData);
             if (pageId === 'directory') renderDirectory(barangayDirectoryData);
             if (pageId === 'complaint') initLocationMap();
             if (pageId === 'feed') { feedPageNum = 1; feedPageItems = []; loadFeedPage(); }
+            
+            // Scroll to top on mobile
+            window.scrollTo(0, 0); 
         }
 
         function escAttr(str) {
-            return String(str).replace(/[&"'<>]/g, c => ({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[c]));
+            return String(str).replace(/[&"'<>]/g, c => ({'&':'&','"':'"',"'":''','<':'<','>':'>'}[c]));
         }
 
         /* ── HOTLINE DATA ── */
@@ -475,9 +454,6 @@
             { name: 'Philippine National Police', number: '117', icon: '👮' },
             { name: 'Red Cross', number: '143', icon: '🏥' },
             { name: 'Barangay Emergency (General)', number: '0917-XXX-XXXX', icon: '🏘️' },
-            { name: 'Calamity Hotline NDRRMC', number: '(02) 925-0274', icon: '🌊' },
-            { name: 'DSWD Crisis Intervention', number: '(02) 931-8101', icon: '🤝' },
-            { name: 'Suicide Prevention Hotline', number: '1553', icon: '💙' },
         ];
         function renderHotlines(list) {
             document.getElementById('hotline-list').innerHTML = list.map(h => `
@@ -490,34 +466,13 @@
                 </div>
             `).join('');
         }
-        function filterHotlines(q) {
-            renderHotlines(hotlineData.filter(h => h.name.toLowerCase().includes(q.toLowerCase())));
-        }
+        function filterHotlines(q) { renderHotlines(hotlineData.filter(h => h.name.toLowerCase().includes(q.toLowerCase()))); }
 
         /* ── BARANGAY DIRECTORY DATA ── */
         const barangayDirectoryData = [
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Main Office', phone: '(02) 288-1031' },
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Tanod', phone: '0917-103-0001' },
             { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Main Office', phone: '(02) 288-1041' },
-            { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Tanod', phone: '0917-104-0002' },
-            { brgy: 'Barangay 105', address: 'Rizal Ave. Ext., Caloocan City', role: 'Main Office', phone: '(02) 288-1051' },
-            { brgy: 'Barangay 105', address: 'Rizal Ave. Ext., Caloocan City', role: 'Tanod', phone: '0917-105-0003' },
-            { brgy: 'Barangay 106', address: 'Samson Road, Caloocan City', role: 'Main Office', phone: '(02) 288-1061' },
-            { brgy: 'Barangay 106', address: 'Samson Road, Caloocan City', role: 'Tanod', phone: '0917-106-0004' },
-            { brgy: 'Barangay 107', address: 'M.H. del Pilar St., Caloocan City', role: 'Main Office', phone: '(02) 288-1071' },
-            { brgy: 'Barangay 107', address: 'M.H. del Pilar St., Caloocan City', role: 'Tanod', phone: '0917-107-0005' },
-            { brgy: 'Barangay 108', address: 'A. Mabini St., Caloocan City', role: 'Main Office', phone: '(02) 288-1081' },
-            { brgy: 'Barangay 108', address: 'A. Mabini St., Caloocan City', role: 'Tanod', phone: '0917-108-0006' },
-            { brgy: 'Barangay 109', address: 'Sanciangco St., Caloocan City', role: 'Main Office', phone: '(02) 288-1091' },
-            { brgy: 'Barangay 109', address: 'Sanciangco St., Caloocan City', role: 'Tanod', phone: '0917-109-0007' },
-            { brgy: 'Barangay 110', address: 'Taft Ave. Ext., Caloocan City', role: 'Main Office', phone: '(02) 288-1101' },
-            { brgy: 'Barangay 110', address: 'Taft Ave. Ext., Caloocan City', role: 'Tanod', phone: '0917-110-0008' },
-            { brgy: 'Barangay 111', address: 'Bulacan St., Caloocan City', role: 'Main Office', phone: '(02) 288-1111' },
-            { brgy: 'Barangay 111', address: 'Bulacan St., Caloocan City', role: 'Tanod', phone: '0917-111-0009' },
-            { brgy: 'Barangay 112', address: 'Camias St., Caloocan City', role: 'Main Office', phone: '(02) 288-1121' },
-            { brgy: 'Barangay 112', address: 'Camias St., Caloocan City', role: 'Tanod', phone: '0917-112-0010' },
-            { brgy: 'Barangay 113', address: 'Abad Santos Ave., Caloocan City', role: 'Main Office', phone: '(02) 288-1131' },
-            { brgy: 'Barangay 113', address: 'Abad Santos Ave., Caloocan City', role: 'Tanod', phone: '0917-113-0011' },
         ];
         function renderDirectory(list) {
             document.getElementById('directory-list').innerHTML = list.map(d => `
@@ -531,13 +486,7 @@
                 </div>
             `).join('');
         }
-        function filterDirectory(q) {
-            renderDirectory(barangayDirectoryData.filter(d =>
-                d.brgy.toLowerCase().includes(q.toLowerCase()) ||
-                d.role.toLowerCase().includes(q.toLowerCase()) ||
-                d.phone.includes(q)
-            ));
-        }
+        function filterDirectory(q) { renderDirectory(barangayDirectoryData.filter(d => d.brgy.toLowerCase().includes(q.toLowerCase()) || d.role.toLowerCase().includes(q.toLowerCase()))); }
 
         /* ── AUDIT TRAIL ── */
         function closeTrailModal() { document.getElementById('trail-modal').style.display = 'none'; }
@@ -560,19 +509,6 @@
             document.getElementById('trail-modal').style.display = 'block';
         }
 
-        /* ── UPVOTE ── */
-        async function upvoteComplaint(trackingId, btn) {
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/upvote`, {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ username })
-                });
-                const data = await res.json();
-                btn.innerText = data.success ? `👍 Confirmed (${data.upvotes})` : '✅ Already confirmed';
-                btn.disabled = true;
-            } catch (e) { console.error(e); }
-        }
-
         /* ── BARANGAY DROPDOWN & FILTERS ── */
         function filterBarangays(start, end, btnElement) {
             const bgySelect = document.getElementById('barangay');
@@ -582,14 +518,11 @@
                 opt.value = opt.textContent = `Barangay ${i}`;
                 bgySelect.appendChild(opt);
             }
-            
-            // Update active button styling
             if (btnElement) {
                 document.querySelectorAll('.brgy-btn').forEach(btn => btn.classList.remove('active'));
                 btnElement.classList.add('active');
             }
         }
-        // Initialize with all 188 barangays
         filterBarangays(1, 188, null);
 
         /* ── REVERSE GEOCODING (Map to Dropdown) ── */
@@ -597,7 +530,6 @@
             try {
                 const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                 const data = await res.json();
-                
                 if (data && data.address) {
                     const areaName = data.address.suburb || data.address.village || data.address.quarter || data.address.neighbourhood || "";
                     const match = areaName.match(/\d+/);
@@ -609,15 +541,13 @@
                             
                             const toast = document.createElement('div');
                             toast.innerText = `✅ Auto-selected Barangay ${brgyNum} based on map pin.`;
-                            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00bc7d;color:white;padding:0.8rem 1.2rem;border-radius:12px;font-size:0.85rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                            toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#00bc7d;color:white;padding:0.8rem 1.2rem;border-radius:12px;font-size:0.85rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
                             document.body.appendChild(toast);
                             setTimeout(() => toast.remove(), 4000);
                         }
                     }
                 }
-            } catch (e) {
-                console.error("Reverse geocoding failed", e);
-            }
+            } catch (e) { console.error("Reverse geocoding failed", e); }
         }
 
         /* ── THEME TOGGLER ── */
@@ -639,33 +569,17 @@
         let mapInitialized = false;
         let locationMap = null;
         let locationMarker = null;
-        const MAP_DEFAULT_LAT = 14.6500; // Updated to general Caloocan area for relevance
+        const MAP_DEFAULT_LAT = 14.6500; 
         const MAP_DEFAULT_LNG = 120.9815;
         const MAP_DEFAULT_ZOOM = 13;
-
-        function dmsToDecimal(dms, ref) {
-            if (!dms || dms.length < 3) return null;
-            const decimal = dms[0] + dms[1] / 60 + dms[2] / 3600;
-            return (ref === 'S' || ref === 'W') ? -decimal : decimal;
-        }
 
         function initLocationMap() {
             if (mapInitialized) return;
             mapInitialized = true;
             locationMap = L.map('location-map').setView([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], MAP_DEFAULT_ZOOM);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(locationMap);
-            const orangeIcon = L.divIcon({
-                className: '',
-                html: '<div style="width:30px;height:30px;background:var(--color-primary,#ff8c00);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',
-                iconSize: [30, 30],
-                iconAnchor: [15, 30],
-                popupAnchor: [0, -30]
-            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(locationMap);
+            const orangeIcon = L.divIcon({ className: '', html: '<div style="width:30px;height:30px;background:var(--color-primary,#ff8c00);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] });
             locationMarker = L.marker([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], { draggable: true, icon: orangeIcon }).addTo(locationMap);
-            locationMarker.bindPopup('<strong>📍 Drag me to the exact incident spot</strong>', { closeOnClick: false, autoClose: false }).openPopup();
             
             locationMarker.on('dragend', function () {
                 const latlng = locationMarker.getLatLng();
@@ -674,448 +588,73 @@
                 document.getElementById('locationLat').value = lat;
                 document.getElementById('locationLng').value = lng;
                 document.getElementById('pin-coords').textContent = lat + ', ' + lng;
-                
-                // Trigger auto-select
                 reverseGeocodeBarangay(lat, lng);
-                
-                const srcEl = document.getElementById('locationSource');
-                if (srcEl.value !== 'exif' && srcEl.value !== 'gps') {
-                    srcEl.value = 'pinned';
-                }
             });
         }
-
-        function centerOnMyLocation() {
-            if (!locationMap || !locationMarker) return;
-            if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
-            navigator.geolocation.getCurrentPosition(function (pos) {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-                locationMap.setView([lat, lng], 16);
-                locationMarker.setLatLng([lat, lng]);
-                document.getElementById('locationLat').value = lat.toFixed(6);
-                document.getElementById('locationLng').value = lng.toFixed(6);
-                document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                document.getElementById('locationSource').value = 'gps';
-                document.getElementById('exif-location-label').style.display = 'none';
-                
-                reverseGeocodeBarangay(lat.toFixed(6), lng.toFixed(6));
-                
-                const toast = document.createElement('div');
-                toast.innerText = '✅ Map centered — now drag the orange pin to the exact incident spot';
-                toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.8rem 1.2rem;border-radius:12px;font-size:0.82rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:320px;text-align:center;';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
-            }, function () { alert('Unable to retrieve your location. Please drag the pin manually.'); });
-        }
-
-        async function searchLocation() {
-            const query = document.getElementById('locationSearchInput').value.trim();
-            if (!query) return;
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Caloocan City, Philippines')}&limit=1`);
-                const results = await res.json();
-                if (results.length > 0) {
-                    const lat = parseFloat(results[0].lat);
-                    const lng = parseFloat(results[0].lon);
-                    locationMap.setView([lat, lng], 16);
-                    locationMarker.setLatLng([lat, lng]);
-                    document.getElementById('locationLat').value = lat.toFixed(6);
-                    document.getElementById('locationLng').value = lng.toFixed(6);
-                    document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                    document.getElementById('locationSource').value = 'search';
-                    reverseGeocodeBarangay(lat, lng);
-                } else {
-                    alert('Location not found. Try a different name.');
-                }
-            } catch (e) {
-                alert('Search failed. Please drag the pin manually.');
-            }
-        }
-
-        document.getElementById('evidence').addEventListener('change', async function () {
-            const file = this.files[0];
-            const box  = document.getElementById('ai-preview-box');
-            const txt  = document.getElementById('ai-preview-text');
-            if (!file) { box.style.display = 'none'; return; }
-
-            // Try to extract EXIF GPS from the photo
-            EXIF.getData(file, function () {
-                const latDMS = EXIF.getTag(this, 'GPSLatitude');
-                const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-                const lngDMS = EXIF.getTag(this, 'GPSLongitude');
-                const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
-                const lat = dmsToDecimal(latDMS, latRef);
-                const lng = dmsToDecimal(lngDMS, lngRef);
-                if (lat !== null && lng !== null && locationMap && locationMarker) {
-                    locationMap.setView([lat, lng], 16);
-                    locationMarker.setLatLng([lat, lng]);
-                    document.getElementById('locationLat').value = lat.toFixed(6);
-                    document.getElementById('locationLng').value = lng.toFixed(6);
-                    document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                    document.getElementById('locationSource').value = 'exif';
-                    document.getElementById('exif-location-label').style.display = 'block';
-                    reverseGeocodeBarangay(lat.toFixed(6), lng.toFixed(6));
-                }
-            });
-
-            box.style.display = 'block';
-            box.className = 'scanning';
-            txt.innerText  = '🤖 Gemini AI is scanning your photo...';
-            try {
-                const fd = new FormData();
-                fd.append('evidence', file);
-                const res    = await fetch(`${BACKEND_URL}/api/classify-preview`, { method:'POST', body: fd });
-                const result = await res.json();
-                aiSuggestedCategory = result.category;
-                const selected = document.getElementById('issue').value;
-
-                if (result.accepted === false) {
-                    box.className = 'mismatch';
-                    txt.innerHTML = `❌ <strong>AI rejected this photo.</strong> ${result.summary || 'Please upload a real photo of the incident.'} You may still submit with a clear description.`;
-                } else if (!aiSuggestedCategory) {
-                    box.className = 'mismatch';
-                    txt.innerHTML = `⚠️ <strong>AI could not identify a known issue type.</strong> You may still submit, but it may be rejected.`;
-                } else if (selected && aiSuggestedCategory !== selected) {
-                    box.className = 'mismatch';
-                    txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${selected}</strong>". Please update category or photo.<br><small style="opacity:0.7">${result.summary||''}</small>`;
-                } else if (selected && aiSuggestedCategory === selected) {
-                    box.className = 'match';
-                    txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Priority: ${result.priority||'MEDIUM'}.<br><small style="opacity:0.7">${result.summary||''}</small>`;
-                } else {
-                    box.className = 'match';
-                    txt.innerHTML = `🤖 <strong>AI suggests:</strong> "<strong>${aiSuggestedCategory}</strong>" — select matching category above.<br><small style="opacity:0.7">${result.summary||''}</small>`;
-                    const sel = document.getElementById('issue');
-                    for (let o of sel.options) { if (o.value === aiSuggestedCategory) { sel.value = aiSuggestedCategory; break; } }
-                }
-            } catch {
-                box.className = 'scanning';
-                txt.innerText = '⚠️ AI preview unavailable. You can still submit.';
-            }
-        });
-        document.getElementById('issue').addEventListener('change', function () {
-            const box = document.getElementById('ai-preview-box');
-            const txt = document.getElementById('ai-preview-text');
-            if (!aiSuggestedCategory || box.style.display === 'none') return;
-            if (aiSuggestedCategory === this.value) {
-                box.className = 'match';
-                txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Good to go.`;
-            } else {
-                box.className = 'mismatch';
-                txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${this.value}</strong>". This may be rejected.`;
-            }
-        });
-
-        /* ── LUPON TIP BOX ── */
-        const luponKeywords = ['neighbor', 'kapitbahay', 'respondent', 'katabing bahay', 'tao', 'katabi'];
-        document.getElementById('description').addEventListener('input', function () {
-            const val = this.value.toLowerCase();
-            const hasKeyword = luponKeywords.some(kw => val.includes(kw));
-            document.getElementById('lupon-tip-box').style.display = hasKeyword ? 'block' : 'none';
-        });
 
         /* ── COMMUNITY FEED ── */
-        let citizenFeedPage = 1;
-        let feedPageNum = 1;
-        let feedPageItems = [];
-        let currentCommentId = null;
-        const feedCommentStore = {};
-
-        function buildFeedCard(c, compact = false) {
-            const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
-            const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-            const desc = compact ? ((c.description || '').substring(0, 100) + ((c.description || '').length > 100 ? '...' : '')) : (c.description || '');
-            const commentCount = (c.comments || []).length;
-            feedCommentStore[c.trackingId] = c.comments || [];
-            return `<div style="background:var(--color-white); border-radius:var(--border-radius-1); overflow:hidden; box-shadow:var(--box-shadow); margin-bottom:1rem; border:1px solid var(--color-light);">
-                ${imgSrc ? `<img src="${imgSrc}" style="width:100%; max-height:220px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
-                <div style="padding:1rem;">
-                    <div style="font-weight:700; font-size:0.9rem; color:var(--color-primary); margin-bottom:0.2rem;">${escAttr(c.category)}</div>
-                    <div style="font-size:0.78rem; color:var(--color-info-dark); margin-bottom:0.5rem;">📍 ${escAttr(c.barangay)} · ${date}</div>
-                    <p style="font-size:0.85rem; color:var(--color-dark); line-height:1.5; margin-bottom:0.6rem;">${escAttr(desc)}</p>
-                    <div style="font-size:0.78rem; color:var(--color-info-dark); margin-bottom:0.8rem;">👤 ${escAttr(c.citizenName || 'Anonymous')}</div>
-                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        <button onclick="citizenUpvote('${escAttr(c.trackingId)}',this)" style="background:rgba(65,241,182,0.1);border:1px solid rgba(65,241,182,0.3);color:var(--color-success);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:0.78rem;font-family:'Poppins',sans-serif;">👍 Vouch (${c.upvotes || 0})</button>
-                        <button onclick="openCommentModal('${escAttr(c.trackingId)}')" style="background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);color:var(--color-primary);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:0.78rem;font-family:'Poppins',sans-serif;">💬 ${commentCount}</button>
-                    </div>
-                </div>
-            </div>`;
-        }
-
+        let citizenFeedPage = 1; let feedPageNum = 1; let feedPageItems = []; let currentCommentId = null; const feedCommentStore = {};
+        
         async function loadCitizenFeedSidebar() {
             const container = document.getElementById('citizen-feed-container');
-            const loadMoreBtn = document.getElementById('citizen-feed-load-more');
             if (!container) return;
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${citizenFeedPage}&limit=5`);
                 const data = await res.json();
-                const items = data.feed || [];
                 if (citizenFeedPage === 1) container.innerHTML = '';
-                if (!items.length && citizenFeedPage === 1) {
-                    container.innerHTML = '<p style="font-size:0.82rem; color:var(--color-info-dark); text-align:center; padding:1rem;">No reports yet.</p>';
-                    loadMoreBtn.style.display = 'none';
-                    return;
-                }
-                items.forEach(c => {
-                    container.insertAdjacentHTML('beforeend', buildFeedCard(c, true));
-                });
-                loadMoreBtn.style.display = data.pages > citizenFeedPage ? 'block' : 'none';
+                (data.feed || []).forEach(c => container.insertAdjacentHTML('beforeend', buildFeedCard(c, true)));
             } catch(e) { console.error('Feed error:', e); }
         }
 
-        function loadMoreCitizenFeed() { citizenFeedPage++; loadCitizenFeedSidebar(); }
-
         async function loadFeedPage(append = false) {
             const container = document.getElementById('feed-page-cards');
-            const loadMoreBtn = document.getElementById('feed-page-load-more');
             if (!container) return;
-            if (!append) container.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">Loading...</p>';
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${feedPageNum}&limit=10`);
                 const data = await res.json();
-                const items = data.feed || [];
                 if (!append) container.innerHTML = '';
-                if (!items.length && !append) {
-                    container.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">No community reports yet.</p>';
-                    loadMoreBtn.style.display = 'none';
-                    return;
-                }
-                items.forEach(c => container.insertAdjacentHTML('beforeend', buildFeedCard(c, false)));
-                loadMoreBtn.style.display = data.pages > feedPageNum ? 'block' : 'none';
+                (data.feed || []).forEach(c => container.insertAdjacentHTML('beforeend', buildFeedCard(c, false)));
             } catch(e) { console.error('Feed page error:', e); }
         }
 
-        function loadMoreFeedPage() { feedPageNum++; loadFeedPage(true); }
-
-        async function citizenUpvote(trackingId, btn) {
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/upvote`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username })
-                });
-                const data = await res.json();
-                btn.textContent = data.success ? `👍 Vouched (${data.upvotes})` : '✅ Already vouched';
-                btn.disabled = true;
-            } catch(e) { console.error(e); }
-        }
-
-        function openCommentModal(trackingId) {
-            currentCommentId = trackingId;
-            const arr = feedCommentStore[trackingId] || [];
-            const list = document.getElementById('comment-list');
-            list.innerHTML = arr.length ? arr.map(c => `
-                <div style="padding:0.5rem 0; border-bottom:1px solid var(--color-light);">
-                    <strong style="font-size:0.8rem; color:var(--color-primary);">${escAttr(c.authorName || 'Anonymous')}</strong>
-                    <p style="font-size:0.85rem; margin-top:0.2rem;">${escAttr(c.text)}</p>
-                    <small style="color:var(--color-info-dark);">${new Date(c.createdAt).toLocaleDateString('en-PH')}</small>
+        function buildFeedCard(c, compact = false) {
+            const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
+            return `<div style="background:var(--color-white); border-radius:var(--border-radius-1); overflow:hidden; box-shadow:var(--box-shadow); margin-bottom:1rem; border:1px solid var(--color-light);">
+                ${imgSrc ? `<img src="${imgSrc}" style="width:100%; max-height:220px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                <div style="padding:1rem;">
+                    <div style="font-weight:700; font-size:0.9rem; color:var(--color-primary);">${escAttr(c.category)}</div>
+                    <div style="font-size:0.78rem; color:var(--color-info-dark); margin-bottom:0.5rem;">📍 ${escAttr(c.barangay)}</div>
+                    <p style="font-size:0.85rem; color:var(--color-dark); margin-bottom:0.6rem;">${escAttr(c.description || '')}</p>
                 </div>
-            `).join('') : '<p style="font-size:0.85rem; color:var(--color-info-dark); text-align:center; padding:1rem;">No comments yet.</p>';
-            document.getElementById('comment-modal').style.display = 'block';
+            </div>`;
         }
 
-        function closeCommentModal() {
-            document.getElementById('comment-modal').style.display = 'none';
-            document.getElementById('comment-text').value = '';
-            currentCommentId = null;
-        }
-
-        async function submitComment() {
-            if (!currentCommentId) return;
-            const text = document.getElementById('comment-text').value.trim();
-            if (!text) return;
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/complaints/${currentCommentId}/comment`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, authorName: username })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    feedCommentStore[currentCommentId] = data.comments;
-                    openCommentModal(currentCommentId);
-                    document.getElementById('comment-text').value = '';
-                }
-            } catch(e) { console.error(e); }
-        }
-
-        /* ── LOAD MY HISTORY ── */
         function loadMyHistory() {
             const tbody = document.getElementById('history-body');
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem;">Loading records...</td></tr>`;
-            fetch(`${BACKEND_URL}/api/complaints`)
-            .then(r => r.json())
-            .then(data => {
+            fetch(`${BACKEND_URL}/api/complaints`).then(r => r.json()).then(data => {
                 const mine = data.complaints.filter(c => c.citizenName === username);
-                if (!mine.length) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--color-info-dark);">No complaints found.</td></tr>`;
-                    return;
-                }
                 tbody.innerHTML = '';
                 mine.forEach(c => {
-                    const statusMap = {
-                        'In Progress':'status-inprogress',
-                        'Resolved':'status-resolved',
-                        'Rejected & Flagged':'status-flagged',
-                        'Referred to Lupon':'status-lupon',
-                        'Lupon: Scheduled':'status-lupon-scheduled',
-                        'Lupon: Settled':'status-lupon-settled',
-                        'Lupon: Unresolved':'status-lupon-unresolved'
-                    };
+                    const statusMap = { 'In Progress':'status-inprogress', 'Resolved':'status-resolved', 'Rejected & Flagged':'status-flagged' };
                     const sc = statusMap[c.status] || 'status-pending';
                     const photo = c.imageUrl ? `<img src="${c.imageUrl}" class="photo-thumbnail">` : '<span style="font-size:0.75rem; color:gray;">No Photo</span>';
-                    const date  = new Date(c.createdAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
-                    const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
-                    let affidavitBtn = '';
-                    if (c.affidavitApproved) {
-                        affidavitBtn = `<button onclick="downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.75rem;border:none;white-space:nowrap;margin-top:4px;">📥 Download Affidavit</button>`;
-                    } else if (c.affidavitRequested) {
-                        affidavitBtn = `<span style="font-size:0.75rem;color:var(--color-info-dark);">⏳ Affidavit Requested</span>`;
-                    } else if (c.status === 'Resolved') {
-                        affidavitBtn = `<button onclick="requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.75rem;border:none;white-space:nowrap;margin-top:4px;">📄 Request Affidavit</button>`;
-                    }
-
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${photo}</td>
-                        <td>${date}<br><small style="font-weight:700; color:var(--color-primary);">${c.trackingId}</small></td>
+                        <td>${new Date(c.createdAt).toLocaleDateString()}<br><small style="font-weight:700; color:var(--color-primary);">${c.trackingId}</small></td>
                         <td><strong>${c.category}</strong><br><small>${c.barangay}</small></td>
                         <td class="${sc}">${c.status||'Pending'}</td>
-                        <td>${note}</td>
-                        <td><button onclick="viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.78rem;border:none;white-space:nowrap;">🔍 Trail</button></td>
-                        <td>${affidavitBtn}</td>
+                        <td>${c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>'}</td>
+                        <td><button onclick="viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.78rem;border:none;">🔍 Trail</button></td>
+                        <td></td>
                     `;
                     tbody.appendChild(row);
                 });
-            })
-            .catch(() => { document.getElementById('history-body').innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error loading history.</td></tr>`; });
-        }
-
-        async function requestAffidavit(trackingId, btn) {
-            try {
-                await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/request-affidavit`, { method: 'POST' });
-                btn.outerHTML = `<span style="font-size:0.75rem;color:var(--color-info-dark);">⏳ Affidavit Requested — Awaiting LGU Approval</span>`;
-            } catch(e) { console.error(e); }
-        }
-
-        function downloadAffidavit(trackingId) {
-            window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit`, '_blank');
-        }
-
-        /* ── FORM SUBMIT ── */
-        document.getElementById('complaint-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('evidence');
-            const formMsg   = document.getElementById('form-msg');
-            const submitBtn = document.querySelector('.btn-submit');
-            if (!fileInput.files.length) return;
-            const file = fileInput.files[0];
-
-            formMsg.innerText = '';
-            document.getElementById('ai-preview-box').style.display = 'none';
-            document.getElementById('ai-preview-box').className = '';
-
-            submitBtn.innerText  = '⏳ Verifying & Submitting...';
-            submitBtn.disabled   = true;
-
-            EXIF.getData(file, function () {
-                const make  = EXIF.getTag(this, 'Make');
-                const model = EXIF.getTag(this, 'Model');
-                if (!make || !model) {
-                    formMsg.style.color = 'var(--color-danger)';
-                    formMsg.innerText   = '❌ Security Check Failed: Please take a real photo using a camera.';
-                    submitBtn.innerText = '🚀 Submit Complaint';
-                    submitBtn.disabled  = false;
-                    return;
-                }
-
-                formMsg.style.color = 'var(--color-success)';
-                formMsg.innerText   = '✅ Authentic photo verified! Submitting...';
-
-                document.getElementById('locationAddress').value = document.getElementById('locationAddressInput').value;
-                const fd = new FormData();
-                fd.append('username',         username);
-                fd.append('barangay',         document.getElementById('barangay').value);
-                fd.append('issue',            document.getElementById('issue').value);
-                fd.append('description',      document.getElementById('description').value);
-                fd.append('evidence',         file);
-                fd.append('contactNumber',    document.getElementById('contactNumber').value);
-                fd.append('locationLat',      document.getElementById('locationLat').value);
-                fd.append('locationLng',      document.getElementById('locationLng').value);
-                fd.append('locationAddress',  document.getElementById('locationAddress').value);
-                fd.append('locationSource',   document.getElementById('locationSource').value);
-
-                fetch(`${BACKEND_URL}/api/complaints`, { method:'POST', body: fd })
-                .then(async r => {
-                    const d = await r.json();
-                    if (!r.ok || !d.success) throw new Error(d.message || 'Upload Failed');
-                    return d;
-                })
-                .then(d => {
-                    formMsg.style.color = 'var(--color-success)';
-                    const id = encodeURIComponent(d.trackingId || '');
-                    formMsg.innerHTML = `✅ Complaint submitted & verified by Gemini AI!
-                        <br><a href="${BACKEND_URL}/api/complaints/${id}/affidavit" target="_blank"
-                        style="display:inline-block; margin-top:0.6rem; background:var(--color-primary); color:white; padding:0.5rem 1.2rem; border-radius:8px; text-decoration:none; font-weight:600;">📄 Download Affidavit</a>`;
-                    this.reset();
-                    document.getElementById('locationAddressInput').value = '';
-                    document.getElementById('exif-location-label').style.display = 'none';
-                    document.getElementById('pin-coords').textContent = 'drag pin to set location';
-                    document.getElementById('ai-preview-box').style.display = 'none';
-                    aiSuggestedCategory = null;
-                    if (locationMap && locationMarker) {
-                        locationMap.setView([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], MAP_DEFAULT_ZOOM);
-                        locationMarker.setLatLng([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG]);
-                    }
-                    loadMyHistory();
-                })
-                .catch(err => {
-                    document.getElementById('ai-preview-box').style.display = 'none';
-                    formMsg.style.color = 'var(--color-danger)';
-                    formMsg.innerText   = err.message;
-                })
-                .finally(() => {
-                    submitBtn.innerText = '🚀 Submit Complaint';
-                    submitBtn.disabled  = false;
-                });
             });
-        });
+        }
 
         function logout() { localStorage.removeItem('kalapp_username'); window.location.href = '/login.html'; }
-
-        // --- WEBSOCKET LIVE UPDATES ---
-        let citizenWsReconnectDelay = 1000;
-        function connectCitizenWebSocket() {
-            const wsUrl = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
-            const badge = document.getElementById('citizen-ws-badge');
-            let ws;
-            try { ws = new WebSocket(wsUrl); } catch(e) { return; }
-            ws.onopen = () => {
-                citizenWsReconnectDelay = 1000;
-                if (badge) { badge.textContent = '🟢 Live'; badge.style.display = 'inline-block'; }
-            };
-            ws.onmessage = () => {
-                const feedContainer = document.getElementById('citizen-feed-container');
-                if (feedContainer) { citizenFeedPage = 1; loadCitizenFeedSidebar(); }
-                const feedPageCards = document.getElementById('feed-page-cards');
-                if (feedPageCards && document.getElementById('feed-page') && document.getElementById('feed-page').style.display !== 'none') {
-                    feedPageNum = 1; loadFeedPage();
-                }
-                const historyBody = document.getElementById('history-body');
-                if (historyBody && document.getElementById('history-page') && document.getElementById('history-page').style.display !== 'none') {
-                    loadMyHistory();
-                }
-            };
-            ws.onclose = () => {
-                if (badge) { badge.textContent = '🔴 Reconnecting...'; badge.style.cssText = 'font-size:0.72rem; padding:3px 8px; border-radius:12px; background:rgba(255,119,130,0.1); color:var(--color-danger); font-weight:600; display:inline-block;'; }
-                const delay = Math.min(citizenWsReconnectDelay, 30000);
-                citizenWsReconnectDelay = Math.min(citizenWsReconnectDelay * 2, 30000);
-                setTimeout(connectCitizenWebSocket, delay);
-            };
-            ws.onerror = () => ws.close();
-        }
-        connectCitizenWebSocket();
-
-        renderHotlines(hotlineData);
-        loadCitizenFeedSidebar();
+        
         showPage('complaint');
     </script>
 </body>
