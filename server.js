@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 
 // 🤖 Google Generative AI
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { OAuth2Client } = require('google-auth-library');
 
 // ☁️ Cloudinary Configuration for Permanent Storage
 const cloudinary = require('cloudinary').v2;
@@ -21,6 +22,8 @@ const PORT = process.env.PORT || 3001;
 
 // --- API Configurations ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -226,18 +229,36 @@ app.post('/api/verify-otp', async (req, res) => {
 });
 
 app.post('/api/google-login', async (req, res) => {
-    const { email, name } = req.body;
+    const { token } = req.body; // Now expecting a secure token, not just an email
+    
     try {
+        // 1. Verify the token directly with Google
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        
+        // 2. Extract the verified info
+        const payload = ticket.getPayload();
+        const email = payload.email;
+        const name = payload.name;
+
+        // 3. Proceed with standard login logic
         let user = await User.findOne({ email });
         if (user) {
             if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });
             if (user.authMethod !== 'google') return res.status(400).json({ message: 'Use OTP Login.' });
             return res.json({ success: true, username: user.username, role: user.role });
         }
+        
         user = new User({ username: name, email: email, role: 'citizen', authMethod: 'google' });
         await user.save();
         res.json({ success: true, username: user.username, role: user.role });
-    } catch (error) { res.status(500).json({ message: 'Google login failed.' }); }
+        
+    } catch (error) { 
+        console.error('Google Auth Error:', error);
+        res.status(401).json({ message: 'Google login failed or token invalid.' }); 
+    }
 });
 
 app.post('/api/login', async (req, res) => {

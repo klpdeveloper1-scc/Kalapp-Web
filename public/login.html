@@ -527,28 +527,29 @@
 
         // --- 3. GOOGLE LOGIN WIRING ---
         function handleGoogleLogin(response) {
-            try {
-                const responsePayload = decodeJwtResponse(response.credential);
-                fetch('/api/google-login', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: responsePayload.email, name: responsePayload.name })
-                })
-                .then(safeFetch)
-                .then(data => {
-                    errorMsg.style.color = 'var(--success-green)';
-                    errorMsg.innerText = `✅ Verified via Google as ${data.username}`;
-                    localStorage.setItem('kalapp_username', data.username);
-                    setTimeout(() => { window.location.href = '/citizen-portal.html'; }, 1000);
-                })
-                .catch(err => { 
-                    errorMsg.style.color = 'var(--error-red)';
-                    errorMsg.innerText = `❌ ${err.message}`; 
-                });
-            } catch (error) { 
-                errorMsg.style.color = 'var(--error-red)';
-                errorMsg.innerText = "⚠️ Google Login blocked by browser."; 
-            }
-        }
+      console.log("Secure token received from Google!");
+
+      // We no longer decode it here. We send the raw secure token straight to your server.
+      fetch('https://kalapp-web.onrender.com/api/google-login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              token: response.credential 
+          })
+      })
+      .then(res => res.json())
+      .then(data => {
+          if (data.success) {
+              alert("Login Successful! Welcome " + data.username);
+              // window.location.href = 'index.html'; // Redirect to citizen dashboard
+          } else {
+              alert("Login Failed: " + data.message);
+          }
+      })
+      .catch(error => console.error("Error connecting to server:", error));
+       }
 
         function decodeJwtResponse(token) {
             let base64Url = token.split('.')[1];
