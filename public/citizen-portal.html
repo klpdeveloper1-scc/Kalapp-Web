@@ -23,22 +23,15 @@
         * { margin: 0; padding: 0; outline: 0; border: 0; text-decoration: none; list-style: none; box-sizing: border-box; }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.95rem;
-            background: var(--color-background);
-            color: var(--color-dark);
-            overflow-x: hidden;
-            transition: all 300ms ease;
+            font-family: 'Poppins', sans-serif; font-size: 0.95rem;
+            background: var(--color-background); color: var(--color-dark);
+            overflow-x: hidden; transition: all 300ms ease;
         }
 
         /* ── DESKTOP LAYOUT ── */
         .container {
-            display: grid;
-            width: 96%;
-            margin: 0 auto;
-            gap: 1.8rem;
-            grid-template-columns: 14rem auto 23rem;
-            min-height: 100vh;
+            display: grid; width: 96%; margin: 0 auto; gap: 1.8rem;
+            grid-template-columns: 14rem auto 23rem; min-height: 100vh;
         }
 
         /* SIDEBAR */
@@ -59,36 +52,38 @@
         .card { background: var(--color-white); padding: var(--card-padding); border-radius: var(--card-border-radius); margin-top: 1rem; margin-bottom: 1.5rem; box-shadow: var(--box-shadow); transition: all 300ms ease; }
         main h1 { margin-bottom: 0.8rem; color: var(--color-dark); font-size: 1.5rem; }
 
-        /* FORM */
+        /* ── NEW SPLIT LAYOUT & FRIENDLY UI ── */
+        .form-split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+        @media screen and (max-width: 900px) { .form-split { grid-template-columns: 1fr; gap: 1rem; } }
+
         .form-group { margin-bottom: 1.2rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-dark); font-size: 0.9rem; }
+        
         .form-control {
-            width: 100%;
-            padding: 1rem;
-            border-radius: var(--border-radius-1);
-            border: 1.5px solid var(--color-info-light);
-            background: var(--color-background);
-            color: var(--color-dark);
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem; /* Prevents iOS zoom */
-            transition: border-color 0.2s;
+            width: 100%; padding: 1.1rem; border-radius: 12px;
+            border: 1.5px solid var(--color-info-light); background: var(--color-background);
+            color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 1rem;
+            transition: border-color 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         .form-control:focus { border-color: var(--color-primary); outline: none; }
+        
         .btn-submit {
-            background: var(--color-primary);
-            color: white;
-            padding: 1rem;
-            border-radius: var(--border-radius-1);
-            cursor: pointer;
-            font-weight: 700;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            width: 100%;
-            transition: 0.3s;
-            letter-spacing: 0.5px;
+            background: var(--color-primary); color: white; padding: 1.2rem;
+            border-radius: 12px; cursor: pointer; font-weight: 700;
+            font-family: 'Poppins', sans-serif; font-size: 1.1rem; width: 100%;
+            transition: 0.3s; letter-spacing: 0.5px;
         }
         .btn-submit:hover { background: #e67e00; }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Barangay Filter Buttons */
+        .brgy-filters { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+        .brgy-btn {
+            flex: 1; background: var(--color-light); color: var(--color-dark); border: none;
+            padding: 0.6rem 0.4rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 600; font-family: 'Poppins', sans-serif; transition: 0.2s ease; text-align: center;
+        }
+        .brgy-btn:hover, .brgy-btn.active { background: var(--color-primary); color: white; box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3); }
 
         /* TABLE */
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: var(--card-padding); }
@@ -108,21 +103,10 @@
         .status-lupon-unresolved{ color: #ff6467; font-weight: bold; text-decoration: line-through; }
 
         /* AI PREVIEW BOX */
-        #ai-preview-box {
-            display: none;
-            margin-top: 0.8rem;
-            padding: 1rem;
-            border-radius: var(--border-radius-1);
-            border: 1.5px solid var(--color-info-light);
-            background: var(--color-background);
-            font-size: 0.88rem;
-            line-height: 1.5;
-            animation: fadeIn 0.4s ease;
-        }
+        #ai-preview-box { display: none; margin-top: 0.8rem; padding: 1rem; border-radius: var(--border-radius-1); border: 1.5px solid var(--color-info-light); background: var(--color-background); font-size: 0.88rem; line-height: 1.5; animation: fadeIn 0.4s ease; }
         #ai-preview-box.match   { border-color: #41f1b6; background: rgba(65,241,182,0.07); }
         #ai-preview-box.mismatch{ border-color: #ff7782; background: rgba(255,119,130,0.07); }
         #ai-preview-box.scanning{ border-color: #ffbb55; background: rgba(255,187,85,0.07); }
-
         #approved-section { display: none; margin-top: 1.5rem; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -134,55 +118,14 @@
         .right .theme-toggler span.active { background: var(--color-primary); color: white; border-radius: var(--border-radius-1); }
         .right .profile { display: flex; gap: 1rem; align-items: center; text-align: right; }
         .search-container { background: var(--color-white); padding: 1rem; border-radius: var(--border-radius-1); box-shadow: var(--box-shadow); margin-top: 1rem; }
-        .search-box { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-        .btn-search { background: var(--color-primary); color: white; padding: 0.6rem 0.8rem; border-radius: var(--border-radius-1); cursor: pointer; display: flex; align-items: center; flex-shrink: 0; }
+        
         #mobile-search-card { display: none; }
-        @media screen and (max-width: 768px) {
-            #mobile-search-card { display: block; margin-bottom: 1rem; }
-        }
+        @media screen and (max-width: 768px) { #mobile-search-card { display: block; margin-bottom: 1rem; } }
 
         /* ── MOBILE HEADER ── */
-        .mobile-header {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 56px;
-            background: var(--color-white);
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1rem;
-            z-index: 999;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        }
-
-        /* ── MOBILE BOTTOM NAV ── */
-        .mobile-nav {
-            display: none;
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: var(--color-white);
-            justify-content: space-around;
-            align-items: center;
-            padding: 0.4rem 0 0.6rem;
-            z-index: 999;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.1);
-            border-top: 1px solid var(--color-light);
-        }
-        .mobile-nav button {
-            background: none;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.65rem;
-            font-family: 'Poppins', sans-serif;
-            color: var(--color-info-dark);
-            cursor: pointer;
-            gap: 0.15rem;
-            padding: 0.3rem 0.8rem;
-            border-radius: 12px;
-            transition: color 0.2s;
-        }
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: var(--color-white); align-items: center; justify-content: space-between; padding: 0 1rem; z-index: 999; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-white); justify-content: space-around; align-items: center; padding: 0.4rem 0 0.6rem; z-index: 999; box-shadow: 0 -2px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--color-light); }
+        .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.8rem; border-radius: 12px; transition: color 0.2s; }
         .mobile-nav button span.material-icons-sharp { font-size: 1.5rem; }
         .mobile-nav button.active { color: var(--color-primary); }
 
@@ -195,47 +138,21 @@
 
         /* ── MOBILE ── */
         @media screen and (max-width: 768px) {
-            /* Kill the 3-column grid, go full single column */
-            .container {
-                display: block !important;
-                width: 100% !important;
-                padding: 0;
-            }
+            .container { display: block !important; width: 100% !important; padding: 0; }
             aside  { display: none !important; }
             .right { display: none !important; }
-
-            main {
-                display: block;
-                width: 100% !important;
-                margin-top: 56px !important; /* height of fixed header */
-                padding: 1rem 1rem 5rem; /* bottom padding clears mobile nav */
-            }
-
+            main { display: block; width: 100% !important; margin-top: 56px !important; padding: 1rem 1rem 5rem; }
             main h1 { font-size: 1.3rem; }
-
             .card { border-radius: 1rem; padding: 1rem; }
-
             .mobile-header { display: flex; }
             .mobile-nav    { display: flex; }
-
-            /* Make form controls comfortable on touch */
-            .form-control { padding: 0.9rem 1rem; font-size: 1rem; }
-            .btn-submit   { font-size: 1rem; padding: 1rem; }
-
-            /* History table scrolls horizontally */
             .table-wrapper { padding: 0.5rem; }
             table { min-width: 480px; }
             th, td { padding: 0.7rem 0.6rem; font-size: 0.82rem; }
             .photo-thumbnail { width: 40px; height: 40px; }
         }
+
         /* ── LOCATION MAP ── */
-        #location-map {
-            height: 280px;
-            border-radius: 12px;
-            border: 1.5px solid var(--color-info-light);
-            margin-bottom: 0.8rem;
-            z-index: 1;
-        }
         .leaflet-container { font-family: 'Poppins', sans-serif; }
         .leaflet-pane { z-index: 1 !important; }
         .leaflet-top, .leaflet-bottom { z-index: 2 !important; }
@@ -243,7 +160,6 @@
 </head>
 <body>
 
-    <!-- ── MOBILE TOP HEADER ── -->
     <header class="mobile-header">
         <div style="display:flex; align-items:center; gap:0.6rem;">
             <img src="logokalapp.png" alt="Kalapp" style="width:32px; height:32px; border-radius:8px;">
@@ -254,7 +170,6 @@
 
     <div class="container">
 
-        <!-- ── SIDEBAR (desktop) ── -->
         <aside>
             <div class="top">
                 <div class="logo">
@@ -284,7 +199,6 @@
             </div>
         </aside>
 
-        <!-- ── FILE COMPLAINT PAGE ── -->
         <main id="complaint-page">
             <h1>Submit a Complaint</h1>
             <div class="card" id="mobile-search-card">
@@ -294,66 +208,93 @@
                 </div>
                 <p style="font-size:0.82rem; color:var(--color-info-dark);">See what your neighbors are reporting in your community.</p>
             </div>
+            
             <div class="card">
                 <form id="complaint-form">
-                    <div class="form-group">
-                        <label>Select Barangay</label>
-                        <select class="form-control" id="barangay" required>
-                            <option value="">-- Choose your Barangay --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Issue Category</label>
-                        <select class="form-control" id="issue" required>
-                            <option value="" disabled selected>-- Choose Category --</option>
-                            <option value="Infrastructure &amp; Public Works">Infrastructure &amp; Public Works</option>
-                            <option value="Environment &amp; Sanitation">Environment &amp; Sanitation</option>
-                            <option value="Peace, Order &amp; Public Safety">Peace, Order &amp; Public Safety</option>
-                            <option value="Inter-Personal Disputes (Lupon / Mediation)">Inter-Personal Disputes (Lupon / Mediation)</option>
-                            <option value="Business &amp; Ordinance Violations">Business &amp; Ordinance Violations</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Detailed Description</label>
-                        <textarea class="form-control" id="description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
-                        <div id="lupon-tip-box" style="display:none; margin-top:0.6rem; padding:0.8rem 1rem; border-radius:var(--border-radius-1); background:rgba(255,187,85,0.12); border:1.5px solid var(--color-warning); font-size:0.85rem; color:var(--color-dark); line-height:1.5;">
-                            ⚖️ <strong>Tip:</strong> If this involves a neighbor dispute that may go to Lupon mediation, include the respondent's contact number (e.g., 09XXXXXXXXX) in your description so authorities can reach them.
+                    <div class="form-split">
+                        <div class="form-col" style="background: rgba(132, 139, 200, 0.05); padding: 1.5rem; border-radius: 16px; border: 1.5px solid var(--color-info-light);">
+                            <h3 style="margin-bottom: 1rem; color: var(--color-primary);">1. Pin Location</h3>
+                            <div style="font-size:0.85rem; color:var(--color-info-dark); margin-bottom:0.8rem;">
+                                📍 Mark your location first. We will automatically select your Barangay.
+                            </div>
+                            
+                            <div id="exif-location-label" style="display:none; margin-bottom:0.6rem; font-size:0.85rem; color:var(--color-success); font-weight:600;">📷 Location auto-detected from photo</div>
+                            
+                            <div style="display:flex; gap:0.5rem; margin-bottom:0.6rem;">
+                                <input type="text" id="locationSearchInput" class="form-control" placeholder="🔍 Search landmark" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();searchLocation();}">
+                                <button type="button" onclick="searchLocation()" style="background:var(--color-primary); color:white; padding:0.6rem 1rem; border-radius:12px; cursor:pointer; font-weight:600; font-size:0.85rem; font-family:'Poppins',sans-serif; border:none; flex-shrink:0;">Search</button>
+                            </div>
+
+                            <div style="display:flex; gap:0.6rem; margin-bottom:0.8rem; flex-wrap:wrap;">
+                                <button type="button" onclick="centerOnMyLocation()" style="background:var(--color-primary); color:white; padding:0.8rem 1rem; border-radius:12px; cursor:pointer; font-weight:600; font-size:0.9rem; border:none; width: 100%;">📍 Use My Current Location</button>
+                            </div>
+
+                            <div id="location-map" style="height: 300px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1;"></div>
+                            
+                            <div style="margin-top:0.8rem; font-size:0.85rem; font-weight:600; color:var(--color-primary);">📌 Pinned at: <span id="pin-coords">drag pin to set</span></div>
+                            
+                            <input type="text" class="form-control" id="locationAddressInput" placeholder="✏️ Add a landmark or address (optional)" style="margin-top: 1rem;">
+                        </div>
+
+                        <div class="form-col">
+                            <h3 style="margin-bottom: 1rem; color: var(--color-primary);">2. Report Details</h3>
+                            
+                            <div class="form-group">
+                                <label>Select Barangay</label>
+                                <div class="brgy-filters">
+                                    <button type="button" class="brgy-btn active" onclick="filterBarangays(1, 188, this)">All</button>
+                                    <button type="button" class="brgy-btn" onclick="filterBarangays(1, 50, this)">1-50</button>
+                                    <button type="button" class="brgy-btn" onclick="filterBarangays(51, 100, this)">51-100</button>
+                                    <button type="button" class="brgy-btn" onclick="filterBarangays(101, 150, this)">101-150</button>
+                                    <button type="button" class="brgy-btn" onclick="filterBarangays(151, 188, this)">151-188</button>
+                                </div>
+                                <select class="form-control" id="barangay" required>
+                                    <option value="">-- Choose your Barangay --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Issue Category</label>
+                                <select class="form-control" id="issue" required>
+                                    <option value="" disabled selected>-- Choose Category --</option>
+                                    <option value="Infrastructure & Public Works">Infrastructure & Public Works</option>
+                                    <option value="Environment & Sanitation">Environment & Sanitation</option>
+                                    <option value="Peace, Order & Public Safety">Peace, Order & Public Safety</option>
+                                    <option value="Inter-Personal Disputes (Lupon / Mediation)">Inter-Personal Disputes (Lupon / Mediation)</option>
+                                    <option value="Business & Ordinance Violations">Business & Ordinance Violations</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Detailed Description</label>
+                                <textarea class="form-control" id="description" rows="3" placeholder="Describe the issue in detail..." required></textarea>
+                                <div id="lupon-tip-box" style="display:none; margin-top:0.6rem; padding:0.8rem 1rem; border-radius:var(--border-radius-1); background:rgba(255,187,85,0.12); border:1.5px solid var(--color-warning); font-size:0.85rem; color:var(--color-dark); line-height:1.5;">
+                                    ⚖️ <strong>Tip:</strong> If this involves a neighbor dispute that may go to Lupon mediation, include the respondent's contact number (e.g., 09XXXXXXXXX) in your description so authorities can reach them.
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Upload Photo Evidence</label>
+                                <input type="file" class="form-control" id="evidence" accept="image/*" required>
+                                <div id="ai-preview-box">
+                                    <span id="ai-preview-text">🤖 Analyzing photo with Gemini AI...</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>📞 Contact Number <span style="color:var(--color-danger);">*</span></label>
+                                <input type="tel" class="form-control" id="contactNumber" placeholder="e.g. 09XX-XXX-XXXX" required>
+                            </div>
+
+                            <input type="hidden" id="locationLat" name="locationLat">
+                            <input type="hidden" id="locationLng" name="locationLng">
+                            <input type="hidden" id="locationAddress" name="locationAddress">
+                            <input type="hidden" id="locationSource" name="locationSource">
+
+                            <div id="form-msg" style="margin-bottom:1rem; font-weight:600; font-size:0.88rem; text-align:center; line-height:1.6;"></div>
+                            <button type="submit" class="btn-submit">🚀 Submit Complaint</button>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Upload Photo Evidence</label>
-                        <input type="file" class="form-control" id="evidence" accept="image/*" required>
-                        <div id="ai-preview-box">
-                            <span id="ai-preview-text">🤖 Analyzing photo with Gemini AI...</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>📞 Contact Number <span style="color:var(--color-danger);">*</span></label>
-                        <input type="tel" class="form-control" id="contactNumber" placeholder="e.g. 09XX-XXX-XXXX" required>
-                    </div>
-                    <div class="form-group">
-                        <label>📍 Incident Location</label>
-                        <div id="exif-location-label" style="display:none; margin-bottom:0.6rem; font-size:0.85rem; color:var(--color-success); font-weight:600;">📷 Location auto-detected from photo</div>
-                        <div style="display:flex; gap:0.5rem; margin-bottom:0.6rem;">
-                            <input type="text" id="locationSearchInput" class="form-control" placeholder="🔍 Search barangay or landmark (e.g. Barangay Sta. Cruz)" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();searchLocation();}">
-                            <button type="button" onclick="searchLocation()" style="background:var(--color-primary); color:white; padding:0.6rem 1rem; border-radius:var(--border-radius-1); cursor:pointer; font-weight:600; font-size:0.85rem; font-family:'Poppins',sans-serif; border:none; flex-shrink:0;">🔍 Search</button>
-                        </div>
-                        <div style="font-size:0.82rem; color:var(--color-info-dark); margin-bottom:0.5rem; font-style:italic;">
-                            👆 Drag the 🔶 orange pin to the <strong>exact location</strong> of the incident
-                        </div>
-                        <div id="location-map"></div>
-                        <div style="margin-bottom:0.8rem; font-size:0.85rem; font-weight:600; color:var(--color-primary);">📌 Pinned at: <span id="pin-coords">drag pin to set location</span></div>
-                        <div style="display:flex; gap:0.6rem; margin-bottom:0.8rem; flex-wrap:wrap;">
-                            <button type="button" onclick="centerOnMyLocation()" style="background:var(--color-primary); color:white; padding:0.6rem 1rem; border-radius:var(--border-radius-1); cursor:pointer; font-weight:600; font-size:0.85rem; font-family:'Poppins',sans-serif; border:none; flex-shrink:0;">📍 Start from My Current Location</button>
-                        </div>
-                        <input type="text" class="form-control" id="locationAddressInput" placeholder="✏️ Add a landmark or address (optional)">
-                    </div>
-                    <input type="hidden" id="locationLat" name="locationLat">
-                    <input type="hidden" id="locationLng" name="locationLng">
-                    <input type="hidden" id="locationAddress" name="locationAddress">
-                    <input type="hidden" id="locationSource" name="locationSource">
-                    <div id="form-msg" style="margin-bottom:1rem; font-weight:600; font-size:0.88rem; text-align:center; line-height:1.6;"></div>
-                    <button type="submit" class="btn-submit">Submit Complaint to LGU</button>
                 </form>
             </div>
 
@@ -374,7 +315,6 @@
             </div>
         </main>
 
-        <!-- ── MY HISTORY PAGE ── -->
         <main id="history-page" style="display:none;">
             <h1>My Complaints</h1>
             <div class="card" style="padding:0;">
@@ -399,34 +339,25 @@
             </div>
         </main>
 
-        <!-- ── HOTLINE PAGE ── -->
         <main id="hotline-page" style="display:none;">
             <h1>Emergency Hotlines</h1>
             <div class="card">
-                <input type="text" id="hotline-search" class="form-control"
-                    placeholder="🔍 Search hotline..."
-                    oninput="filterHotlines(this.value)"
-                    style="margin-bottom:1rem;">
+                <input type="text" id="hotline-search" class="form-control" placeholder="🔍 Search hotline..." oninput="filterHotlines(this.value)" style="margin-bottom:1rem;">
                 <div id="hotline-list"></div>
             </div>
         </main>
 
-        <!-- ── BARANGAY DIRECTORY PAGE ── -->
         <main id="directory-page" style="display:none;">
             <h1>📋 Barangay Directory</h1>
             <div class="card">
                 <div style="background:rgba(255,140,0,0.08); border:1.5px solid var(--color-primary); border-radius:var(--border-radius-1); padding:1rem; margin-bottom:1rem; font-size:0.88rem; color:var(--color-dark);">
                     💡 <strong>Tip:</strong> For minor disturbances like loud karaoke at night, you can call your Tanod directly — no need to wait for the formal complaint process.
                 </div>
-                <input type="text" id="directory-search" class="form-control"
-                    placeholder="🔍 Search barangay or contact..."
-                    oninput="filterDirectory(this.value)"
-                    style="margin-bottom:1rem;">
+                <input type="text" id="directory-search" class="form-control" placeholder="🔍 Search barangay or contact..." oninput="filterDirectory(this.value)" style="margin-bottom:1rem;">
                 <div id="directory-list"></div>
             </div>
         </main>
 
-        <!-- ── COMMUNITY FEED PAGE ── -->
         <main id="feed-page" style="display:none;">
             <h1>📢 Community Feed</h1>
             <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">See what your community is reporting. Vouch for legitimate concerns or leave a comment.</p>
@@ -436,7 +367,6 @@
             </div>
         </main>
 
-        <!-- ── RIGHT PANEL (desktop only) ── -->
         <div class="right">
             <div class="header-actions">
                 <div style="display:flex; align-items:center; gap:1rem;">
@@ -465,10 +395,7 @@
             </div>
         </div>
 
-    </div><!-- end .container -->
-
-    <!-- ── MOBILE BOTTOM NAV ── -->
-    <nav class="mobile-nav">
+    </div><nav class="mobile-nav">
         <button onclick="showPage('complaint')">
             <span class="material-icons-sharp">add_circle_outline</span>File
         </button>
@@ -489,7 +416,6 @@
         </button>
     </nav>
 
-    <!-- ── AUDIT TRAIL MODAL ── -->
     <div id="trail-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:500px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
             <span onclick="closeTrailModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
@@ -498,7 +424,6 @@
         </div>
     </div>
 
-    <!-- ── COMMENT MODAL ── -->
     <div id="comment-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:480px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
             <span onclick="closeCommentModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
@@ -511,7 +436,7 @@
 
     <script>
         const BACKEND_URL = 'https://kalapp-system.onrender.com';
-        const username = localStorage.getItem('kalapp_username') || 'Anonymous';
+        const username = localStorage.getItem('kalapp_username') || 'John Marc Colico';
         document.getElementById('citizen-name-display').innerText = username;
         document.getElementById('mobile-username').innerText = username;
 
@@ -527,13 +452,11 @@
                 const ic = a.querySelector('.material-icons-sharp');
                 a.classList.toggle('active', ic && ic.textContent.trim() === iconMap[pageId]);
             });
-
             // Mobile nav active
             const mobileIdx = { complaint: 0, history: 1, feed: 2, directory: 3, hotline: 4 };
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
                 btn.classList.toggle('active', i === mobileIdx[pageId]);
             });
-
             if (pageId === 'history') loadMyHistory();
             if (pageId === 'hotline') renderHotlines(hotlineData);
             if (pageId === 'directory') renderDirectory(barangayDirectoryData);
@@ -650,12 +573,51 @@
             } catch (e) { console.error(e); }
         }
 
-        /* ── BARANGAY DROPDOWN ── */
-        const bgySelect = document.getElementById('barangay');
-        for (let i = 1; i <= 188; i++) {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = `Barangay ${i}`;
-            bgySelect.appendChild(opt);
+        /* ── BARANGAY DROPDOWN & FILTERS ── */
+        function filterBarangays(start, end, btnElement) {
+            const bgySelect = document.getElementById('barangay');
+            bgySelect.innerHTML = '<option value="">-- Choose your Barangay --</option>';
+            for (let i = start; i <= end; i++) {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = `Barangay ${i}`;
+                bgySelect.appendChild(opt);
+            }
+            
+            // Update active button styling
+            if (btnElement) {
+                document.querySelectorAll('.brgy-btn').forEach(btn => btn.classList.remove('active'));
+                btnElement.classList.add('active');
+            }
+        }
+        // Initialize with all 188 barangays
+        filterBarangays(1, 188, null);
+
+        /* ── REVERSE GEOCODING (Map to Dropdown) ── */
+        async function reverseGeocodeBarangay(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await res.json();
+                
+                if (data && data.address) {
+                    const areaName = data.address.suburb || data.address.village || data.address.quarter || data.address.neighbourhood || "";
+                    const match = areaName.match(/\d+/);
+                    if (match) {
+                        const brgyNum = parseInt(match[0]);
+                        if (brgyNum >= 1 && brgyNum <= 188) {
+                            filterBarangays(1, 188, document.querySelector('.brgy-btn')); 
+                            document.getElementById('barangay').value = `Barangay ${brgyNum}`;
+                            
+                            const toast = document.createElement('div');
+                            toast.innerText = `✅ Auto-selected Barangay ${brgyNum} based on map pin.`;
+                            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#00bc7d;color:white;padding:0.8rem 1.2rem;border-radius:12px;font-size:0.85rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+                            document.body.appendChild(toast);
+                            setTimeout(() => toast.remove(), 4000);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Reverse geocoding failed", e);
+            }
         }
 
         /* ── THEME TOGGLER ── */
@@ -677,9 +639,9 @@
         let mapInitialized = false;
         let locationMap = null;
         let locationMarker = null;
-        const MAP_DEFAULT_LAT = 11.8;
-        const MAP_DEFAULT_LNG = 122.0;
-        const MAP_DEFAULT_ZOOM = 6;
+        const MAP_DEFAULT_LAT = 14.6500; // Updated to general Caloocan area for relevance
+        const MAP_DEFAULT_LNG = 120.9815;
+        const MAP_DEFAULT_ZOOM = 13;
 
         function dmsToDecimal(dms, ref) {
             if (!dms || dms.length < 3) return null;
@@ -695,7 +657,6 @@
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(locationMap);
-
             const orangeIcon = L.divIcon({
                 className: '',
                 html: '<div style="width:30px;height:30px;background:var(--color-primary,#ff8c00);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',
@@ -703,10 +664,9 @@
                 iconAnchor: [15, 30],
                 popupAnchor: [0, -30]
             });
-
             locationMarker = L.marker([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], { draggable: true, icon: orangeIcon }).addTo(locationMap);
             locationMarker.bindPopup('<strong>📍 Drag me to the exact incident spot</strong>', { closeOnClick: false, autoClose: false }).openPopup();
-
+            
             locationMarker.on('dragend', function () {
                 const latlng = locationMarker.getLatLng();
                 const lat = latlng.lat.toFixed(6);
@@ -714,6 +674,10 @@
                 document.getElementById('locationLat').value = lat;
                 document.getElementById('locationLng').value = lng;
                 document.getElementById('pin-coords').textContent = lat + ', ' + lng;
+                
+                // Trigger auto-select
+                reverseGeocodeBarangay(lat, lng);
+                
                 const srcEl = document.getElementById('locationSource');
                 if (srcEl.value !== 'exif' && srcEl.value !== 'gps') {
                     srcEl.value = 'pinned';
@@ -734,6 +698,9 @@
                 document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
                 document.getElementById('locationSource').value = 'gps';
                 document.getElementById('exif-location-label').style.display = 'none';
+                
+                reverseGeocodeBarangay(lat.toFixed(6), lng.toFixed(6));
+                
                 const toast = document.createElement('div');
                 toast.innerText = '✅ Map centered — now drag the orange pin to the exact incident spot';
                 toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.8rem 1.2rem;border-radius:12px;font-size:0.82rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:320px;text-align:center;';
@@ -746,7 +713,7 @@
             const query = document.getElementById('locationSearchInput').value.trim();
             if (!query) return;
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Philippines')}&limit=1`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Caloocan City, Philippines')}&limit=1`);
                 const results = await res.json();
                 if (results.length > 0) {
                     const lat = parseFloat(results[0].lat);
@@ -757,6 +724,7 @@
                     document.getElementById('locationLng').value = lng.toFixed(6);
                     document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
                     document.getElementById('locationSource').value = 'search';
+                    reverseGeocodeBarangay(lat, lng);
                 } else {
                     alert('Location not found. Try a different name.');
                 }
@@ -787,13 +755,13 @@
                     document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
                     document.getElementById('locationSource').value = 'exif';
                     document.getElementById('exif-location-label').style.display = 'block';
+                    reverseGeocodeBarangay(lat.toFixed(6), lng.toFixed(6));
                 }
             });
 
             box.style.display = 'block';
             box.className = 'scanning';
             txt.innerText  = '🤖 Gemini AI is scanning your photo...';
-
             try {
                 const fd = new FormData();
                 fd.append('evidence', file);
@@ -825,7 +793,6 @@
                 txt.innerText = '⚠️ AI preview unavailable. You can still submit.';
             }
         });
-
         document.getElementById('issue').addEventListener('change', function () {
             const box = document.getElementById('ai-preview-box');
             const txt = document.getElementById('ai-preview-text');
@@ -852,7 +819,7 @@
         let feedPageNum = 1;
         let feedPageItems = [];
         let currentCommentId = null;
-        const feedCommentStore = {}; // trackingId -> comments array
+        const feedCommentStore = {};
 
         function buildFeedCard(c, compact = false) {
             const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
@@ -997,8 +964,6 @@
                     const photo = c.imageUrl ? `<img src="${c.imageUrl}" class="photo-thumbnail">` : '<span style="font-size:0.75rem; color:gray;">No Photo</span>';
                     const date  = new Date(c.createdAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
                     const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
-
-                    // Affidavit action button
                     let affidavitBtn = '';
                     if (c.affidavitApproved) {
                         affidavitBtn = `<button onclick="downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.75rem;border:none;white-space:nowrap;margin-top:4px;">📥 Download Affidavit</button>`;
@@ -1044,7 +1009,6 @@
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
 
-            // Clear both form-msg and ai-preview-box before any async calls
             formMsg.innerText = '';
             document.getElementById('ai-preview-box').style.display = 'none';
             document.getElementById('ai-preview-box').className = '';
@@ -1055,11 +1019,10 @@
             EXIF.getData(file, function () {
                 const make  = EXIF.getTag(this, 'Make');
                 const model = EXIF.getTag(this, 'Model');
-
                 if (!make || !model) {
                     formMsg.style.color = 'var(--color-danger)';
                     formMsg.innerText   = '❌ Security Check Failed: Please take a real photo using a camera.';
-                    submitBtn.innerText = 'Submit Complaint to LGU';
+                    submitBtn.innerText = '🚀 Submit Complaint';
                     submitBtn.disabled  = false;
                     return;
                 }
@@ -1067,9 +1030,7 @@
                 formMsg.style.color = 'var(--color-success)';
                 formMsg.innerText   = '✅ Authentic photo verified! Submitting...';
 
-                // Sync address text input to hidden field
                 document.getElementById('locationAddress').value = document.getElementById('locationAddressInput').value;
-
                 const fd = new FormData();
                 fd.append('username',         username);
                 fd.append('barangay',         document.getElementById('barangay').value);
@@ -1112,7 +1073,7 @@
                     formMsg.innerText   = err.message;
                 })
                 .finally(() => {
-                    submitBtn.innerText = 'Submit Complaint to LGU';
+                    submitBtn.innerText = '🚀 Submit Complaint';
                     submitBtn.disabled  = false;
                 });
             });
@@ -1126,15 +1087,12 @@
             const wsUrl = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
             const badge = document.getElementById('citizen-ws-badge');
             let ws;
-            try {
-                ws = new WebSocket(wsUrl);
-            } catch(e) { return; }
+            try { ws = new WebSocket(wsUrl); } catch(e) { return; }
             ws.onopen = () => {
                 citizenWsReconnectDelay = 1000;
                 if (badge) { badge.textContent = '🟢 Live'; badge.style.display = 'inline-block'; }
             };
             ws.onmessage = () => {
-                // Refresh current page data
                 const feedContainer = document.getElementById('citizen-feed-container');
                 if (feedContainer) { citizenFeedPage = 1; loadCitizenFeedSidebar(); }
                 const feedPageCards = document.getElementById('feed-page-cards');
