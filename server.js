@@ -9,7 +9,7 @@ const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
-// 🤖 Google Generative AI
+// 🤖 Google Generative AI & Auth
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { OAuth2Client } = require('google-auth-library');
 
@@ -228,22 +228,20 @@ app.post('/api/verify-otp', async (req, res) => {
     } else { res.status(400).json({ message: 'Invalid OTP.' }); }
 });
 
+// 🔒 SECURE GOOGLE LOGIN ROUTE
 app.post('/api/google-login', async (req, res) => {
-    const { token } = req.body; // Now expecting a secure token, not just an email
+    const { token } = req.body;
     
     try {
-        // 1. Verify the token directly with Google
         const ticket = await googleClient.verifyIdToken({
             idToken: token,
             audience: process.env.GOOGLE_CLIENT_ID,
         });
         
-        // 2. Extract the verified info
         const payload = ticket.getPayload();
         const email = payload.email;
         const name = payload.name;
 
-        // 3. Proceed with standard login logic
         let user = await User.findOne({ email });
         if (user) {
             if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });

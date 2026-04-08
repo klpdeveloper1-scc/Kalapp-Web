@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalapp - Secure Access</title>
@@ -233,6 +234,40 @@
 }
     </style>
 </head>
+
+<script>
+    function handleGoogleLogin(response) {
+        console.log("Secure token received!");
+  
+        // Pointing to your new live Render URL
+        fetch('https://kalapp-web.onrender.com/api/google-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: response.credential 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Login Successful! Welcome " + data.username);
+                // Store user info and redirect to citizen dashboard
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('role', data.role);
+                window.location.href = 'citizen.html'; // Adjust this to match your actual dashboard filename
+            } else {
+                alert("Login Failed: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error connecting to server:", error);
+            alert("Could not connect to the server. Please try again later.");
+        });
+    }
+  </script>
+  
 <body>
     <div class="bubbles">
         <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
