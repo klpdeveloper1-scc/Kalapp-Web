@@ -510,7 +510,7 @@
     </div>
 
     <script>
-        const BACKEND_URL = 'https://kalapp-system.onrender.com';
+        const BACKEND_URL = window.location.origin;
         const username = localStorage.getItem('kalapp_username') || 'Anonymous';
         document.getElementById('citizen-name-display').innerText = username;
         document.getElementById('mobile-username').innerText = username;

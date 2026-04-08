@@ -387,7 +387,7 @@
     </div>
 
     <script>
-        const BACKEND_URL = 'https://kalapp-system.onrender.com';
+        const BACKEND_URL = window.location.origin;
         const currentAdminName = localStorage.getItem('kalapp_username') || 'Official';
 
         function escAttr(str) {
