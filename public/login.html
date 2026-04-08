@@ -236,36 +236,7 @@
 </head>
 
 <script>
-    function handleGoogleLogin(response) {
-        console.log("Secure token received!");
-  
-        // Pointing to your new live Render URL
-        fetch('https://kalapp-web.onrender.com/api/google-login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                token: response.credential 
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert("Login Successful! Welcome " + data.username);
-                // Store user info and redirect to citizen dashboard
-                localStorage.setItem('username', data.username);
-                localStorage.setItem('role', data.role);
-                window.location.href = 'citizen.html'; // Adjust this to match your actual dashboard filename
-            } else {
-                alert("Login Failed: " + data.message);
-            }
-        })
-        .catch(error => {
-            console.error("Error connecting to server:", error);
-            alert("Could not connect to the server. Please try again later.");
-        });
-    }
+    
   </script>
 
 <body>
@@ -560,31 +531,43 @@
             }
         });
 
-        // --- 3. GOOGLE LOGIN WIRING ---
-        function handleGoogleLogin(response) {
-      console.log("Secure token received from Google!");
 
-      // We no longer decode it here. We send the raw secure token straight to your server.
-      fetch('https://kalapp-web.onrender.com/api/google-login', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-              token: response.credential 
-          })
-      })
-      .then(res => res.json())
-      .then(data => {
-          if (data.success) {
-              alert("Login Successful! Welcome " + data.username);
-              // window.location.href = 'index.html'; // Redirect to citizen dashboard
-          } else {
-              alert("Login Failed: " + data.message);
-          }
-      })
-      .catch(error => console.error("Error connecting to server:", error));
-       }
+        // --- 3. GOOGLE LOGIN WIRING ---
+function handleGoogleLogin(response) {
+    console.log("Secure token received from Google!");
+
+    // Using the relative path perfectly matches your Render routing!
+    fetch('/api/google-login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: response.credential 
+        })
+    })
+    .then(safeFetch)
+    .then(data => {
+        // Save the username for the portal to use
+        localStorage.setItem('kalapp_username', data.username);
+        
+        // Smart Redirect based on user role (matches your manual login)
+        if (data.role === 'superadmin') {
+            window.location.href = '/superadmin-dashboard.html';
+        } else if (data.role === 'lgu') {
+            window.location.href = '/lgu-dashboard.html';
+        } else {
+            window.location.href = '/citizen-portal.html';
+        }
+    })
+    .catch(error => {
+        console.error("Error connecting to server:", error);
+        errorMsg.style.color = 'var(--error-red)';
+        errorMsg.innerText = "❌ Google Login Failed. Please try again.";
+    });
+}
+
+       
 
         function decodeJwtResponse(token) {
             let base64Url = token.split('.')[1];
