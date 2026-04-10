@@ -187,8 +187,7 @@ seedAdmin();
 
 // --- Brevo Configuration ---
 const defaultClient = SibApiV3Sdk.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
 // --- API ROUTES ---
@@ -213,9 +212,14 @@ app.post('/api/request-otp', async (req, res) => {
         sendSmtpEmail.to = [{ email: email }];
         sendSmtpEmail.subject = "Your Verification Code";
         sendSmtpEmail.htmlContent = `<h2>Code: ${otp}</h2>`;
-        await tranEmailApi.sendTransacEmail(sendSmtpEmail);
-        res.json({ message: 'OTP sent!' });
-    } catch (error) { res.status(500).json({ message: 'Failed to send OTP.' }); }
+        
+        try {
+            await tranEmailApi.sendTransacEmail(sendSmtpEmail);
+            res.json({ message: 'OTP sent!' });
+          } catch (error) {
+            console.error('BREVO ERROR:', error.response?.body || error);
+            res.status(500).json({ message: 'Failed to send OTP.' });
+          }
 });
 
 app.post('/api/verify-otp', async (req, res) => {
