@@ -195,14 +195,26 @@ const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 app.post('/api/request-otp', async (req, res) => {
     const { email, username, password } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    try {
+
+    try { // <--- Outer Try Start
         let user = await User.findOne({ email });
+
         if (user) {
             if (user.status === 'blocked') return res.status(403).json({ message: 'Account is suspended.' });
             if (user.authMethod === 'google') return res.status(400).json({ message: 'Registered via Google.' });
             if (user.authMethod === 'local' && !user.otp) return res.status(400).json({ message: 'Email already in use.' });
         }
-        if (!user) user = new User({ username: username || email.split('@')[0], email, password, role: 'citizen', authMethod: 'local' });
+
+        if (!user) {
+            user = new User({ 
+                username: username || email.split('@')[0], 
+                email, 
+                password, 
+                role: 'citizen', 
+                authMethod: 'local' 
+            });
+        }
+
         user.otp = otp;
         user.otpExpires = new Date(Date.now() + 10 * 60000);
         await user.save();
@@ -213,13 +225,21 @@ app.post('/api/request-otp', async (req, res) => {
         sendSmtpEmail.subject = "Your Verification Code";
         sendSmtpEmail.htmlContent = `<h2>Code: ${otp}</h2>`;
         
+        // Inner Try for Email Service
         try {
             await tranEmailApi.sendTransacEmail(sendSmtpEmail);
             res.json({ message: 'OTP sent!' });
-          } catch (error) {
+        } catch (error) {
             console.error('BREVO ERROR:', error.response?.body || error);
             res.status(500).json({ message: 'Failed to send OTP.' });
-          }
+        }
+
+    } catch (outerError) { // <--- ADDED THIS MISSING CATCH
+        console.error('DATABASE/SERVER ERROR:', outerError);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Internal server error.' });
+        }
+    } // <--- Outer Try End
 });
 
 app.post('/api/verify-otp', async (req, res) => {
