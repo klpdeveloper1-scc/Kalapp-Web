@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalapp - Secure Access</title>
@@ -21,7 +20,6 @@
             --input-bg: transparent;
             --input-border: #000000;
             --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            --facebook-blue: #1877F2;
             --error-red: #ef4444;
             --success-green: #10b981;
             --dropdown-text: #1e293b;
@@ -86,7 +84,6 @@
             100% { transform: translateY(-1200px) rotate(720deg); opacity: 0; }
         }
         
-        /* Bubble Placements */
         .bubble:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
         .bubble:nth-child(2) { width: 60px; height: 60px; left: 20%; animation-delay: 5s; animation-duration: 20s; }
         .bubble:nth-child(3) { width: 100px; height: 100px; left: 35%; animation-delay: 2s; }
@@ -112,7 +109,6 @@
         .login-card h1 { font-weight: 800; letter-spacing: -1.5px; margin: 0 0 5px 0; font-size: 32px; }
         .login-card p.subtitle { color: var(--text-muted); margin-bottom: 25px; font-size: 14px; }
         
-        /* Form Styling */
         .form-group { position: relative; margin-bottom: 20px; text-align: left; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
@@ -129,7 +125,6 @@
             transition: all 0.2s ease; padding: 0 5px;
         }
         
-        /* Label Float Logic */
         .form-group input:focus ~ label:not(.terms-label),
         .form-group input:not(:placeholder-shown) ~ label:not(.terms-label),
         .form-group select:focus ~ label:not(.terms-label),
@@ -148,7 +143,6 @@
             background-repeat: no-repeat; background-position: right 12px center; background-size: 14px;
         }
 
-        /* Terms of Agreement Styling */
         .terms-container { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; text-align: left; }
         .terms-container input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; cursor: pointer; accent-color: var(--orange); }
         .terms-container .terms-label { font-size: 12px; color: var(--text-muted); line-height: 1.4; cursor: pointer; }
@@ -179,22 +173,24 @@
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--input-border); }
         .divider span { padding: 0 10px; color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
         
-        .social-btn-wrapper { display: flex; justify-content: center; gap: 15px; }
+        .social-btn-wrapper { display: flex; align-items: center; justify-content: center; gap: 15px; }
         
-        .facebook-btn { 
-            width: 40px; height: 40px; border-radius: 50%; background: white; 
-            border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: var(--facebook-blue); font-size: 18px; 
+        /* Google Button Animation */
+        .g_id_signin {
+            animation: googlePulse 2s infinite;
+            border-radius: 50%;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease !important;
         }
 
-        .facebook-btn, .g_id_signin {
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease !important;
-            border-radius: 50%;
+        @keyframes googlePulse {
+            0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(66, 133, 244, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); }
         }
-        .facebook-btn:hover, .g_id_signin:hover { 
+
+        .g_id_signin:hover { 
             transform: translateY(-5px) scale(1.15) !important; box-shadow: 0 10px 15px rgba(0,0,0,0.15);
         }
-        .facebook-btn:hover i { transform: rotate(10deg); transition: transform 0.3s ease; }
 
         #error-msg { color: var(--error-red); font-size: 12px; margin-bottom: 10px; font-weight: 600; min-height: 18px; }
         #password-hint { font-size: 11px; margin-top: 5px; font-weight: 600; display: none; }
@@ -206,38 +202,37 @@
             cursor: pointer; color: var(--text-muted); font-size: 20px; z-index: 5;
         }
         
-        /* OTP Section Styling */
         #otp-section { display: none; margin-top: 10px; }
         .otp-back { text-align: left; margin-bottom: 15px; cursor: pointer; color: var(--text-muted); font-size: 12px; display: flex; align-items: center; }
         .otp-back:hover { color: var(--orange); }
         #reg-otp { text-align: center; letter-spacing: 15px; font-size: 24px; font-weight: bold; }
-        /* 🚻 Fix para sa Sex Dropdown */
-#reg-sex {
-    background-color: rgba(255, 255, 255, 0.1) !important; /* Transparent glass look */
-    color: white !important;
-    appearance: none; /* Tinatanggal ang default styling ng Windows/Chrome */
-    cursor: pointer;
-}
 
-/* Ito ang para sa listahan na lumalabas (Male/Female) */
-#reg-sex option {
-    background-color: #003262; /* Marine Blue para mabasa ang text */
-    color: white;
-    padding: 10px;
-}
+        #resend-container { font-size: 12px; margin-top: 15px; color: var(--text-muted); }
+        #resend-link { display: none; }
 
-/* Fix para sa Floating Label ng Sex */
-.form-group select:focus ~ label:not(.terms-label),
-.form-group select:not([value=""]) ~ label:not(.terms-label) {
-    background-color: #003262 !important; /* Itapat sa kulay ng card para hindi maging white block */
-    padding: 0 5px;
-}
+        #reg-sex {
+            background-color: rgba(255, 255, 255, 0.1) !important; 
+            color: inherit;
+            cursor: pointer;
+        }
+
+        #reg-sex option {
+            background-color: #003262; 
+            color: white;
+            padding: 10px;
+        }
+
+        body:not(.dark) #reg-sex option {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .form-group select:focus ~ label:not(.terms-label),
+        .form-group select:not([value=""]) ~ label:not(.terms-label) {
+            background-color: var(--bg-card) !important; 
+        }
     </style>
 </head>
-
-<script>
-    
-  </script>
 
 <body>
     <div class="bubbles">
@@ -280,7 +275,6 @@
             <div class="social-btn-wrapper">
                 <div id="g_id_onload" data-client_id="807044554235-tqj4kr5dujudhgkb6bqarhpp314agbve.apps.googleusercontent.com" data-callback="handleGoogleLogin"></div>
                 <div class="g_id_signin" data-type="icon" data-shape="circle" data-theme="outline"></div>
-                <div class="facebook-btn" onclick="handleFacebookLogin()"><i class="fa-brands fa-facebook-f"></i></div>
             </div>
         </div>
 
@@ -354,6 +348,10 @@
                         <input type="text" id="reg-otp" placeholder=" " maxlength="6">
                         <label>Verification Code</label>
                     </div>
+                    <div id="resend-container">
+                        <span id="resend-timer">Resend code in 30s</span>
+                        <span id="resend-link" class="toggle-text" onclick="handleResendOTP()">Resend New Code</span>
+                    </div>
                 </div>
 
                 <button type="submit" id="main-submit-btn" class="btn btn-orange">Send Verification Code</button>
@@ -366,8 +364,8 @@
         const errorMsg = document.getElementById('error-msg');
         const modeToggle = document.getElementById('mode-toggle');
         let currentSignupStep = 1; 
+        let countdownInterval;
 
-        // --- Safe Fetch Helper to prevent JSON Crashes ---
         async function safeFetch(response) {
             const isJson = response.headers.get('content-type')?.includes('application/json');
             const data = isJson ? await response.json() : null;
@@ -375,7 +373,6 @@
             return data;
         }
 
-        // --- UI Toggles ---
         function toggleView(view) {
             document.getElementById('login-section').style.display = view === 'login' ? 'block' : 'none';
             document.getElementById('signup-section').style.display = view === 'signup' ? 'block' : 'none';
@@ -412,8 +409,59 @@
             }
         }
 
+        function startResendCountdown() {
+            let seconds = 30;
+            const timerSpan = document.getElementById('resend-timer');
+            const resendLink = document.getElementById('resend-link');
+            
+            timerSpan.style.display = 'inline';
+            resendLink.style.display = 'none';
+            
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                seconds--;
+                timerSpan.innerText = `Resend code in ${seconds}s`;
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    timerSpan.style.display = 'none';
+                    resendLink.style.display = 'inline';
+                }
+            }, 1000);
+        }
+
+        function handleResendOTP() {
+            const email = document.getElementById('reg-email').value;
+            errorMsg.style.color = 'var(--text-muted)';
+            errorMsg.innerText = 'Requesting new code...';
+            
+            fetch('/api/request-otp', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, resend: true })
+            })
+            .then(safeFetch)
+            .then(data => {
+                errorMsg.style.color = 'var(--success-green)';
+                errorMsg.innerText = '✅ New code sent!';
+                startResendCountdown();
+            })
+            .catch(err => {
+                errorMsg.style.color = 'var(--error-red)';
+                errorMsg.innerText = `❌ ${err.message}`;
+            });
+        }
+
+        document.getElementById('reg-confirm-password').addEventListener('input', function() {
+            const pass = document.getElementById('reg-password').value;
+            if (this.value === pass && pass !== "") {
+                this.style.borderColor = 'var(--success-green)';
+            } else {
+                this.style.borderColor = 'var(--error-red)';
+            }
+        });
+
         function backToSignup() {
             currentSignupStep = 1;
+            clearInterval(countdownInterval);
             document.getElementById('signup-fields').style.display = 'block';
             document.getElementById('otp-section').style.display = 'none';
             document.getElementById('main-submit-btn').innerText = 'Send Verification Code';
@@ -421,7 +469,6 @@
             errorMsg.innerText = '';
         }
 
-        // --- 1. LOGIN FORM WIRING ---
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const btn = this.querySelector('button');
@@ -448,7 +495,6 @@
             });
         });
 
-        // --- 2. SIGNUP & OTP WIRING ---
         document.getElementById('signup-form').addEventListener('submit', function(e) {
             e.preventDefault(); 
             const submitBtn = document.getElementById('main-submit-btn');
@@ -472,10 +518,9 @@
                 }
 
                 errorMsg.style.color = 'var(--text-muted)';
-                errorMsg.innerText = 'Sending code to your email via Brevo...';
+                errorMsg.innerText = 'Sending code to your email...';
                 submitBtn.disabled = true; submitBtn.innerText = 'Sending...';
 
-                // REAL FETCH: Ask server to send OTP
                 fetch('/api/request-otp', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, username: username, password: password })
@@ -485,12 +530,11 @@
                     document.getElementById('signup-fields').style.display = 'none';
                     document.getElementById('otp-section').style.display = 'block';
                     document.getElementById('reg-otp').setAttribute('required', 'true');
-                    
                     submitBtn.innerText = 'Verify & Create Account';
                     currentSignupStep = 2;
-                    
                     errorMsg.style.color = 'var(--success-green)';
                     errorMsg.innerText = '✅ ' + data.message;
+                    startResendCountdown();
                 })
                 .catch(err => {
                     errorMsg.style.color = 'var(--error-red)';
@@ -510,7 +554,6 @@
                 const otpValue = document.getElementById('reg-otp').value;
                 const email = document.getElementById('reg-email').value;
 
-                // REAL FETCH: Ask server to verify OTP
                 fetch('/api/verify-otp', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, otp: otpValue })
@@ -531,55 +574,24 @@
             }
         });
 
-
-        // --- 3. GOOGLE LOGIN WIRING ---
-function handleGoogleLogin(response) {
-    console.log("Secure token received from Google!");
-
-    // Using the relative path perfectly matches your Render routing!
-    fetch('/api/google-login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            token: response.credential 
-        })
-    })
-    .then(safeFetch)
-    .then(data => {
-        // Save the username for the portal to use
-        localStorage.setItem('kalapp_username', data.username);
-        
-        // Smart Redirect based on user role (matches your manual login)
-        if (data.role === 'superadmin') {
-            window.location.href = '/superadmin-dashboard.html';
-        } else if (data.role === 'lgu') {
-            window.location.href = '/lgu-dashboard.html';
-        } else {
-            window.location.href = '/citizen-portal.html';
-        }
-    })
-    .catch(error => {
-        console.error("Error connecting to server:", error);
-        errorMsg.style.color = 'var(--error-red)';
-        errorMsg.innerText = "❌ Google Login Failed. Please try again.";
-    });
-}
-
-       
-
-        function decodeJwtResponse(token) {
-            let base64Url = token.split('.')[1];
-            let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            return JSON.parse(decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join('')));
+        function handleGoogleLogin(response) {
+            fetch('/api/google-login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: response.credential })
+            })
+            .then(safeFetch)
+            .then(data => {
+                localStorage.setItem('kalapp_username', data.username);
+                if (data.role === 'superadmin') window.location.href = '/superadmin-dashboard.html';
+                else if (data.role === 'lgu') window.location.href = '/lgu-dashboard.html';
+                else window.location.href = '/citizen-portal.html';
+            })
+            .catch(error => {
+                errorMsg.style.color = 'var(--error-red)';
+                errorMsg.innerText = "❌ Google Login Failed.";
+            });
         }
 
-        function handleFacebookLogin() { alert("Facebook Login requires a Meta Developer App setup."); }
-
-        // --- Theme Init ---
         const updateThemeUI = () => {
             const isDark = document.body.classList.contains('dark');
             modeToggle.innerText = isDark ? 'LIGHT MODE' : 'DARK MODE';
@@ -590,7 +602,9 @@ function handleGoogleLogin(response) {
             updateThemeUI();
         };
 
-        document.getElementById('reg-sex').addEventListener('change', function() { this.setAttribute('value', this.value); });
+        document.getElementById('reg-sex').addEventListener('change', function() { 
+            this.setAttribute('value', this.value); 
+        });
         
         window.onload = () => {
             if (localStorage.getItem('kalapp-theme') === 'dark') { document.body.classList.add('dark'); }
