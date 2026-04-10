@@ -428,7 +428,7 @@ app.post('/api/complaints', upload.single('evidence'), async (req, res) => {
     } catch (error) { 
         console.error('UPLOAD ERROR:', error);
         res.status(500).json({ success: false, error: error.message }); 
-    } }
+    } 
 });
 
 app.get('/api/complaints', async (req, res) => {
