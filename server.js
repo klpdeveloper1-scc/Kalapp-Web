@@ -3,11 +3,14 @@ const express = require('express');
 const http = require('http');
 const { WebSocketServer, WebSocket } = require('ws');
 const mongoose = require('mongoose');
-const SibApiV3Sdk = require('sib-api-v3-sdk');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+
+// 📧 Mailer Dependencies (NEW)
+const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
 // 🤖 Google Generative AI & Auth
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -29,6 +32,14 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+// --- Google Mailer Configuration (NEW) ---
+const mailerOAuth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    'https://developers.google.com/oauthplayground'
+);
+mailerOAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
 // --- Middleware ---
 app.use(express.json());
@@ -112,30 +123,33 @@ async function scanImageWithAI(imageUrl, category) {
 
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
-The citizen reported this under the category ${category}.
+        The citizen reported this under the category ${category}.
 
-Analyze the uploaded photo and determine if it is a legitimate barangay complaint image.
-IMPORTANT RULES — BE LENIENT AND HELPFUL
-- ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
-- Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
-- Only REJECT if the photo is CLEARLY a troll (e.g. meme, cartoon, stock photo watermark, solid color, screenshot of a website, or completely unrelated like a selfie with no context).
-- When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
-- Do not reject just because the photo is dark, blurry, or taken at night.
-Respond ONLY with valid JSON (no markdown):
-{
-  "accepted": true,
-  "summary": "One short sentence describing what you see."
-}`;
+        Analyze the uploaded photo and determine if it is a legitimate barangay complaint image.
+        IMPORTANT RULES — BE LENIENT AND HELPFUL
+        - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
+        - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
+        - Only REJECT if the photo is CLEARLY a troll (e.g. meme, cartoon, stock photo watermark, solid color, screenshot of a website, or completely unrelated like a selfie with no context).
+        - When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
+        - Do not reject just because the photo is dark, blurry, or taken at night.
+        Respond ONLY with valid JSON (no markdown):
+        {
+          "accepted": true,
+          "summary": "One short sentence describing what you see."
+        }`;
+
         const imagePart = {
             inlineData: {
                 data: buffer.toString('base64'),
                 mimeType: response.headers.get('content-type') || 'image/jpeg'
             }
         };
+
         const result = await model.generateContent([prompt, imagePart]);
         const text = result.response.text().trim();
         const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJson);
+        
         console.log(`🤖 AI Scan Result for [${category}] accepted=${parsed.accepted}`);
         return parsed.accepted === true;
     } catch (error) {
@@ -185,18 +199,13 @@ async function seedAdmin() {
 }
 seedAdmin();
 
-// --- Brevo Configuration ---
-const defaultClient = SibApiV3Sdk.ApiClient.instance;
-defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
-const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
-
 // --- API ROUTES ---
 
 app.post('/api/request-otp', async (req, res) => {
     const { email, username, password } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    try { // <--- Outer Try Start
+    try {
         let user = await User.findOne({ email });
 
         if (user) {
@@ -219,27 +228,43 @@ app.post('/api/request-otp', async (req, res) => {
         user.otpExpires = new Date(Date.now() + 10 * 60000);
         await user.save();
 
-        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-        sendSmtpEmail.sender = { name: "System Admin", email: "kalappscc@gmail.com" };
-        sendSmtpEmail.to = [{ email: email }];
-        sendSmtpEmail.subject = "Your Verification Code";
-        sendSmtpEmail.htmlContent = `<h2>Code: ${otp}</h2>`;
-        
-        // Inner Try for Email Service
+        // --- NEW GMAIL API SENDER LOGIC ---
         try {
-            await tranEmailApi.sendTransacEmail(sendSmtpEmail);
+            const accessToken = await mailerOAuth2Client.getAccessToken();
+
+            const transport = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    type: 'OAuth2',
+                    user: process.env.GMAIL_ADDRESS,
+                    clientId: process.env.GMAIL_CLIENT_ID,
+                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+                    accessToken: accessToken.token,
+                },
+            });
+
+            const mailOptions = {
+                from: `System Admin <${process.env.GMAIL_ADDRESS}>`,
+                to: email,
+                subject: "Your Verification Code",
+                html: `<h2>Code: ${otp}</h2>`,
+            };
+
+            await transport.sendMail(mailOptions);
             res.json({ message: 'OTP sent!' });
+            
         } catch (error) {
-            console.error('BREVO ERROR:', error.response?.body || error);
+            console.error('GMAIL MAILER ERROR:', error);
             res.status(500).json({ message: 'Failed to send OTP.' });
         }
 
-    } catch (outerError) { // <--- ADDED THIS MISSING CATCH
+    } catch (outerError) { 
         console.error('DATABASE/SERVER ERROR:', outerError);
         if (!res.headersSent) {
             res.status(500).json({ message: 'Internal server error.' });
         }
-    } // <--- Outer Try End
+    } 
 });
 
 app.post('/api/verify-otp', async (req, res) => {
@@ -276,7 +301,6 @@ app.post('/api/google-login', async (req, res) => {
         user = new User({ username: name, email: email, role: 'citizen', authMethod: 'google' });
         await user.save();
         res.json({ success: true, username: user.username, role: user.role });
-        
     } catch (error) { 
         console.error('Google Auth Error:', error);
         res.status(401).json({ message: 'Google login failed or token invalid.' }); 
@@ -300,35 +324,35 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
 
-Your job is to:
-1. Analyze the uploaded photo and assign the most fitting category from ONLY these 5 options:
-   - Infrastructure & Public Works
-   - Environment & Sanitation
-   - Peace, Order & Public Safety
-   - Inter-Personal Disputes (Lupon / Mediation)
-   - Business & Ordinance Violations
+        Your job is to:
+        1. Analyze the uploaded photo and assign the most fitting category from ONLY these 5 options:
+           - Infrastructure & Public Works
+           - Environment & Sanitation
+           - Peace, Order & Public Safety
+           - Inter-Personal Disputes (Lupon / Mediation)
+           - Business & Ordinance Violations
 
-2. Assign a priority level: CRITICAL, HIGH, MEDIUM, or LOW.
-   - CRITICAL: Immediate danger to life, health, or safety
-   - HIGH: Significant disruption or public health risk
-   - MEDIUM: Notable community issue needing action within days
-   - LOW: Minor concern or informational
+        2. Assign a priority level: CRITICAL, HIGH, MEDIUM, or LOW.
+           - CRITICAL: Immediate danger to life, health, or safety
+           - HIGH: Significant disruption or public health risk
+           - MEDIUM: Notable community issue needing action within days
+           - LOW: Minor concern or informational
 
-3. Write a short AI summary (1-2 sentences) describing what you observe.
-
-IMPORTANT RULES — BE LENIENT AND HELPFUL
-- ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
-- Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
-- Only REJECT if the photo is CLEARLY a troll.
-- When in doubt, ACCEPT and classify — it is better to forward a borderline report than to reject a real one.
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "accepted": true,
-  "category": "Infrastructure & Public Works",
-  "priority": "MEDIUM",
-  "summary": "A pothole is visible on a concrete road surface."
-}`;
+        3. Write a short AI summary (1-2 sentences) describing what you observe.
+        
+        IMPORTANT RULES — BE LENIENT AND HELPFUL
+        - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
+        - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
+        - Only REJECT if the photo is CLEARLY a troll.
+        - When in doubt, ACCEPT and classify — it is better to forward a borderline report than to reject a real one.
+        
+        Respond ONLY with valid JSON in this exact format:
+        {
+          "accepted": true,
+          "category": "Infrastructure & Public Works",
+          "priority": "MEDIUM",
+          "summary": "A pothole is visible on a concrete road surface."
+        }`;
 
         const imagePart = {
             inlineData: {
@@ -336,10 +360,12 @@ Respond ONLY with valid JSON in this exact format:
                 mimeType: req.file.mimetype
             }
         };
+
         const result = await model.generateContent([prompt, imagePart]);
         const text = result.response.text().trim();
         const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJson);
+        
         console.log(`🔍 AI Preview Classify: accepted=${parsed.accepted}, category=${parsed.category}, priority=${parsed.priority}`);
         res.json(parsed);
     } catch (error) {
@@ -395,6 +421,7 @@ app.post('/api/complaints', upload.single('evidence'), async (req, res) => {
             locationSource: locationSource || '',
             history: [{ status: 'Pending', note: 'Complaint officially filed.', updatedBy: username || 'System' }]
         });
+        
         await newComplaint.save();
         broadcast('complaint_update', { action: 'new' });
         res.json({ success: true, message: 'Complaint submitted!', trackingId: newComplaint.trackingId });
@@ -495,6 +522,7 @@ app.post('/api/complaints/:trackingId/upvote', rateLimit({ windowMs: 60000, max:
     const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
     if (!complaint) return res.status(404).json({ error: 'Not found' });
     if (complaint.upvotedBy.includes(username)) return res.status(400).json({ error: 'Already upvoted' });
+    
     complaint.upvotes += 1;
     complaint.upvotedBy.push(username);
      
@@ -550,8 +578,8 @@ async function analyzeLuponEligibility(description) {
     try {
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const prompt = `You are an assistant for a Philippine barangay complaint system.
-Analyze the following complaint description and determine if it is eligible for Lupon Tagapamayapa mediation.
-Description: ${description}
+        Analyze the following complaint description and determine if it is eligible for Lupon Tagapamayapa mediation.
+        Description: ${description}
 
         Check for:
         1. Does the description mention a respondent (neighbor, person, kapwa, individual, katabi, etc.)
@@ -586,7 +614,7 @@ app.post('/api/complaints/:id/refer-lupon', rateLimit({ windowMs: 60000, max: 10
         const analysis = await analyzeLuponEligibility(complaint.description || '');
 
         if (!analysis.eligible || !analysis.hasContact) {
-             return res.status(400).json({
+              return res.status(400).json({
                 success: false,
                 message: `⚖️ Lupon referral rejected: The complaint description must include the respondent's contact number (e.g., 09XXXXXXXXX) for Lupon to schedule mediation. No strike added.`
             });
@@ -598,7 +626,7 @@ app.post('/api/complaints/:id/refer-lupon', rateLimit({ windowMs: 60000, max: 10
                 $set: { status: 'Referred to Lupon', lguNote: note || 'Escalated to Barangay Lupon Tagapamayapa for mediation.' },
                 $push: {
                     history: {
-                        status: 'Referred to Lupon',
+                         status: 'Referred to Lupon',
                         note: note || 'Escalated to Barangay Lupon Tagapamayapa for mediation.',
                         updatedBy: adminName || 'LGU Admin'
                     }
@@ -685,6 +713,7 @@ app.get('/api/complaints/feed', rateLimit({ windowMs: 60000, max: 60 }), async (
             status: { $nin: ['Rejected & Flagged'] },
             category: { $nin: ['Inter-Personal Disputes (Lupon / Mediation)'] }
         }).sort({ createdAt: -1 }).skip(skip).limit(limit);
+        
         const total = await Complaint.countDocuments({
             citizenName: { $exists: true, $ne: '' },
             status: { $nin: ['Rejected & Flagged'] },
@@ -712,6 +741,7 @@ app.post('/api/complaints/:id/comment', rateLimit({ windowMs: 60000, max: 20 }),
 // --- HTTP + WebSocket Server ---
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+
 wss.on('connection', (ws) => {
     ws.isAlive = true;
     ws.on('pong', () => { ws.isAlive = true; });
