@@ -425,7 +425,10 @@ app.post('/api/complaints', upload.single('evidence'), async (req, res) => {
         await newComplaint.save();
         broadcast('complaint_update', { action: 'new' });
         res.json({ success: true, message: 'Complaint submitted!', trackingId: newComplaint.trackingId });
-    } catch (error) { res.status(500).json({ success: false, error: error.message }); }
+    } catch (error) { 
+        console.error('UPLOAD ERROR:', error);
+        res.status(500).json({ success: false, error: error.message }); 
+    } }
 });
 
 app.get('/api/complaints', async (req, res) => {

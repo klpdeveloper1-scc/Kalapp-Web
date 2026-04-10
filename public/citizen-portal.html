@@ -243,7 +243,6 @@
 </head>
 <body>
 
-    <!-- ── MOBILE TOP HEADER ── -->
     <header class="mobile-header">
         <div style="display:flex; align-items:center; gap:0.6rem;">
             <img src="logokalapp.png" alt="Kalapp" style="width:32px; height:32px; border-radius:8px;">
@@ -254,7 +253,6 @@
 
     <div class="container">
 
-        <!-- ── SIDEBAR (desktop) ── -->
         <aside>
             <div class="top">
                 <div class="logo">
@@ -284,7 +282,6 @@
             </div>
         </aside>
 
-        <!-- ── FILE COMPLAINT PAGE ── -->
         <main id="complaint-page">
             <h1>Submit a Complaint</h1>
             <div class="card" id="mobile-search-card">
@@ -374,7 +371,6 @@
             </div>
         </main>
 
-        <!-- ── MY HISTORY PAGE ── -->
         <main id="history-page" style="display:none;">
             <h1>My Complaints</h1>
             <div class="card" style="padding:0;">
@@ -399,7 +395,6 @@
             </div>
         </main>
 
-        <!-- ── HOTLINE PAGE ── -->
         <main id="hotline-page" style="display:none;">
             <h1>Emergency Hotlines</h1>
             <div class="card">
@@ -411,7 +406,6 @@
             </div>
         </main>
 
-        <!-- ── BARANGAY DIRECTORY PAGE ── -->
         <main id="directory-page" style="display:none;">
             <h1>📋 Barangay Directory</h1>
             <div class="card">
@@ -426,7 +420,6 @@
             </div>
         </main>
 
-        <!-- ── COMMUNITY FEED PAGE ── -->
         <main id="feed-page" style="display:none;">
             <h1>📢 Community Feed</h1>
             <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">See what your community is reporting. Vouch for legitimate concerns or leave a comment.</p>
@@ -436,7 +429,6 @@
             </div>
         </main>
 
-        <!-- ── RIGHT PANEL (desktop only) ── -->
         <div class="right">
             <div class="header-actions">
                 <div style="display:flex; align-items:center; gap:1rem;">
@@ -465,10 +457,7 @@
             </div>
         </div>
 
-    </div><!-- end .container -->
-
-    <!-- ── MOBILE BOTTOM NAV ── -->
-    <nav class="mobile-nav">
+    </div><nav class="mobile-nav">
         <button onclick="showPage('complaint')">
             <span class="material-icons-sharp">add_circle_outline</span>File
         </button>
@@ -489,7 +478,6 @@
         </button>
     </nav>
 
-    <!-- ── AUDIT TRAIL MODAL ── -->
     <div id="trail-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:500px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
             <span onclick="closeTrailModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
@@ -498,7 +486,6 @@
         </div>
     </div>
 
-    <!-- ── COMMENT MODAL ── -->
     <div id="comment-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:480px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
             <span onclick="closeCommentModal()" style="position:absolute; top:1rem; right:1rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
@@ -533,7 +520,6 @@
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
                 btn.classList.toggle('active', i === mobileIdx[pageId]);
             });
-
             if (pageId === 'history') loadMyHistory();
             if (pageId === 'hotline') renderHotlines(hotlineData);
             if (pageId === 'directory') renderDirectory(barangayDirectoryData);
@@ -695,7 +681,6 @@
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(locationMap);
-
             const orangeIcon = L.divIcon({
                 className: '',
                 html: '<div style="width:30px;height:30px;background:var(--color-primary,#ff8c00);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>',
@@ -703,10 +688,8 @@
                 iconAnchor: [15, 30],
                 popupAnchor: [0, -30]
             });
-
             locationMarker = L.marker([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], { draggable: true, icon: orangeIcon }).addTo(locationMap);
             locationMarker.bindPopup('<strong>📍 Drag me to the exact incident spot</strong>', { closeOnClick: false, autoClose: false }).openPopup();
-
             locationMarker.on('dragend', function () {
                 const latlng = locationMarker.getLatLng();
                 const lat = latlng.lat.toFixed(6);
@@ -793,7 +776,6 @@
             box.style.display = 'block';
             box.className = 'scanning';
             txt.innerText  = '🤖 Gemini AI is scanning your photo...';
-
             try {
                 const fd = new FormData();
                 fd.append('evidence', file);
@@ -1055,7 +1037,6 @@
             EXIF.getData(file, function () {
                 const make  = EXIF.getTag(this, 'Make');
                 const model = EXIF.getTag(this, 'Model');
-
                 if (!make || !model) {
                     formMsg.style.color = 'var(--color-danger)';
                     formMsg.innerText   = '❌ Security Check Failed: Please take a real photo using a camera.';
@@ -1069,7 +1050,6 @@
 
                 // Sync address text input to hidden field
                 document.getElementById('locationAddress').value = document.getElementById('locationAddressInput').value;
-
                 const fd = new FormData();
                 fd.append('username',         username);
                 fd.append('barangay',         document.getElementById('barangay').value);
@@ -1084,9 +1064,25 @@
 
                 fetch(`${BACKEND_URL}/api/complaints`, { method:'POST', body: fd })
                 .then(async r => {
-                    const d = await r.json();
-                    if (!r.ok || !d.success) throw new Error(d.message || 'Upload Failed');
-                    return d;
+                    // 1. Read the raw text first instead of assuming it is JSON
+                    const text = await r.text(); 
+                    
+                    try {
+                        // 2. Try to parse it as JSON
+                        const d = JSON.parse(text); 
+                        if (!r.ok || !d.success) throw new Error(d.message || 'Upload Failed');
+                        return d;
+                    } catch (err) {
+                        // 3. If it fails (because it's HTML), log the raw HTML so we can see the real error!
+                        console.error("🔥 RAW SERVER RESPONSE:", text);
+                        
+                        // Check if it's the Gemini 503 error so we can give the user a friendly message
+                        if (text.includes("503") || text.includes("Service Unavailable") || text.includes("GoogleGenerativeAIFetchError")) {
+                             throw new Error("Google's AI servers are currently overloaded. Please try again in a minute.");
+                        }
+                        
+                        throw new Error("Server crashed and returned an invalid response. Check console.");
+                    }
                 })
                 .then(d => {
                     formMsg.style.color = 'var(--color-success)';
