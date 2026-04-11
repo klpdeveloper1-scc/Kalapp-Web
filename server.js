@@ -104,7 +104,7 @@ const complaintSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Complaint = mongoose.model('Complaint', complaintSchema);
 
-// --- 🚀 NEW FAST AI MODERATOR (Reads from Memory Buffer) ---
+// --- 🚀 FAST AI MODERATOR (Reads from Memory Buffer) ---
 async function scanImageBufferWithAI(buffer, mimeType, category) {
     try {
         const model = genAI.getGenerativeModel({ 
@@ -119,7 +119,7 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
         IMPORTANT RULES — BE LENIENT AND HELPFUL
         - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
         - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
-        - Only REJECT if the photo is CLEARLY a troll (e.g. meme, cartoon, stock photo watermark, solid color, screenshot of a website, or completely unrelated like a selfie with no context).
+        - Only REJECT if the photo is CLEARLY a troll.
         - When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
         - Do not reject just because the photo is dark, blurry, or taken at night.
         
@@ -137,46 +137,13 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
         };
 
         const result = await model.generateContent([prompt, imagePart]);
-        const parsed = JSON.parse(result.response.text()); // No .replace() hacks needed!
+        const parsed = JSON.parse(result.response.text()); 
         
         console.log(`🤖 AI Scan Result for [${category}] accepted=${parsed.accepted}`);
         return parsed.accepted === true;
     } catch (error) {
         console.error('AI Scan Error', error);
         return true; // fail open
-    }
-}
-
-// --- AI SENTIMENT & PRIORITY ANALYZER ---
-async function analyzePriority(category, description) {
-    try {
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: "application/json" }
-        });
-        
-        const prompt = `
-            You are an emergency dispatcher AI for a local government.
-            Analyze the following citizen complaint based on its category and description.
-            Determine the urgency and priority level based on sentiment, potential danger, and community impact.
-            Category: ${category}
-            Description: ${description}
-
-            Respond ONLY with a valid JSON object in this exact schema:
-            {
-                "priority": "CRITICAL" | "HIGH" | "MEDIUM" | "LOW",
-                "reason": "Short 1-sentence explanation why."
-            }
-        `;
-
-        const result = await model.generateContent(prompt);
-        const parsedResult = JSON.parse(result.response.text());
-
-        console.log(`📊 AI Priority Scan: ${parsedResult.priority} - ${parsedResult.reason}`);
-        return parsedResult.priority;
-    } catch (error) {
-        console.error('AI Priority Scan Error', error);
-        return 'MEDIUM';
     }
 }
 
@@ -351,7 +318,8 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
 // --- 🚀 FAST FINAL COMPLAINT SUBMISSION ---
 app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) => {
     try {
-        const { username, barangay, issue, description, contactNumber, locationLat, locationLng, locationAddress, locationSource } = req.body;
+        // FIXED: Added 'priority' to the list of incoming data
+        const { username, barangay, issue, description, contactNumber, locationLat, locationLng, locationAddress, locationSource, priority } = req.body;
         const user = await User.findOne({ username });
 
         if (user && user.status === 'blocked') {
@@ -361,7 +329,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: 'No photo uploaded.' });
         }
 
-        // 1. Instantly scan the image from memory (No Cloudinary delays!)
+        // 1. Instantly scan the image from memory
         const isApproved = await scanImageBufferWithAI(req.file.buffer, req.file.mimetype, issue);
         
         if (!isApproved) {
@@ -377,7 +345,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
         }
 
-        // 2. Upload to Cloudinary securely using stream (Only happens if AI approves it!)
+        // 2. Upload to Cloudinary securely using stream 
         const imageUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
                 if (error) reject(error);
@@ -386,18 +354,12 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             stream.end(req.file.buffer);
         });
 
-        // 3. Get Priority rating
-        let complaintPriority = 'MEDIUM';
-        if (description) {
-            complaintPriority = await analyzePriority(issue, description);
-        }
-
-        // 4. Save to Database
+        // 3. Save to Database using the locked-in priority from the frontend
         const newComplaint = new Complaint({
             trackingId: 'KAL-' + Math.floor(1000 + Math.random() * 9000),
             citizenName: username, barangay, category: issue, description, imageUrl,
             status: 'Pending',
-            priority: complaintPriority,
+            priority: priority || 'MEDIUM', // Uses exact priority from frontend preview
             contactNumber: contactNumber || '',
             locationLat: locationLat ? parseFloat(locationLat) : null,
             locationLng: locationLng ? parseFloat(locationLng) : null,
@@ -677,7 +639,7 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
     } catch (error) { res.status(500).json({ error: 'Failed to upload progress photo.' }); }
 });
 
-// Chat endpoint does not require the JSON wrapper
+// Chat endpoint
 app.post('/api/ai-chat', async (req, res) => {
     try {
         const { message, history } = req.body;
