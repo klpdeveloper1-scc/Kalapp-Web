@@ -1090,7 +1090,7 @@
                     formMsg.innerHTML = `✅ Complaint submitted & verified by Gemini AI!
                         <br><a href="${BACKEND_URL}/api/complaints/${id}/affidavit" target="_blank"
                         style="display:inline-block; margin-top:0.6rem; background:var(--color-primary); color:white; padding:0.5rem 1.2rem; border-radius:8px; text-decoration:none; font-weight:600;">📄 Download Affidavit</a>`;
-                    this.reset();
+                    document.getElementById('complaint-form').reset();
                     document.getElementById('locationAddressInput').value = '';
                     document.getElementById('exif-location-label').style.display = 'none';
                     document.getElementById('pin-coords').textContent = 'drag pin to set location';
