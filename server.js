@@ -21,7 +21,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
-app.set('trust proxy', 1); // <-- FIX: Trusts Render's proxy to prevent Rate Limit errors
+app.set('trust proxy', 1); // Trusts Render's proxy to prevent Rate Limit errors
 const PORT = process.env.PORT || 3001;
 
 // --- API Configurations ---
@@ -122,8 +122,8 @@ async function scanImageWithAI(imageUrl, category) {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // FIX: Downgraded to 1.5-flash to bypass the 503 traffic jam errors
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); 
+        // FIX 1: Updated to latest flash model
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' }); 
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
 
@@ -163,8 +163,8 @@ async function scanImageWithAI(imageUrl, category) {
 // --- AI SENTIMENT & PRIORITY ANALYZER ---
 async function analyzePriority(category, description) {
     try {
-        // FIX: Downgraded to 1.5-flash
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // FIX 2: Updated to latest flash model
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
         const prompt = `
             You are an emergency dispatcher AI for a local government.
             Analyze the following citizen complaint based on its category and description.
@@ -324,8 +324,8 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
     try {
         if (!req.file) return res.status(400).json({ error: 'No file provided.' });
 
-        // FIX: Downgraded to 1.5-flash
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // FIX 3: Updated to latest flash model
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
 
         Your job is to:
@@ -432,7 +432,7 @@ app.post('/api/complaints', upload.single('evidence'), async (req, res) => {
     } catch (error) { 
         console.error('UPLOAD ERROR:', error);
         res.status(500).json({ success: false, error: error.message }); 
-    } // <--- FIX: Removed the extra curly bracket that was here
+    } 
 });
 
 app.get('/api/complaints', async (req, res) => {
@@ -583,7 +583,8 @@ app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, ma
 // --- AI LUPON ELIGIBILITY ANALYZER ---
 async function analyzeLuponEligibility(description) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // FIX 4: Updated to latest flash model
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
         const prompt = `You are an assistant for a Philippine barangay complaint system.
         Analyze the following complaint description and determine if it is eligible for Lupon Tagapamayapa mediation.
         Description: ${description}
@@ -695,8 +696,9 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
 app.post('/api/ai-chat', async (req, res) => {
     try {
         const { message, history } = req.body;
+        // FIX 5: Updated to latest flash model
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-1.5-flash-latest',
             systemInstruction: `You are 'Sumbong-Bot', official AI of Kalapp. Tone: Empathetic, uses 'po/opo', Taglish. 
             Rules: No Markdown (** or #). Keep it plain text. Ask 4 Ws only if reporting. Direct to form for submission.`
         });
