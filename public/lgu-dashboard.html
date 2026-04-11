@@ -30,7 +30,7 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--dark); font-size: 0.855rem; overflow-x: hidden; }
 
         /* ========== LAYOUT ========== */
-        .app { display: flex; min-height: 100vh; }
+        .app { display: flex; min-height: 100vh; width: 100vw; }
 
         /* ========== SIDEBAR ========== */
         .sidebar {
@@ -94,6 +94,9 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            /* CRITICAL FIX FOR CUTOFF: Forces main container to never exceed viewport */
+            min-width: 0; 
+            width: calc(100% - var(--sidebar-w)); 
         }
 
         /* ========== TOPBAR ========== */
@@ -158,7 +161,7 @@
         .admin-role { font-size: 0.68rem; color: var(--muted); }
 
         /* ========== CONTENT AREA ========== */
-        .content { padding: 1.8rem 2rem; flex: 1; }
+        .content { padding: 1.8rem 2rem; flex: 1; min-width: 0; }
 
         /* ========== STAT CARDS ========== */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.8rem; }
@@ -179,24 +182,20 @@
         .stat-num { font-size: 2rem; font-weight: 800; letter-spacing: -1.5px; }
         .stat-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
 
-        /* ========== MAIN PANEL ========== */
-        .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.2rem; }
-        .main-grid.full { grid-template-columns: 1fr; }
-
-        /* Chart cards */
+        /* ========== CHARTS ========== */
         .chart-row { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 1.2rem; margin-bottom: 1.8rem; }
         .card {
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 16px; padding: 1.4rem;
+            border-radius: 16px; padding: 1.4rem; min-width: 0;
         }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
         .card-title { font-size: 0.88rem; font-weight: 700; }
         .card-sub { font-size: 0.72rem; color: var(--muted); }
 
-        canvas { height: 200px !important; }
+        canvas { height: 200px !important; width: 100% !important; }
 
         /* ========== REPORTS TABLE ========== */
-        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; min-width: 0; }
         .table-header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
@@ -218,6 +217,7 @@
             border-radius: 8px; font-family: 'Poppins', sans-serif;
             font-size: 0.78rem; font-weight: 600; cursor: pointer;
             transition: 0.2s;
+            white-space: nowrap;
         }
         .btn-export:hover { background: rgba(65,105,225,0.2); }
 
@@ -230,7 +230,8 @@
         .search-input:focus { border-color: var(--primary); }
         .search-input::placeholder { color: #3f3f46; }
 
-        table { width: 100%; border-collapse: collapse; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         thead th {
             text-align: left; padding: 0.85rem 1rem;
             color: var(--muted); font-size: 0.7rem;
@@ -278,22 +279,10 @@
         }
         .quick-resolve:hover { background: rgba(0,188,125,0.2); }
 
-        /* ========== SIDE PANEL ========== */
-        .side-panel { display: flex; flex-direction: column; gap: 1.2rem; }
-
-        .mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem; }
-        .mini-card .card-title { margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.4rem; }
-
-        /* ========== SECTION: LUPON ========== */
-        #lupon-section { display: none; }
+        /* ========== SECTIONS ========== */
+        #lupon-section, #inprogress-section, #feed-section { display: none; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; min-width: 0; }
         .lupon-table-wrap { overflow-x: auto; padding: 0 1.5rem 1.5rem; }
-
-        /* ========== SECTION: IN-PROGRESS ========== */
-        #inprogress-section { display: none; }
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-
-        /* ========== SECTION: FEED ========== */
-        #feed-section { display: none; }
         .feed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
 
         /* ========== MODAL ========== */
@@ -318,7 +307,6 @@
 
         #modal-id { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.3rem; color: var(--primary); letter-spacing: -0.5px; font-family: 'Courier New', monospace; }
         .modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; margin: 1rem 0; }
-        .meta-item { }
         .meta-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
         .meta-value { font-size: 0.85rem; color: var(--dark); font-weight: 500; }
 
@@ -368,7 +356,25 @@
         .timeline-content strong { display: block; }
         .timeline-content small { color: var(--muted); }
 
-        /* ========== MISC ========== */
+        /* ========== RESPONSIVENESS ========== */
+        @media screen and (max-width: 1300px) {
+            .chart-row { grid-template-columns: 1fr 1fr; }
+            .chart-row .card:nth-child(1) { grid-column: 1 / -1; }
+        }
+        @media screen and (max-width: 1024px) {
+            .app { flex-direction: column; }
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+            .mobile-bottom-nav { 
+                display: flex; position: fixed; bottom: 0; left: 0; right: 0; 
+                background: var(--surface); border-top: 1px solid var(--border); 
+                justify-content: space-around; padding: 0.5rem; z-index: 1000; 
+            }
+            .mobile-bottom-nav button { background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; cursor: pointer; gap: 0.2rem; }
+            .content { margin-bottom: 60px; padding: 1.2rem; }
+        }
         @keyframes rowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
@@ -382,22 +388,19 @@
         </div>
         <nav class="sidebar-nav">
             <div class="nav-section-label">Overview</div>
-            <button class="nav-item active" onclick="switchTab('dashboard')">
-                <span class="material-icons-sharp">grid_view</span> Dashboard
-            </button>
-            <button class="nav-item" onclick="switchTab('analytics')">
-                <span class="material-icons-sharp">bar_chart</span> Analytics
+            <button class="nav-item active" onclick="switchTab('overview')">
+                <span class="material-icons-sharp">dashboard</span> Overview
             </button>
 
             <div class="nav-section-label">Case Management</div>
             <button class="nav-item" onclick="switchTab('reports')">
-                <span class="material-icons-sharp">description</span> All Reports
+                <span class="material-icons-sharp">folder_open</span> All Reports
             </button>
             <button class="nav-item" onclick="switchTab('inprogress')">
                 <span class="material-icons-sharp">cached</span> In Progress
             </button>
             <button class="nav-item" onclick="switchTab('lupon')">
-                <span class="material-icons-sharp">gavel</span> Lupon
+                <span class="material-icons-sharp">gavel</span> Lupon Cases
             </button>
             <button class="nav-item" onclick="switchTab('feed')">
                 <span class="material-icons-sharp">dynamic_feed</span> Community Feed
@@ -414,8 +417,8 @@
 
         <header class="topbar">
             <div class="topbar-left">
-                <span class="page-title" id="page-title">Dashboard</span>
-                <span class="breadcrumb" id="page-breadcrumb">Overview of all complaints</span>
+                <span class="page-title" id="page-title">Overview</span>
+                <span class="breadcrumb" id="page-breadcrumb">Platform statistics and analytics</span>
             </div>
             <div class="topbar-right">
                 <span id="ws-badge">🟢 Live</span>
@@ -517,10 +520,10 @@
                 </div>
             </div>
 
-            <div class="table-card" id="reports-table-card">
+            <div class="table-card" id="reports-table-card" style="display: none;">
                 <div class="table-header">
                     <div style="display:flex; align-items:center; gap:0.8rem;">
-                        <span style="font-size:0.9rem; font-weight:700;">Recent Complaints</span>
+                        <span style="font-size:0.9rem; font-weight:700;">Complaint Database</span>
                         <span id="table-count-badge" style="background:rgba(65,105,225,0.12); color:var(--primary); padding:3px 9px; border-radius:20px; font-size:0.7rem; font-weight:700;"></span>
                     </div>
                     <div class="table-filters">
@@ -539,7 +542,7 @@
                         <button class="btn-export" onclick="downloadCSV()">📥 Export CSV</button>
                     </div>
                 </div>
-                <div style="overflow-x:auto;">
+                <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
@@ -564,7 +567,7 @@
                     <div class="table-header">
                         <span style="font-size:0.9rem; font-weight:700;">⚖️ Lupon Tagapamayapa Cases</span>
                     </div>
-                    <div class="lupon-table-wrap">
+                    <div class="table-responsive lupon-table-wrap" style="padding-top: 1rem;">
                         <table>
                             <thead>
                                 <tr>
@@ -602,7 +605,15 @@
                 </div>
             </div>
 
-        </div></div></div><div id="lgu-comment-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4000; overflow-y:auto; padding:2rem 1rem;">
+        </div></div></div><nav class="mobile-bottom-nav" style="display: none;">
+    <button onclick="switchTab('overview')"><span class="material-icons-sharp" style="font-size:1.4rem;">dashboard</span><span>Overview</span></button>
+    <button onclick="switchTab('reports')"><span class="material-icons-sharp" style="font-size:1.4rem;">folder_open</span><span>Reports</span></button>
+    <button onclick="switchTab('inprogress')"><span class="material-icons-sharp" style="font-size:1.4rem;">cached</span><span>Progress</span></button>
+    <button onclick="switchTab('lupon')"><span class="material-icons-sharp" style="font-size:1.4rem;">gavel</span><span>Lupon</span></button>
+    <button onclick="switchTab('feed')"><span class="material-icons-sharp" style="font-size:1.4rem;">dynamic_feed</span><span>Feed</span></button>
+</nav>
+
+<div id="lgu-comment-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4000; overflow-y:auto; padding:2rem 1rem;">
     <div style="background:var(--surface); border:1px solid var(--border); max-width:480px; width:100%; margin:0 auto; padding:2rem; border-radius:18px; position:relative; animation:slideUp 0.3s ease;">
         <span onclick="closeLguCommentModal()" style="position:absolute; top:1.1rem; right:1.3rem; cursor:pointer; font-size:1.4rem; color:var(--muted); background:none; border:none;">×</span>
         <h3 style="margin-bottom:1.2rem; font-size:0.95rem; font-weight:700;">💬 Comments</h3>
@@ -702,14 +713,10 @@
 const BACKEND_URL = window.location.origin;
 const currentAdminName = localStorage.getItem('kalapp_username') || 'Official';
 
-// FIXED: Properly escaping HTML to prevent the crash
 function escAttr(str) {
     return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/&/g, '&').replace(/"/g, '"')
+        .replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
 }
 
 document.getElementById('lgu-name-display').innerText = currentAdminName;
@@ -784,8 +791,6 @@ async function loadComplaints() {
     try {
         const res = await fetch(`${BACKEND_URL}/api/complaints`);
         const data = await res.json();
-        
-        // Accurate statistics including all statuses
         const stats = {
             pending: data.complaints.filter(c => !c.status || c.status.toLowerCase() === 'pending').length,
             progress: data.complaints.filter(c => c.status?.toLowerCase() === 'in progress').length,
@@ -793,12 +798,10 @@ async function loadComplaints() {
             lupon: data.complaints.filter(c => c.status?.toLowerCase().includes('lupon')).length,
             flagged: data.complaints.filter(c => c.status?.toLowerCase().includes('flagged')).length
         };
-        
         document.getElementById('count-total').innerText = data.complaints.length;
         document.getElementById('count-pending').innerText = stats.pending;
         document.getElementById('count-progress').innerText = stats.progress;
         document.getElementById('count-resolved').innerText = stats.resolved;
-        
         initCharts(data.complaints, stats);
         allComplaintsCache = data.complaints;
         renderNotifications(data.complaints);
@@ -806,8 +809,8 @@ async function loadComplaints() {
         currentFilteredData = data.complaints.filter(c => {
             const s = c.status || 'Pending';
             if (filterValue === 'All') return true;
-            return s.toLowerCase() === filterValue.toLowerCase(); // Case-insensitive fix
-        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by date
+            return s.toLowerCase() === filterValue.toLowerCase();
+        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         renderTable(currentFilteredData);
     } catch (err) { console.error('loadComplaints error:', err); }
@@ -1301,16 +1304,25 @@ function switchTab(tabName) {
     statsGrid.style.display = 'none';
 
     document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-    const tabMap = { dashboard: 0, analytics: 1, reports: 2, inprogress: 3, lupon: 4, feed: 5 };
+    
+    // Updated tab map (Dashboard completely removed)
+    const tabMap = { overview: 0, reports: 1, inprogress: 2, lupon: 3, feed: 4 };
     const navBtns = document.querySelectorAll('.sidebar-nav .nav-item');
     if (tabMap[tabName] !== undefined && navBtns[tabMap[tabName]]) navBtns[tabMap[tabName]].classList.add('active');
 
-    const titles = { dashboard: ['Dashboard', 'Overview of all complaints'], analytics: ['Analytics', 'Charts and statistics'], reports: ['All Reports', 'Browse and filter complaints'], inprogress: ['In Progress', 'Active and Lupon queue'], lupon: ['Lupon Cases', 'Lupon Tagapamayapa management'], feed: ['Community Feed', 'Public complaints and vouches'] };
-    const [title, sub] = titles[tabName] || ['Dashboard', ''];
+    const titles = { 
+        overview: ['Overview', 'Platform statistics and analytics'], 
+        reports: ['All Reports', 'Browse and filter complaints'], 
+        inprogress: ['In Progress', 'Active and Lupon queue'], 
+        lupon: ['Lupon Cases', 'Lupon Tagapamayapa management'], 
+        feed: ['Community Feed', 'Public complaints and vouches'] 
+    };
+    const [title, sub] = titles[tabName] || ['Overview', ''];
     document.getElementById('page-title').innerText = title;
     document.getElementById('page-breadcrumb').innerText = sub;
 
-    if (tabName === 'analytics') {
+    // Display logic based on selected tab
+    if (tabName === 'overview') {
         statsGrid.style.display = 'grid';
         chartRow.style.display = 'grid';
     } else if (tabName === 'reports') {
@@ -1328,7 +1340,6 @@ function switchTab(tabName) {
     } else {
         statsGrid.style.display = 'grid';
         chartRow.style.display = 'grid';
-        reportsCard.style.display = 'block';
     }
 }
 
@@ -1357,7 +1368,7 @@ async function loadFeed(append = false) {
             card.onmouseleave = () => card.style.borderColor = 'rgba(255,255,255,0.07)';
             const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
             const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' });
-            const safeDesc = String(c.description||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const safeDesc = String(c.description||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
             const desc = safeDesc.substring(0, 100) + (safeDesc.length > 100 ? '...' : '');
             const commentCount = (c.comments||[]).length;
             card.innerHTML = `
@@ -1399,8 +1410,8 @@ function openLguCommentModal(trackingId) {
     const arr = lguFeedCommentStore[trackingId] || [];
     list.innerHTML = arr.length ? arr.map(c => `
         <div style="padding:0.5rem 0; border-bottom:1px solid var(--border);">
-            <strong style="font-size:0.78rem; color:var(--primary);">${String(c.authorName||'Anonymous').replace(/</g,'&lt;')}</strong>
-            <p style="font-size:0.8rem; color:#d1d1d1; margin-top:0.2rem;">${String(c.text||'').replace(/</g,'&lt;')}</p>
+            <strong style="font-size:0.78rem; color:var(--primary);">${String(c.authorName||'Anonymous').replace(/</g,'<')}</strong>
+            <p style="font-size:0.8rem; color:#d1d1d1; margin-top:0.2rem;">${String(c.text||'').replace(/</g,'<')}</p>
             <small style="color:var(--muted);">${new Date(c.createdAt).toLocaleDateString('en-PH')}</small>
         </div>`).join('') : '<p style="font-size:0.8rem; color:var(--muted); text-align:center; padding:1rem;">No comments yet.</p>';
     document.getElementById('lgu-comment-modal').style.display = 'block';
@@ -1459,6 +1470,9 @@ function connectWebSocket() {
     };
     ws.onerror = () => ws.close();
 }
+
+// Initialize default tab layout and load data
+switchTab('overview');
 connectWebSocket();
 loadComplaints();
 </script>
