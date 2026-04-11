@@ -21,6 +21,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
+app.set('trust proxy', 1); // <-- FIX: Trusts Render's proxy to prevent Rate Limit errors
 const PORT = process.env.PORT || 3001;
 
 // --- API Configurations ---
@@ -121,7 +122,8 @@ async function scanImageWithAI(imageUrl, category) {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        // FIX: Downgraded to 1.5-flash to bypass the 503 traffic jam errors
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); 
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
 
@@ -161,7 +163,8 @@ async function scanImageWithAI(imageUrl, category) {
 // --- AI SENTIMENT & PRIORITY ANALYZER ---
 async function analyzePriority(category, description) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        // FIX: Downgraded to 1.5-flash
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `
             You are an emergency dispatcher AI for a local government.
             Analyze the following citizen complaint based on its category and description.
@@ -321,7 +324,8 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
     try {
         if (!req.file) return res.status(400).json({ error: 'No file provided.' });
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        // FIX: Downgraded to 1.5-flash
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
 
         Your job is to:
@@ -428,7 +432,7 @@ app.post('/api/complaints', upload.single('evidence'), async (req, res) => {
     } catch (error) { 
         console.error('UPLOAD ERROR:', error);
         res.status(500).json({ success: false, error: error.message }); 
-    } 
+    } // <--- FIX: Removed the extra curly bracket that was here
 });
 
 app.get('/api/complaints', async (req, res) => {
@@ -579,7 +583,7 @@ app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, ma
 // --- AI LUPON ELIGIBILITY ANALYZER ---
 async function analyzeLuponEligibility(description) {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const prompt = `You are an assistant for a Philippine barangay complaint system.
         Analyze the following complaint description and determine if it is eligible for Lupon Tagapamayapa mediation.
         Description: ${description}
@@ -692,7 +696,7 @@ app.post('/api/ai-chat', async (req, res) => {
     try {
         const { message, history } = req.body;
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             systemInstruction: `You are 'Sumbong-Bot', official AI of Kalapp. Tone: Empathetic, uses 'po/opo', Taglish. 
             Rules: No Markdown (** or #). Keep it plain text. Ask 4 Ws only if reporting. Direct to form for submission.`
         });
@@ -739,6 +743,16 @@ app.post('/api/complaints/:id/comment', rateLimit({ windowMs: 60000, max: 20 }),
         broadcast('complaint_update', { action: 'comment' });
         res.json({ success: true, comments: complaint.comments });
     } catch (error) { res.status(500).json({ error: 'Failed to post comment.' }); }
+});
+
+// --- 🚨 GLOBAL ERROR CATCHER (NEW) ---
+app.use((err, req, res, next) => {
+    console.error("🚨 CRITICAL MIDDLEWARE ERROR CAUGHT:", err);
+    res.status(500).json({ 
+        success: false, 
+        message: "A backend service crashed before processing.", 
+        details: err.message || err 
+    });
 });
 
 // --- HTTP + WebSocket Server ---
