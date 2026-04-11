@@ -122,8 +122,12 @@ async function scanImageWithAI(imageUrl, category) {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // FIX 1: Updated to latest flash model
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' }); 
+        // FIX: Enforce strictly formatted JSON from Gemini 2.5
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: "application/json" }
+        }); 
+        
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
 
@@ -134,10 +138,11 @@ async function scanImageWithAI(imageUrl, category) {
         - Only REJECT if the photo is CLEARLY a troll (e.g. meme, cartoon, stock photo watermark, solid color, screenshot of a website, or completely unrelated like a selfie with no context).
         - When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
         - Do not reject just because the photo is dark, blurry, or taken at night.
-        Respond ONLY with valid JSON (no markdown):
+        
+        Respond ONLY with this valid JSON schema:
         {
-          "accepted": true,
-          "summary": "One short sentence describing what you see."
+          "accepted": boolean,
+          "summary": string
         }`;
 
         const imagePart = {
@@ -148,9 +153,8 @@ async function scanImageWithAI(imageUrl, category) {
         };
 
         const result = await model.generateContent([prompt, imagePart]);
-        const text = result.response.text().trim();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
+        const text = result.response.text();
+        const parsed = JSON.parse(text); // No more regex needed!
         
         console.log(`🤖 AI Scan Result for [${category}] accepted=${parsed.accepted}`);
         return parsed.accepted === true;
@@ -163,8 +167,11 @@ async function scanImageWithAI(imageUrl, category) {
 // --- AI SENTIMENT & PRIORITY ANALYZER ---
 async function analyzePriority(category, description) {
     try {
-        // FIX 2: Updated to latest flash model
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
         const prompt = `
             You are an emergency dispatcher AI for a local government.
             Analyze the following citizen complaint based on its category and description.
@@ -172,7 +179,7 @@ async function analyzePriority(category, description) {
             Category: ${category}
             Description: ${description}
 
-            Respond ONLY with a valid JSON object in this exact format, with no markdown formatting or extra text:
+            Respond ONLY with a valid JSON object in this exact schema:
             {
                 "priority": "CRITICAL" | "HIGH" | "MEDIUM" | "LOW",
                 "reason": "Short 1-sentence explanation why."
@@ -180,9 +187,8 @@ async function analyzePriority(category, description) {
         `;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedResult = JSON.parse(cleanJson);
+        const text = result.response.text();
+        const parsedResult = JSON.parse(text);
 
         console.log(`📊 AI Priority Scan: ${parsedResult.priority} - ${parsedResult.reason}`);
         return parsedResult.priority;
@@ -324,8 +330,11 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
     try {
         if (!req.file) return res.status(400).json({ error: 'No file provided.' });
 
-        // FIX 3: Updated to latest flash model
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
 
         Your job is to:
@@ -345,17 +354,15 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
         3. Write a short AI summary (1-2 sentences) describing what you observe.
         
         IMPORTANT RULES — BE LENIENT AND HELPFUL
-        - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
-        - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
+        - ACCEPT the report if the photo shows ANY real-world scene.
         - Only REJECT if the photo is CLEARLY a troll.
-        - When in doubt, ACCEPT and classify — it is better to forward a borderline report than to reject a real one.
         
-        Respond ONLY with valid JSON in this exact format:
+        Respond ONLY with this valid JSON schema:
         {
-          "accepted": true,
-          "category": "Infrastructure & Public Works",
-          "priority": "MEDIUM",
-          "summary": "A pothole is visible on a concrete road surface."
+          "accepted": boolean,
+          "category": string,
+          "priority": string,
+          "summary": string
         }`;
 
         const imagePart = {
@@ -366,9 +373,8 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
         };
 
         const result = await model.generateContent([prompt, imagePart]);
-        const text = result.response.text().trim();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
+        const text = result.response.text();
+        const parsed = JSON.parse(text);
         
         console.log(`🔍 AI Preview Classify: accepted=${parsed.accepted}, category=${parsed.category}, priority=${parsed.priority}`);
         res.json(parsed);
@@ -583,8 +589,11 @@ app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, ma
 // --- AI LUPON ELIGIBILITY ANALYZER ---
 async function analyzeLuponEligibility(description) {
     try {
-        // FIX 4: Updated to latest flash model
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: "application/json" }
+        });
+        
         const prompt = `You are an assistant for a Philippine barangay complaint system.
         Analyze the following complaint description and determine if it is eligible for Lupon Tagapamayapa mediation.
         Description: ${description}
@@ -594,19 +603,18 @@ async function analyzeLuponEligibility(description) {
         2. Does it contain a Philippine contact number? Look for formats 09XXXXXXXXX, +639XXXXXXXXX, or a landline like (02) XXXX-XXXX or 8XXX-XXXX.
         3. Is this a civil/community/interpersonal dispute (not a public infrastructure issue like potholes or broken streetlights)
 
-        Respond ONLY with a valid JSON object, no markdown:
+        Respond ONLY with a valid JSON object in this schema:
         {
-            "eligible": true or false,
-            "hasContact": true or false,
-            "hasRespondent": true or false,
-            "isCivilDispute": true or false,
-            "reason": "Brief explanation."
+            "eligible": boolean,
+            "hasContact": boolean,
+            "hasRespondent": boolean,
+            "isCivilDispute": boolean,
+            "reason": string
         }`;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(cleanJson);
+        const text = result.response.text();
+        return JSON.parse(text);
     } catch (error) {
         console.error('Lupon Eligibility AI Error', error);
         return { eligible: false, hasContact: false, hasRespondent: false, isCivilDispute: false, reason: 'AI analysis unavailable.' };
@@ -693,12 +701,12 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
     } catch (error) { res.status(500).json({ error: 'Failed to upload progress photo.' }); }
 });
 
+// Chat endpoint does not require the JSON wrapper
 app.post('/api/ai-chat', async (req, res) => {
     try {
         const { message, history } = req.body;
-        // FIX 5: Updated to latest flash model
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash-latest',
+            model: 'gemini-2.5-flash',
             systemInstruction: `You are 'Sumbong-Bot', official AI of Kalapp. Tone: Empathetic, uses 'po/opo', Taglish. 
             Rules: No Markdown (** or #). Keep it plain text. Ask 4 Ws only if reporting. Direct to form for submission.`
         });
