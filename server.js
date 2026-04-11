@@ -18,10 +18,9 @@ const { OAuth2Client } = require('google-auth-library');
 
 // ☁️ Cloudinary Configuration for Permanent Storage
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
-app.set('trust proxy', 1); // Trusts Render's proxy to prevent Rate Limit errors
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 // --- API Configurations ---
@@ -34,7 +33,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// --- Google Mailer Configuration (NEW) ---
+// --- Google Mailer Configuration ---
 const mailerOAuth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_ID,
     process.env.GMAIL_CLIENT_SECRET,
@@ -47,17 +46,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Cloudinary Multer Storage ---
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'evidence_uploads',
-    allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
-  },
-});
-const upload = multer({ storage: storage });
-
-// --- Temp Memory Storage for Preview ---
+// --- Temp Memory Storage (Used for both Preview AND Final Upload) ---
 const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 // --- MongoDB Connection ---
@@ -115,19 +104,14 @@ const complaintSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Complaint = mongoose.model('Complaint', complaintSchema);
 
-// --- AI IMAGE MODERATOR LOGIC ---
-async function scanImageWithAI(imageUrl, category) {
+// --- 🚀 NEW FAST AI MODERATOR (Reads from Memory Buffer) ---
+async function scanImageBufferWithAI(buffer, mimeType, category) {
     try {
-        const response = await fetch(imageUrl);
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        // FIX: Enforce strictly formatted JSON from Gemini 2.5
         const model = genAI.getGenerativeModel({ 
             model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: "application/json" }
+            generationConfig: { responseMimeType: "application/json" } // Forces strict JSON format
         }); 
-        
+
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
 
@@ -148,13 +132,12 @@ async function scanImageWithAI(imageUrl, category) {
         const imagePart = {
             inlineData: {
                 data: buffer.toString('base64'),
-                mimeType: response.headers.get('content-type') || 'image/jpeg'
+                mimeType: mimeType || 'image/jpeg'
             }
         };
 
         const result = await model.generateContent([prompt, imagePart]);
-        const text = result.response.text();
-        const parsed = JSON.parse(text); // No more regex needed!
+        const parsed = JSON.parse(result.response.text()); // No .replace() hacks needed!
         
         console.log(`🤖 AI Scan Result for [${category}] accepted=${parsed.accepted}`);
         return parsed.accepted === true;
@@ -187,8 +170,7 @@ async function analyzePriority(category, description) {
         `;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        const parsedResult = JSON.parse(text);
+        const parsedResult = JSON.parse(result.response.text());
 
         console.log(`📊 AI Priority Scan: ${parsedResult.priority} - ${parsedResult.reason}`);
         return parsedResult.priority;
@@ -224,23 +206,15 @@ app.post('/api/request-otp', async (req, res) => {
         }
 
         if (!user) {
-            user = new User({ 
-                username: username || email.split('@')[0], 
-                email, 
-                password, 
-                role: 'citizen', 
-                authMethod: 'local' 
-            });
+            user = new User({ username: username || email.split('@')[0], email, password, role: 'citizen', authMethod: 'local' });
         }
 
         user.otp = otp;
         user.otpExpires = new Date(Date.now() + 10 * 60000);
         await user.save();
 
-        // --- NEW GMAIL API SENDER LOGIC ---
         try {
             const accessToken = await mailerOAuth2Client.getAccessToken();
-
             const transport = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
@@ -267,12 +241,9 @@ app.post('/api/request-otp', async (req, res) => {
             console.error('GMAIL MAILER ERROR:', error);
             res.status(500).json({ message: 'Failed to send OTP.' });
         }
-
     } catch (outerError) { 
         console.error('DATABASE/SERVER ERROR:', outerError);
-        if (!res.headersSent) {
-            res.status(500).json({ message: 'Internal server error.' });
-        }
+        if (!res.headersSent) res.status(500).json({ message: 'Internal server error.' });
     } 
 });
 
@@ -286,16 +257,10 @@ app.post('/api/verify-otp', async (req, res) => {
     } else { res.status(400).json({ message: 'Invalid OTP.' }); }
 });
 
-// 🔒 SECURE GOOGLE LOGIN ROUTE
 app.post('/api/google-login', async (req, res) => {
     const { token } = req.body;
-    
     try {
-        const ticket = await googleClient.verifyIdToken({
-            idToken: token,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        
+        const ticket = await googleClient.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
         const payload = ticket.getPayload();
         const email = payload.email;
         const name = payload.name;
@@ -325,7 +290,7 @@ app.post('/api/login', async (req, res) => {
     } else { res.status(401).json({ message: 'Invalid credentials.' }); }
 });
 
-// --- 🆕 AI CLASSIFY PREVIEW ENDPOINT ---
+// --- AI CLASSIFY PREVIEW ENDPOINT ---
 app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ error: 'No file provided.' });
@@ -373,8 +338,7 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
         };
 
         const result = await model.generateContent([prompt, imagePart]);
-        const text = result.response.text();
-        const parsed = JSON.parse(text);
+        const parsed = JSON.parse(result.response.text());
         
         console.log(`🔍 AI Preview Classify: accepted=${parsed.accepted}, category=${parsed.category}, priority=${parsed.priority}`);
         res.json(parsed);
@@ -384,41 +348,51 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
     }
 });
 
-app.post('/api/complaints', upload.single('evidence'), async (req, res) => {
+// --- 🚀 FAST FINAL COMPLAINT SUBMISSION ---
+app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) => {
     try {
         const { username, barangay, issue, description, contactNumber, locationLat, locationLng, locationAddress, locationSource } = req.body;
-        const imageUrl = req.file ? req.file.path : '';
         const user = await User.findOne({ username });
 
         if (user && user.status === 'blocked') {
             return res.status(403).json({ success: false, message: 'Your account is BLOCKED.' });
         }
-
-        if (imageUrl) {
-            const isApproved = await scanImageWithAI(imageUrl, issue);
-            if (!isApproved) {
-                if (user) {
-                    if (user.strikes < 3) {
-                        user.strikes += 1;
-                    }
-                    if (user.strikes >= 3) {
-                        user.status = 'blocked';
-                    }
-                    await user.save();
-                    return res.status(400).json({
-                        success: false,
-                        message: `❌ AI Rejected: Photo doesn't match category. Strike ${user.strikes}/3.${user.status === 'blocked' ? ' Your account is now BLOCKED.' : ''}`
-                    });
-                }
-                return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
-            }
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No photo uploaded.' });
         }
 
+        // 1. Instantly scan the image from memory (No Cloudinary delays!)
+        const isApproved = await scanImageBufferWithAI(req.file.buffer, req.file.mimetype, issue);
+        
+        if (!isApproved) {
+            if (user) {
+                user.strikes += 1;
+                if (user.strikes >= 3) user.status = 'blocked';
+                await user.save();
+                return res.status(400).json({
+                    success: false,
+                    message: `❌ AI Rejected: Photo doesn't match category. Strike ${user.strikes}/3.${user.status === 'blocked' ? ' Your account is now BLOCKED.' : ''}`
+                });
+            }
+            return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
+        }
+
+        // 2. Upload to Cloudinary securely using stream (Only happens if AI approves it!)
+        const imageUrl = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+            });
+            stream.end(req.file.buffer);
+        });
+
+        // 3. Get Priority rating
         let complaintPriority = 'MEDIUM';
         if (description) {
             complaintPriority = await analyzePriority(issue, description);
         }
 
+        // 4. Save to Database
         const newComplaint = new Complaint({
             trackingId: 'KAL-' + Math.floor(1000 + Math.random() * 9000),
             citizenName: username, barangay, category: issue, description, imageUrl,
@@ -458,12 +432,8 @@ app.patch('/api/complaints/:id/status', async (req, res) => {
             if (complaint) {
                 const user = await User.findOne({ username: complaint.citizenName });
                 if (user) {
-                    if (user.strikes < 3) {
-                        user.strikes += 1;
-                    }
-                    if (user.strikes >= 3) {
-                        user.status = 'blocked';
-                    }
+                    if (user.strikes < 3) user.strikes += 1;
+                    if (user.strikes >= 3) user.status = 'blocked';
                     await user.save();
                 }
             }
@@ -529,9 +499,8 @@ app.get('/api/complaints/:trackingId/history', rateLimit({ windowMs: 60000, max:
 
 app.post('/api/complaints/:trackingId/upvote', rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
     const { username } = req.body;
-    if (!username || typeof username !== 'string' || username.trim() === '') {
-        return res.status(400).json({ error: 'Username required' });
-    }
+    if (!username || typeof username !== 'string' || username.trim() === '') return res.status(400).json({ error: 'Username required' });
+    
     const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
     if (!complaint) return res.status(404).json({ error: 'Not found' });
     if (complaint.upvotedBy.includes(username)) return res.status(400).json({ error: 'Already upvoted' });
@@ -613,8 +582,7 @@ async function analyzeLuponEligibility(description) {
         }`;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
-        return JSON.parse(text);
+        return JSON.parse(result.response.text());
     } catch (error) {
         console.error('Lupon Eligibility AI Error', error);
         return { eligible: false, hasContact: false, hasRespondent: false, isCivilDispute: false, reason: 'AI analysis unavailable.' };
@@ -686,11 +654,19 @@ app.post('/api/complaints/:id/approve-affidavit', rateLimit({ windowMs: 60000, m
     } catch (error) { res.status(500).json({ success: false, error: 'Failed to approve affidavit.' }); }
 });
 
-app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max: 10 }), upload.single('photo'), async (req, res) => {
+app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max: 10 }), memoryUpload.single('photo'), async (req, res) => {
     try {
         const { note, adminName } = req.body;
-        const photoUrl = req.file ? req.file.path : null;
-        if (!photoUrl) return res.status(400).json({ error: 'No photo uploaded.' });
+        if (!req.file) return res.status(400).json({ error: 'No photo uploaded.' });
+
+        const photoUrl = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+            });
+            stream.end(req.file.buffer);
+        });
+
         const complaint = await Complaint.findOneAndUpdate(
             { trackingId: req.params.id },
             { $push: { history: { status: 'Progress Update', note: note || 'LGU uploaded a progress photo.', updatedBy: adminName || 'LGU Admin', photoUrl } } }
@@ -755,7 +731,7 @@ app.post('/api/complaints/:id/comment', rateLimit({ windowMs: 60000, max: 20 }),
     } catch (error) { res.status(500).json({ error: 'Failed to post comment.' }); }
 });
 
-// --- 🚨 GLOBAL ERROR CATCHER (NEW) ---
+// --- 🚨 GLOBAL ERROR CATCHER ---
 app.use((err, req, res, next) => {
     console.error("🚨 CRITICAL MIDDLEWARE ERROR CAUGHT:", err);
     res.status(500).json({ 
@@ -775,7 +751,6 @@ wss.on('connection', (ws) => {
     ws.on('message', () => {}); // ignore incoming messages
 });
 
-// Broadcast helper — called after any complaint mutation
 function broadcast(type, payload) {
     const msg = JSON.stringify({ type, payload });
     wss.clients.forEach(client => {
@@ -783,7 +758,6 @@ function broadcast(type, payload) {
     });
 }
 
-// Keep-alive ping every 30s
 setInterval(() => {
     wss.clients.forEach(ws => {
         if (!ws.isAlive) return ws.terminate();
