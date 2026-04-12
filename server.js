@@ -1,731 +1,1189 @@
-require('dotenv').config();
-const express = require('express');
-const http = require('http');
-const { WebSocketServer, WebSocket } = require('ws');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const path = require('path');
-const cors = require('cors');
-const rateLimit = require('express-rate-limit');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalapp — LGU Official Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --primary: #4169E1;
+            --primary-glow: rgba(65,105,225,0.2);
+            --danger: #ff6467;
+            --success: #00bc7d;
+            --warning: #fe9a00;
+            --muted: #71717a;
+            --dark: #f8fafc;
+            --bg: #09090b;
+            --surface: #111113;
+            --surface2: #18181b;
+            --border: rgba(255,255,255,0.07);
+            --sidebar-w: 220px;
+        }
 
-// 📧 Mailer Dependencies (NEW)
-const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
+        * { margin: 0; padding: 0; box-sizing: border-box; border: 0; outline: 0; text-decoration: none; list-style: none; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--dark); font-size: 0.855rem; overflow-x: hidden; }
 
-// 🤖 Google Generative AI & Auth
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { OAuth2Client } = require('google-auth-library');
+        /* ========== LAYOUT ========== */
+        .app { display: flex; min-height: 100vh; width: 100vw; }
 
-// ☁️ Cloudinary Configuration for Permanent Storage
-const cloudinary = require('cloudinary').v2;
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0;
+            height: 100vh;
+            z-index: 100;
+            padding: 0;
+            transition: width 0.25s;
+        }
 
-const app = express();
-app.set('trust proxy', 1);
-const PORT = process.env.PORT || 3001;
+        .sidebar-logo {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 1.4rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-img {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: white; overflow: hidden; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .logo-img img { width: 100%; height: 100%; object-fit: contain; }
+        .logo-name { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px; }
 
-// --- API Configurations ---
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        .sidebar-nav { flex: 1; padding: 0.8rem 0.7rem; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+        .nav-section-label {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--muted); padding: 0.6rem 0.7rem 0.3rem; margin-top: 0.4rem;
+        }
 
-// --- Google Mailer Configuration ---
-const mailerOAuth2Client = new google.auth.OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
-);
-mailerOAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+        .nav-item {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.65rem 0.8rem; border-radius: 10px;
+            color: var(--muted); cursor: pointer;
+            transition: all 0.2s; font-weight: 500;
+            font-size: 0.83rem;
+            background: none; width: 100%;
+            font-family: 'Poppins', sans-serif;
+        }
+        .nav-item .material-icons-sharp { font-size: 1.1rem; flex-shrink: 0; }
+        .nav-item:hover { color: var(--dark); background: rgba(255,255,255,0.04); }
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(65,105,225,0.12);
+            font-weight: 600;
+        }
+        .nav-item.active .material-icons-sharp { color: var(--primary); }
 
-// --- Middleware ---
-app.use(express.json());
-app.use(cors());
-app.use(express.static(path.join(__dirname, 'public')));
+        .sidebar-footer { padding: 0.8rem 0.7rem; border-top: 1px solid var(--border); }
 
-// --- Temp Memory Storage (Used for both Preview AND Final Upload) ---
-const memoryUpload = multer({ storage: multer.memoryStorage() });
+        /* ========== MAIN ========== */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            min-width: 0; 
+            width: calc(100% - var(--sidebar-w)); 
+        }
 
-// --- MongoDB Connection ---
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB Atlas!'))
-    .catch(err => console.error('❌ MongoDB Connection Error', err));
+        /* ========== TOPBAR ========== */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem; height: 60px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        .page-title { font-size: 1rem; font-weight: 700; }
+        .breadcrumb { font-size: 0.75rem; color: var(--muted); }
 
-// --- Schemas & Models ---
-const userSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    email: { type: String },
-    password: { type: String },
-    role: { type: String, default: 'citizen' },
-    status: { type: String, default: 'active' },
-    authMethod: { type: String, default: 'local' },
-    otp: String,
-    otpExpires: Date,
-    strikes: { type: Number, default: 0 }
-});
+        .topbar-right { display: flex; align-items: center; gap: 0.7rem; }
 
-const complaintSchema = new mongoose.Schema({
-    trackingId: String,
-    citizenName: String,
-    barangay: String,
-    category: String,
-    description: String,
-    imageUrl: String,
-    status: { type: String, default: 'Pending' },
-    priority: { type: String, default: 'MEDIUM' },
-    lguNote: String,
-    history: [{
-        status: String,
-        note: String,
-        updatedBy: String,
-        photoUrl: { type: String, default: null },
-        updatedAt: { type: Date, default: Date.now }
-    }],
-    upvotes: { type: Number, default: 0 },
-    upvotedBy: [{ type: String }],
-    comments: [{
-        text: String,
-        authorName: { type: String, default: 'Anonymous' },
-        createdAt: { type: Date, default: Date.now }
-    }],
-    affidavitRequested: { type: Boolean, default: false },
-    affidavitApproved: { type: Boolean, default: false },
-    contactNumber: { type: String, default: '' },
-    locationLat: { type: Number, default: null },
-    locationLng: { type: Number, default: null },
-    locationAddress: { type: String, default: '' },
-    locationSource: { type: String, default: '' },
-    createdAt: { type: Date, default: Date.now }
-});
+        #ws-badge {
+            font-size: 0.7rem; padding: 4px 10px; border-radius: 20px;
+            background: rgba(0,188,125,0.12); color: var(--success); font-weight: 700;
+            display: none;
+        }
 
-const User = mongoose.model('User', userSchema);
-const Complaint = mongoose.model('Complaint', complaintSchema);
+        .icon-btn {
+            width: 36px; height: 36px; border-radius: 9px;
+            background: rgba(255,255,255,0.05); color: var(--muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem; position: relative;
+            transition: 0.2s; font-family: 'Poppins', sans-serif;
+        }
+        .icon-btn:hover { color: var(--dark); background: rgba(255,255,255,0.09); }
 
-// --- 🚀 FAST AI MODERATOR (Reads from Memory Buffer) ---
-async function scanImageBufferWithAI(buffer, mimeType, category) {
-    try {
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: "application/json" } // Forces strict JSON format
-        }); 
+        #notif-badge {
+            position: absolute; top: -3px; right: -3px;
+            background: var(--danger); color: white;
+            border-radius: 50%; width: 17px; height: 17px;
+            font-size: 0.62rem; font-weight: 800;
+            display: none; align-items: center; justify-content: center;
+            line-height: 1;
+        }
 
-        const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
-        The citizen reported this under the category ${category}.
+        #notif-panel {
+            display: none; position: absolute; top: 46px; right: 0;
+            width: 320px; max-height: 380px; overflow-y: auto;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            z-index: 3000; padding: 1rem;
+        }
 
-        Analyze the uploaded photo and determine if it is a legitimate barangay complaint image.
-        IMPORTANT RULES — BE LENIENT AND HELPFUL
-        - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
-        - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
-        - Only REJECT if the photo is CLEARLY a troll.
-        - When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
-        - Do not reject just because the photo is dark, blurry, or taken at night.
-        
-        Respond ONLY with this valid JSON schema:
-        {
-          "accepted": boolean,
-          "summary": string
-        }`;
+        .admin-pill {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 5px 12px 5px 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 30px;
+        }
+        .admin-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #7b9ef8);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800; color: white;
+        }
+        .admin-name { font-size: 0.78rem; font-weight: 600; }
+        .admin-role { font-size: 0.68rem; color: var(--muted); }
 
-        const imagePart = {
-            inlineData: {
-                data: buffer.toString('base64'),
-                mimeType: mimeType || 'image/jpeg'
+        /* ========== CONTENT AREA ========== */
+        .content { padding: 1.8rem 2rem; flex: 1; min-width: 0; }
+
+        /* ========== STAT CARDS ========== */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.8rem; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.3rem 1.5rem;
+            display: flex; flex-direction: column; gap: 0.6rem;
+            transition: 0.25s; cursor: pointer;
+        }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 24px var(--primary-glow); }
+        .stat-card-top { display: flex; justify-content: space-between; align-items: center; }
+        .stat-icon {
+            width: 36px; height: 36px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .stat-change { font-size: 0.7rem; font-weight: 600; }
+        .stat-num { font-size: 2rem; font-weight: 800; letter-spacing: -1.5px; }
+        .stat-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+
+        /* ========== CHARTS ========== */
+        .chart-row { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 1.2rem; margin-bottom: 1.8rem; }
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.4rem; min-width: 0;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+        .card-title { font-size: 0.88rem; font-weight: 700; }
+        .card-sub { font-size: 0.72rem; color: var(--muted); }
+
+        canvas { height: 200px !important; width: 100% !important; }
+
+        /* ========== REPORTS TABLE ========== */
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; min-width: 0; }
+        .table-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border);
+            gap: 1rem; flex-wrap: wrap;
+        }
+        .table-filters { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+
+        .filter-select {
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--dark); padding: 7px 12px; border-radius: 8px;
+            font-family: 'Poppins', sans-serif; font-size: 0.78rem; cursor: pointer;
+            outline: none;
+        }
+        .filter-select:focus { border-color: var(--primary); }
+
+        .btn-export {
+            background: rgba(65,105,225,0.12); color: var(--primary);
+            border: 1px solid rgba(65,105,225,0.3); padding: 7px 14px;
+            border-radius: 8px; font-family: 'Poppins', sans-serif;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer;
+            transition: 0.2s; white-space: nowrap;
+        }
+        .btn-export:hover { background: rgba(65,105,225,0.2); }
+
+        .search-input {
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--dark); padding: 7px 12px; border-radius: 8px;
+            font-family: 'Poppins', sans-serif; font-size: 0.78rem; width: 200px; outline: none;
+        }
+        .search-input:focus { border-color: var(--primary); }
+
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        thead th {
+            text-align: left; padding: 0.85rem 1rem;
+            color: var(--muted); font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            font-weight: 700; border-bottom: 1px solid var(--border);
+            background: var(--surface2); white-space: nowrap;
+        }
+        tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; cursor: pointer; }
+        tbody tr:hover { background: rgba(255,255,255,0.03); }
+        tbody tr.critical-row { background: rgba(239,68,68,0.06); }
+        tbody tr.critical-row td:first-child { border-left: 3px solid #ef4444; }
+        td { padding: 0.9rem 1rem; vertical-align: middle; }
+        td:first-child { padding-left: 1.2rem; }
+
+        .tracking-id { font-weight: 700; font-size: 0.82rem; color: var(--dark); font-family: 'Courier New', monospace; }
+        .pill { padding: 4px 10px; border-radius: 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-block; }
+        .pill-pending { background: rgba(255,100,103,0.1); color: var(--danger); }
+        .pill-inprogress { background: rgba(254,154,0,0.1); color: var(--warning); }
+        .pill-resolved { background: rgba(0,188,125,0.1); color: var(--success); }
+        .pill-flagged { background: rgba(113,113,122,0.1); color: var(--muted); text-decoration: line-through; }
+        .pill-lupon { background: rgba(251,191,36,0.1); color: #fbbf24; }
+        .pill-lupon-sch { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+        .pill-lupon-settled { background: rgba(0,188,125,0.1); color: var(--success); }
+        .pill-lupon-unresolved { background: rgba(255,100,103,0.1); color: var(--danger); text-decoration: line-through; }
+
+        .priority-tag { padding: 3px 8px; border-radius: 6px; font-size: 0.62rem; font-weight: 800; display: inline-block; }
+        .priority-critical { background: #ef4444; color: white; }
+        .priority-high { background: #f97316; color: white; }
+        .priority-medium { background: #3b82f6; color: white; }
+        .priority-low { background: #64748b; color: white; }
+
+        .quick-resolve {
+            background: rgba(0,188,125,0.1); color: var(--success);
+            border: 1px solid rgba(0,188,125,0.25); padding: 5px 12px;
+            border-radius: 8px; font-size: 0.72rem; font-weight: 700;
+            cursor: pointer; font-family: 'Poppins', sans-serif;
+            transition: 0.2s; white-space: nowrap;
+        }
+
+        /* ========== SECTIONS ========== */
+        #lupon-section, #inprogress-section, #feed-section { display: none; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; min-width: 0; }
+        .lupon-table-wrap { overflow-x: auto; padding: 0 1.5rem 1.5rem; }
+        .feed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+            z-index: 2000; overflow-y: auto; padding: 2rem 1rem;
+        }
+        .modal-box {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; width: 90%; max-width: 680px;
+            margin: 0 auto; padding: 2rem; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 1.2rem; right: 1.4rem;
+            background: none; color: var(--muted); font-size: 1.5rem; cursor: pointer;
+        }
+
+        #modal-id { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.3rem; color: var(--primary); font-family: 'Courier New', monospace; }
+        .modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; margin: 1rem 0; }
+        .meta-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+        .meta-value { font-size: 0.85rem; color: var(--dark); font-weight: 500; }
+        #modal-img { width: 100%; border-radius: 12px; margin: 0.8rem 0; max-height: 280px; object-fit: cover; border: 1px solid var(--border); }
+        #modal-map { height: 200px; border-radius: 10px; border: 1px solid var(--border); margin: 0.5rem 0; }
+
+        .desc-box {
+            background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 10px;
+            border: 1px solid var(--border); font-size: 0.83rem; line-height: 1.7; color: #d1d1d1; margin: 0.8rem 0;
+        }
+        .ai-section {
+            background: rgba(65,105,225,0.06); border: 1px solid rgba(65,105,225,0.2);
+            border-radius: 12px; padding: 1rem; margin: 1rem 0;
+        }
+        .note-input {
+            width: 100%; padding: 0.6rem 0.8rem; border-radius: 8px;
+            border: 1px solid var(--border); background: rgba(0,0,0,0.2);
+            color: white; font-family: 'Poppins', sans-serif; font-size: 0.82rem; margin-bottom: 0.6rem;
+        }
+        .action-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .a-btn {
+            padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-family: 'Poppins', sans-serif; font-size: 0.78rem; font-weight: 700; border: none;
+        }
+        .a-btn-accept { background: var(--warning); color: black; }
+        .a-btn-resolve { background: var(--success); color: black; }
+        .a-btn-lupon { background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+        .a-btn-reject { background: rgba(255,100,103,0.15); color: var(--danger); border: 1px solid rgba(255,100,103,0.3); }
+        .a-btn-neutral { background: rgba(255,255,255,0.08); color: var(--muted); }
+
+        .timeline-item { display: flex; gap: 0.8rem; margin-bottom: 1rem; }
+        .timeline-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+        .timeline-content { font-size: 0.82rem; }
+
+        @media screen and (max-width: 1300px) {
+            .chart-row { grid-template-columns: 1fr 1fr; }
+            .chart-row .card:nth-child(1) { grid-column: 1 / -1; }
+        }
+        @media screen and (max-width: 1024px) {
+            .app { flex-direction: column; }
+            .sidebar { display: none; }
+            .main { margin-left: 0; width: 100%; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+            .mobile-bottom-nav { 
+                display: flex; position: fixed; bottom: 0; left: 0; right: 0; 
+                background: var(--surface); border-top: 1px solid var(--border); 
+                justify-content: space-around; padding: 0.5rem; z-index: 1000; 
             }
-        };
-
-        const result = await model.generateContent([prompt, imagePart]);
-        const parsed = JSON.parse(result.response.text()); 
-        
-        console.log(`🤖 AI Scan Result for [${category}] accepted=${parsed.accepted}`);
-        return parsed.accepted === true;
-    } catch (error) {
-        console.error('AI Scan Error', error);
-        return true; // fail open
-    }
-}
-
-// --- SEED SUPERADMIN ---
-async function seedAdmin() {
-    const admin = await User.findOne({ username: 'cityhall' });
-    if (!admin) {
-        await User.create({ username: 'cityhall', password: 'masterkey2026', role: 'superadmin', authMethod: 'local' });
-        console.log("✅ SuperAdmin 'cityhall' created.");
-    }
-}
-seedAdmin();
-
-// --- API ROUTES ---
-
-app.post('/api/request-otp', async (req, res) => {
-    const { email, username, password } = req.body;
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    try {
-        let user = await User.findOne({ email });
-
-        if (user) {
-            if (user.status === 'blocked') return res.status(403).json({ message: 'Account is suspended.' });
-            if (user.authMethod === 'google') return res.status(400).json({ message: 'Registered via Google.' });
-            if (user.authMethod === 'local' && !user.otp) return res.status(400).json({ message: 'Email already in use.' });
+            .mobile-bottom-nav button { background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; cursor: pointer; gap: 0.2rem; border: none; }
+            .content { margin-bottom: 60px; padding: 1.2rem; }
         }
+    </style>
+</head>
+<body>
+<div class="app">
 
-        if (!user) {
-            user = new User({ username: username || email.split('@')[0], email, password, role: 'citizen', authMethod: 'local' });
-        }
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-img"><img src="logokalapp.png" alt="Kalapp"></div>
+            <span class="logo-name">Kalapp</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <button class="nav-item active" onclick="switchTab('overview')">
+                <span class="material-icons-sharp">dashboard</span> Overview
+            </button>
 
-        user.otp = otp;
-        user.otpExpires = new Date(Date.now() + 10 * 60000);
-        await user.save();
+            <div class="nav-section-label">Case Management</div>
+            <button class="nav-item" onclick="switchTab('reports')">
+                <span class="material-icons-sharp">folder_open</span> All Reports
+            </button>
+            <button class="nav-item" onclick="switchTab('inprogress')">
+                <span class="material-icons-sharp">cached</span> In Progress
+            </button>
+            <button class="nav-item" onclick="switchTab('lupon')">
+                <span class="material-icons-sharp">gavel</span> Lupon Cases
+            </button>
+            <button class="nav-item" onclick="switchTab('feed')">
+                <span class="material-icons-sharp">dynamic_feed</span> Community Feed
+            </button>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="nav-item" onclick="logout()" style="color: var(--danger);">
+                <span class="material-icons-sharp">logout</span> Sign Out
+            </button>
+        </div>
+    </aside>
 
-        try {
-            const accessToken = await mailerOAuth2Client.getAccessToken();
-            const transport = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    type: 'OAuth2',
-                    user: process.env.GMAIL_ADDRESS,
-                    clientId: process.env.GMAIL_CLIENT_ID,
-                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                    accessToken: accessToken.token,
-                },
-            });
+    <div class="main">
 
-            const mailOptions = {
-                from: `System Admin <${process.env.GMAIL_ADDRESS}>`,
-                to: email,
-                subject: "Your Verification Code",
-                html: `<h2>Code: ${otp}</h2>`,
-            };
-
-            await transport.sendMail(mailOptions);
-            res.json({ message: 'OTP sent!' });
-            
-        } catch (error) {
-            console.error('GMAIL MAILER ERROR:', error);
-            res.status(500).json({ message: 'Failed to send OTP.' });
-        }
-    } catch (outerError) { 
-        console.error('DATABASE/SERVER ERROR:', outerError);
-        if (!res.headersSent) res.status(500).json({ message: 'Internal server error.' });
-    } 
-});
-
-app.post('/api/verify-otp', async (req, res) => {
-    const { email, otp } = req.body;
-    const user = await User.findOne({ email, otp, otpExpires: { $gt: Date.now() } });
-    if (user) {
-        user.otp = undefined; user.otpExpires = undefined;
-        await user.save();
-        res.json({ message: 'Login successful!', username: user.username, role: user.role });
-    } else { res.status(400).json({ message: 'Invalid OTP.' }); }
-});
-
-app.post('/api/google-login', async (req, res) => {
-    const { token } = req.body;
-    try {
-        const ticket = await googleClient.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
-        const payload = ticket.getPayload();
-        const email = payload.email;
-        const name = payload.name;
-
-        let user = await User.findOne({ email });
-        if (user) {
-            if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });
-            if (user.authMethod !== 'google') return res.status(400).json({ message: 'Use OTP Login.' });
-            return res.json({ success: true, username: user.username, role: user.role });
-        }
-        
-        user = new User({ username: name, email: email, role: 'citizen', authMethod: 'google' });
-        await user.save();
-        res.json({ success: true, username: user.username, role: user.role });
-    } catch (error) { 
-        console.error('Google Auth Error:', error);
-        res.status(401).json({ message: 'Google login failed or token invalid.' }); 
-    }
-});
-
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
-    if (user) {
-        if (user.status === 'blocked') return res.status(403).json({ message: 'Account suspended.' });
-        res.json({ success: true, username: user.username, role: user.role });
-    } else { res.status(401).json({ message: 'Invalid credentials.' }); }
-});
-
-// --- AI CLASSIFY PREVIEW ENDPOINT ---
-app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ error: 'No file provided.' });
-
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: "application/json" }
-        });
-        
-        const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
-
-        Your job is to:
-        1. Analyze the uploaded photo and assign the most fitting category from ONLY these 5 options:
-           - Infrastructure & Public Works
-           - Environment & Sanitation
-           - Peace, Order & Public Safety
-           - Inter-Personal Disputes (Lupon / Mediation)
-           - Business & Ordinance Violations
-
-        2. Assign a priority level: CRITICAL, HIGH, MEDIUM, or LOW.
-           - CRITICAL: Immediate danger to life, health, or safety
-           - HIGH: Significant disruption or public health risk
-           - MEDIUM: Notable community issue needing action within days
-           - LOW: Minor concern or informational
-
-        3. Write a short AI summary (1-2 sentences) describing what you observe.
-        
-        IMPORTANT RULES — BE LENIENT AND HELPFUL
-        - ACCEPT the report if the photo shows ANY real-world scene.
-        - Only REJECT if the photo is CLEARLY a troll.
-        
-        Respond ONLY with this valid JSON schema:
-        {
-          "accepted": boolean,
-          "category": string,
-          "priority": string,
-          "summary": string
-        }`;
-
-        const imagePart = {
-            inlineData: {
-                data: req.file.buffer.toString('base64'),
-                mimeType: req.file.mimetype
-            }
-        };
-
-        const result = await model.generateContent([prompt, imagePart]);
-        const parsed = JSON.parse(result.response.text());
-        
-        console.log(`🔍 AI Preview Classify: accepted=${parsed.accepted}, category=${parsed.category}, priority=${parsed.priority}`);
-        res.json(parsed);
-    } catch (error) {
-        console.error('AI Classify Preview Error', error);
-        res.json({ accepted: null, category: null, priority: null, summary: null });
-    }
-});
-
-// --- 🚀 FAST FINAL COMPLAINT SUBMISSION ---
-app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) => {
-    try {
-        // FIXED: Added 'priority' to the list of incoming data
-        const { username, barangay, issue, description, contactNumber, locationLat, locationLng, locationAddress, locationSource, priority } = req.body;
-        const user = await User.findOne({ username });
-
-        if (user && user.status === 'blocked') {
-            return res.status(403).json({ success: false, message: 'Your account is BLOCKED.' });
-        }
-        if (!req.file) {
-            return res.status(400).json({ success: false, message: 'No photo uploaded.' });
-        }
-
-        // 1. Instantly scan the image from memory
-        const isApproved = await scanImageBufferWithAI(req.file.buffer, req.file.mimetype, issue);
-        
-        if (!isApproved) {
-            if (user) {
-                user.strikes += 1;
-                if (user.strikes >= 3) user.status = 'blocked';
-                await user.save();
-                return res.status(400).json({
-                    success: false,
-                    message: `❌ AI Rejected: Photo doesn't match category. Strike ${user.strikes}/3.${user.status === 'blocked' ? ' Your account is now BLOCKED.' : ''}`
-                });
-            }
-            return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
-        }
-
-        // 2. Upload to Cloudinary securely using stream 
-        const imageUrl = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
-                if (error) reject(error);
-                else resolve(result.secure_url);
-            });
-            stream.end(req.file.buffer);
-        });
-
-        // 3. Save to Database using the locked-in priority from the frontend
-        const newComplaint = new Complaint({
-            trackingId: 'KAL-' + Math.floor(1000 + Math.random() * 9000),
-            citizenName: username, barangay, category: issue, description, imageUrl,
-            status: 'Pending',
-            priority: priority || 'MEDIUM', // Uses exact priority from frontend preview
-            contactNumber: contactNumber || '',
-            locationLat: locationLat ? parseFloat(locationLat) : null,
-            locationLng: locationLng ? parseFloat(locationLng) : null,
-            locationAddress: locationAddress || '',
-            locationSource: locationSource || '',
-            history: [{ status: 'Pending', note: 'Complaint officially filed.', updatedBy: username || 'System' }]
-        });
-        
-        await newComplaint.save();
-        broadcast('complaint_update', { action: 'new' });
-        res.json({ success: true, message: 'Complaint submitted!', trackingId: newComplaint.trackingId });
-    } catch (error) { 
-        console.error('UPLOAD ERROR:', error);
-        res.status(500).json({ success: false, error: error.message }); 
-    } 
-});
-
-app.get('/api/complaints', async (req, res) => {
-    const complaints = await Complaint.find().sort({ createdAt: -1 });
-    res.json({ complaints });
-});
-
-app.patch('/api/complaints/:id/status', async (req, res) => {
-    try {
-        const { status, note, adminName, priority } = req.body;
-        const updateData = { status, lguNote: note };
-
-        if (priority) updateData.priority = priority;
-
-        if (status === 'Rejected & Flagged') {
-            const complaint = await Complaint.findOne({ trackingId: req.params.id });
-            if (complaint) {
-                const user = await User.findOne({ username: complaint.citizenName });
-                if (user) {
-                    if (user.strikes < 3) user.strikes += 1;
-                    if (user.strikes >= 3) user.status = 'blocked';
-                    await user.save();
-                }
-            }
-        }
-
-        await Complaint.findOneAndUpdate(
-            { trackingId: req.params.id },
-            {
-                $set: updateData,
-                $push: {
-                    history: {
-                        status: status,
-                        note: note || (priority ? `Priority changed to ${priority}` : 'Status updated'),
-                        updatedBy: adminName || 'LGU Admin'
-                    }
-                }
-            }
-        );
-        broadcast('complaint_update', { action: 'status' });
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ error: 'Failed to update status.' }); }
-});
-
-app.get('/api/admin/users', async (req, res) => {
-    const users = await User.find({ role: { $ne: 'superadmin' } });
-    res.json({ users });
-});
-
-app.post('/api/admin/create-lgu', async (req, res) => {
-    try {
-        await new User({ username: req.body.username, email: req.body.email, password: req.body.password, role: 'lgu', authMethod: 'local' }).save();
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
-});
-
-app.patch('/api/admin/users/:id/toggle-block', async (req, res) => {
-    const user = await User.findById(req.params.id);
-    if (user) {
-        user.status = user.status === 'blocked' ? 'active' : 'blocked';
-        await user.save();
-        res.json({ success: true });
-    }
-});
-
-app.patch('/api/admin/users/:id/reset-strikes', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (user) {
-            user.strikes = 0;
-            await user.save();
-            res.json({ success: true });
-        } else {
-            res.status(404).json({ success: false, message: 'User not found.' });
-        }
-    } catch (error) { res.status(500).json({ success: false }); }
-});
-
-app.get('/api/complaints/:trackingId/history', rateLimit({ windowMs: 60000, max: 30 }), async (req, res) => {
-    const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
-    if (!complaint) return res.status(404).json({ error: 'Not found' });
-    res.json({ history: complaint.history, trackingId: complaint.trackingId });
-});
-
-app.post('/api/complaints/:trackingId/upvote', rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
-    const { username } = req.body;
-    if (!username || typeof username !== 'string' || username.trim() === '') return res.status(400).json({ error: 'Username required' });
-    
-    const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
-    if (!complaint) return res.status(404).json({ error: 'Not found' });
-    if (complaint.upvotedBy.includes(username)) return res.status(400).json({ error: 'Already upvoted' });
-    
-    complaint.upvotes += 1;
-    complaint.upvotedBy.push(username);
-     
-    if (complaint.upvotes >= 3 && complaint.priority !== 'CRITICAL') {
-        const priorityOrder = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-        const idx = priorityOrder.indexOf(complaint.priority);
-        if (idx < 3) {
-            complaint.priority = priorityOrder[idx + 1];
-            complaint.history.push({ status: complaint.status, note: `Priority auto-bumped to ${complaint.priority} due to community validation (${complaint.upvotes} confirmations).`, updatedBy: 'System' });
-        }
-    }
-    await complaint.save();
-    broadcast('complaint_update', { action: 'upvote' });
-    res.json({ success: true, upvotes: complaint.upvotes, priority: complaint.priority });
-});
-
-app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, max: 15 }), async (req, res) => {
-    const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
-    if (!complaint) return res.status(404).send('Not found');
-    const date = new Date(complaint.createdAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-    res.send(`
-        <!DOCTYPE html><html><head><title>Affidavit - ${complaint.trackingId}</title>
-        <style>
-            body { font-family: 'Times New Roman', serif; max-width: 700px; margin: 40px auto; padding: 40px; line-height: 1.8; color: #000; }
-            h1 { text-align: center; text-transform: uppercase; font-size: 1.2rem; margin-bottom: 5px; }
-            h2 { text-align: center; font-size: 1rem; margin-bottom: 30px; }
-            .section { margin: 20px 0; }
-            .label { font-weight: bold; }
-            .signature-line { border-top: 1px solid #000; width: 300px; margin-top: 60px; }
-            @media print { body { margin: 0; } button { display: none; } }
-        </style></head>
-        <body>
-            <h1>Republic of the Philippines</h1>
-            <h2>Barangay Complaint Affidavit</h2>
-            <p>I, <strong>${complaint.citizenName}</strong>, of legal age, resident of <strong>${complaint.barangay}</strong>, hereby declare that:</p>
-            <div class="section">
-                <p><span class="label">Complaint Reference:</span> ${complaint.trackingId}</p>
-                <p><span class="label">Date Filed:</span> ${date}</p>
-                <p><span class="label">Category:</span> ${complaint.category}</p>
-                <p><span class="label">Description:</span> ${complaint.description}</p>
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="page-title" id="page-title">Overview</span>
+                <span class="breadcrumb" id="page-breadcrumb">Platform statistics and analytics</span>
             </div>
-            <p>I attest that the information provided is true and correct to the best of my knowledge.</p>
-            <div class="signature-line"></div>
-            <p>${complaint.citizenName}<br><small>Complainant's Signature over Printed Name</small></p>
-            <br>
-            <button onclick="window.print()">🖨️ Print Affidavit</button>
-        </body></html>
-    `);
-});
+            <div class="topbar-right">
+                <span id="ws-badge">🟢 Live</span>
+                <div style="position:relative;">
+                    <button class="icon-btn" onclick="toggleNotifPanel()" title="Notifications">
+                        🔔<span id="notif-badge">0</span>
+                    </button>
+                    <div id="notif-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                            <strong style="font-size:0.85rem;">🔔 Notifications</strong>
+                            <button onclick="markAllRead()" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:0.72rem; font-family:'Poppins',sans-serif; font-weight:600;">Mark all read</button>
+                        </div>
+                        <div id="notif-list"><p style="color:var(--muted); font-size:0.8rem; text-align:center; padding:1rem;">No notifications</p></div>
+                    </div>
+                </div>
+                <div class="admin-pill">
+                    <div class="admin-avatar" id="admin-avatar-initial">A</div>
+                    <div>
+                        <div class="admin-name" id="lgu-name-display">Admin User</div>
+                        <div class="admin-role">LGU Officer</div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-// --- AI LUPON ELIGIBILITY ANALYZER ---
-async function analyzeLuponEligibility(description) {
-    try {
-        const model = genAI.getGenerativeModel({ 
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: "application/json" }
-        });
-        
-        const prompt = `You are an assistant for a Philippine barangay complaint system.
-        Analyze the following complaint description and determine if it is eligible for Lupon Tagapamayapa mediation.
-        Description: ${description}
+        <div class="content">
 
-        Check for:
-        1. Does the description mention a respondent (neighbor, person, kapwa, individual, katabi, etc.)
-        2. Does it contain a Philippine contact number? Look for formats 09XXXXXXXXX, +639XXXXXXXXX, or a landline like (02) XXXX-XXXX or 8XXX-XXXX.
-        3. Is this a civil/community/interpersonal dispute (not a public infrastructure issue like potholes or broken streetlights)
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card" onclick="switchTab('reports')">
+                    <div class="stat-card-top">
+                        <div class="stat-icon" style="background:rgba(65,105,225,0.12); color:var(--primary);"><span class="material-icons-sharp" style="font-size:1.1rem;">file_copy</span></div>
+                        <span class="stat-change" style="color:var(--muted);">All time</span>
+                    </div>
+                    <div class="stat-num" id="count-total">0</div>
+                    <div class="stat-label">Total Reports</div>
+                </div>
+                <div class="stat-card" onclick="switchTab('reports'); document.getElementById('statusFilter').value='Pending'; loadComplaints();">
+                    <div class="stat-card-top">
+                        <div class="stat-icon" style="background:rgba(255,100,103,0.12); color:var(--danger);"><span class="material-icons-sharp" style="font-size:1.1rem;">emergency_share</span></div>
+                        <span class="stat-change" style="color:var(--danger);">Needs action</span>
+                    </div>
+                    <div class="stat-num" id="count-pending">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card" onclick="switchTab('inprogress')">
+                    <div class="stat-card-top">
+                        <div class="stat-icon" style="background:rgba(254,154,0,0.12); color:var(--warning);"><span class="material-icons-sharp" style="font-size:1.1rem;">cached</span></div>
+                        <span class="stat-change" style="color:var(--warning);">Active</span>
+                    </div>
+                    <div class="stat-num" id="count-progress">0</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-top">
+                        <div class="stat-icon" style="background:rgba(0,188,125,0.12); color:var(--success);"><span class="material-icons-sharp" style="font-size:1.1rem;">check_circle</span></div>
+                        <span class="stat-change" style="color:var(--success);">Closed</span>
+                    </div>
+                    <div class="stat-num" id="count-resolved">0</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+            </div>
 
-        Respond ONLY with a valid JSON object in this schema:
-        {
-            "eligible": boolean,
-            "hasContact": boolean,
-            "hasRespondent": boolean,
-            "isCivilDispute": boolean,
-            "reason": string
-        }`;
+            <div class="chart-row" id="chart-row">
+                <div class="card">
+                    <div class="card-header"><div><div class="card-title">Daily Activity</div><div class="card-sub">Reports per day</div></div></div>
+                    <canvas id="activityChart"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div><div class="card-title">Monthly Trend</div><div class="card-sub">Last 6 months</div></div></div>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div><div class="card-title">Case Summary</div><div class="card-sub">By status</div></div></div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
 
-        const result = await model.generateContent(prompt);
-        return JSON.parse(result.response.text());
-    } catch (error) {
-        console.error('Lupon Eligibility AI Error', error);
-        return { eligible: false, hasContact: false, hasRespondent: false, isCivilDispute: false, reason: 'AI analysis unavailable.' };
-    }
+            <div class="table-card" id="reports-table-card" style="display: none;">
+                <div class="table-header">
+                    <div style="display:flex; align-items:center; gap:0.8rem;">
+                        <span style="font-size:0.9rem; font-weight:700;">Complaint Database</span>
+                        <span id="table-count-badge" style="background:rgba(65,105,225,0.12); color:var(--primary); padding:3px 9px; border-radius:20px; font-size:0.7rem; font-weight:700;"></span>
+                    </div>
+                    <div class="table-filters">
+                        <input class="search-input" type="text" id="searchInput" placeholder="🔍 Search ID, name, barangay..." oninput="filterTable()">
+                        <select class="filter-select" id="statusFilter" onchange="loadComplaints()">
+                            <option value="All">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Referred to Lupon">Referred to Lupon</option>
+                            <option value="Lupon: Scheduled">Lupon: Scheduled</option>
+                            <option value="Lupon: Settled">Lupon: Settled</option>
+                            <option value="Lupon: Unresolved">Lupon: Unresolved</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Rejected & Flagged">Rejected & Flagged</option>
+                        </select>
+                        <button class="btn-export" onclick="downloadCSV()">📥 Export CSV</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Report ID</th><th>Date</th><th>Citizen / Barangay</th><th>Category</th><th>Status</th><th>Priority</th><th>Quick Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-table-body">
+                            <tr><td colspan="7" style="text-align:center; padding:3rem; color:var(--muted);">Loading reports...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="lupon-section">
+                <div class="table-card">
+                    <div class="table-header"><span style="font-size:0.9rem; font-weight:700;">⚖️ Lupon Tagapamayapa Cases</span></div>
+                    <div class="table-responsive lupon-table-wrap" style="padding-top: 1rem;">
+                        <table>
+                            <thead>
+                                <tr><th>Report ID</th><th>Date Referred</th><th>Citizen</th><th>Category</th><th>Barangay</th><th>Outcome / Actions</th></tr>
+                            </thead>
+                            <tbody id="lupon-table-body">
+                                <tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--muted);">Loading Lupon cases...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="inprogress-section">
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title" style="color:var(--warning);">🔄 Active Cases</span></div>
+                        <div id="active-cases-list"><p style="color:var(--muted); text-align:center; padding:1.5rem;">Loading...</p></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title" style="color:#fbbf24;">⚖️ Lupon Queue</span></div>
+                        <div id="lupon-cases-list"><p style="color:var(--muted); text-align:center; padding:1.5rem;">Loading...</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="feed-section">
+                <div class="card-header" style="margin-bottom:1rem;"><span style="font-size:0.9rem; font-weight:700;">📢 Community Feed</span></div>
+                <div id="feed-cards" class="feed-grid"></div>
+                <div style="text-align:center; margin-top:1.5rem;">
+                    <button id="feed-load-more" onclick="loadMoreFeed()" style="background:rgba(255,255,255,0.07); border:1px solid var(--border); color:var(--dark); padding:0.7rem 2rem; border-radius:10px; cursor:pointer; font-size:0.82rem; display:none;">Load More</button>
+                </div>
+            </div>
+
+        </div></div></div><nav class="mobile-bottom-nav" style="display: none;">
+    <button onclick="switchTab('overview')"><span class="material-icons-sharp" style="font-size:1.4rem;">dashboard</span><span>Overview</span></button>
+    <button onclick="switchTab('reports')"><span class="material-icons-sharp" style="font-size:1.4rem;">folder_open</span><span>Reports</span></button>
+    <button onclick="switchTab('inprogress')"><span class="material-icons-sharp" style="font-size:1.4rem;">cached</span><span>Progress</span></button>
+    <button onclick="switchTab('lupon')"><span class="material-icons-sharp" style="font-size:1.4rem;">gavel</span><span>Lupon</span></button>
+    <button onclick="switchTab('feed')"><span class="material-icons-sharp" style="font-size:1.4rem;">dynamic_feed</span><span>Feed</span></button>
+</nav>
+
+<div id="lgu-comment-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4000; overflow-y:auto; padding:2rem 1rem;">
+    <div style="background:var(--surface); border:1px solid var(--border); max-width:480px; width:100%; margin:0 auto; padding:2rem; border-radius:18px; position:relative;">
+        <span onclick="closeLguCommentModal()" style="position:absolute; top:1.1rem; right:1.3rem; cursor:pointer; font-size:1.4rem; color:var(--muted);">×</span>
+        <h3 style="margin-bottom:1.2rem; font-size:0.95rem; font-weight:700;">💬 Comments</h3>
+        <div id="lgu-comments-list" style="max-height:240px; overflow-y:auto; margin-bottom:1rem;"></div>
+        <textarea id="lgu-comment-text" rows="3" placeholder="Write an official comment..." style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; border-radius:10px; padding:0.8rem; font-family:'Poppins',sans-serif; font-size:0.82rem; resize:vertical; outline:none;"></textarea>
+        <button onclick="submitLguComment()" style="margin-top:0.6rem; width:100%; background:var(--primary); color:white; border:none; padding:0.75rem; border-radius:10px; cursor:pointer; font-weight:700;">Post Comment</button>
+    </div>
+</div>
+
+<div id="reportModal" class="modal-overlay">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div id="modal-id">#KAL-0000</div>
+        <div style="display:flex; align-items:center; gap:0.7rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <span id="modal-status-pill"></span>
+            <span id="modal-priority-pill"></span>
+            <span id="modal-upvote-badge" style="font-size:0.78rem; color:var(--muted);"></span>
+        </div>
+
+        <div class="modal-meta">
+            <div class="meta-item"><div class="meta-label">Resident</div><div class="meta-value" id="modal-citizen">—</div></div>
+            <div class="meta-item"><div class="meta-label">Category</div><div class="meta-value" id="modal-issue">—</div></div>
+            <div class="meta-item"><div class="meta-label">Barangay</div><div class="meta-value" id="modal-barangay">—</div></div>
+            <div class="meta-item"><div class="meta-label">Contact</div><div class="meta-value" id="modal-contact">—</div></div>
+        </div>
+
+        <div class="meta-item" style="margin-bottom:0.6rem;"><div class="meta-label">📍 Location</div><div class="meta-value" id="modal-location">—</div></div>
+        <div id="modal-map" style="display:none;"></div>
+        <img id="modal-img" src="" alt="Evidence Photo" onerror="this.style.display='none'">
+
+        <div class="meta-label" style="margin-top:0.5rem;">Description</div>
+        <div class="desc-box" id="modal-desc"></div>
+
+        <div id="ai-priority-section" class="ai-section">
+            <p style="font-size:0.82rem; font-weight:700; margin-bottom:0.7rem;">🤖 AI Suggested Priority: <span id="modal-priority" style="color:var(--primary);"></span></p>
+            <div id="priority-confirm-row" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="a-btn a-btn-resolve" onclick="confirmAIPriority()">✅ Confirm Priority</button>
+                <button class="a-btn a-btn-neutral" onclick="showPriorityOverride()">✍️ Override</button>
+            </div>
+            <div id="priority-override-row" style="display:none; margin-top:0.8rem; display:flex; gap:0.5rem;">
+                <select id="priority-override-select" class="filter-select" style="flex:1;">
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="HIGH">HIGH</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="LOW">LOW</option>
+                </select>
+                <button class="a-btn" style="background:var(--primary); color:white;" onclick="applyPriorityOverride()">Apply</button>
+            </div>
+        </div>
+
+        <div style="margin:1rem 0;"><div class="meta-label" style="margin-bottom:0.4rem;">LGU Note</div><div class="desc-box" id="modal-note" style="color:var(--warning);"></div></div>
+        <div class="modal-actions" id="modal-actions-div" style="margin-top:1.2rem;"></div>
+
+        <div id="progress-photo-section" style="margin-top:1.2rem; display:none;">
+            <div class="meta-label" style="margin-bottom:0.5rem;">📸 Upload Progress Photo</div>
+            <input type="file" id="progress-photo-input" accept="image/*" style="color:white; font-size:0.8rem; width:100%; margin-bottom:0.5rem;" onchange="previewProgressPhoto(this)">
+            <div id="progress-photo-preview" style="margin-top:0.4rem;"></div>
+            <input type="text" id="progress-photo-note" class="note-input" placeholder="Photo description (optional)">
+            <button onclick="uploadProgressPhoto()" class="a-btn" style="background:var(--primary); color:white; width:100%; margin-top:0.3rem;">📤 Upload Photo</button>
+        </div>
+
+        <div id="affidavit-section" style="margin-top:1.2rem; display:none;">
+            <div class="meta-label" style="color:var(--warning); margin-bottom:0.5rem;">📄 Affidavit Request</div>
+            <div id="affidavit-preview" class="desc-box"></div>
+            <button onclick="approveAffidavit()" class="a-btn a-btn-resolve" style="width:100%; margin-top:0.5rem;">✅ Approve & Release Affidavit</button>
+        </div>
+
+        <div style="margin-top:1.5rem;"><div class="meta-label" style="margin-bottom:0.8rem;">📋 Complaint History</div><div id="modal-history-timeline"></div></div>
+    </div>
+</div>
+
+<script>
+const BACKEND_URL = window.location.origin;
+const currentAdminName = localStorage.getItem('kalapp_username') || 'Official';
+
+// SAFE STRING ESCAPING TO PREVENT SYNTAX ERRORS
+function escAttr(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-app.post('/api/complaints/:id/refer-lupon', rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
+document.getElementById('lgu-name-display').innerText = currentAdminName;
+document.getElementById('admin-avatar-initial').innerText = currentAdminName.charAt(0).toUpperCase();
+
+let activityChart, weeklyChart, categoryChart;
+let currentFilteredData = [];
+let allComplaintsCache = [];
+let currentComplaint = null;
+let lguModalMap = null;
+let searchTerm = '';
+
+function filterTable() {
+    searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    renderTable(currentFilteredData);
+}
+
+function initCharts(complaints, stats) {
+    const ctxA = document.getElementById('activityChart').getContext('2d');
+    const ctxW = document.getElementById('weeklyChart').getContext('2d');
+    const ctxC = document.getElementById('categoryChart').getContext('2d');
+    if (activityChart) activityChart.destroy();
+    if (weeklyChart) weeklyChart.destroy();
+    if (categoryChart) categoryChart.destroy();
+
+    const chartDefaults = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+
+    const dayCounts = [0,0,0,0,0,0,0];
+    complaints.forEach(c => { dayCounts[new Date(c.createdAt).getDay()]++; });
+    const dayData = [dayCounts[1],dayCounts[2],dayCounts[3],dayCounts[4],dayCounts[5],dayCounts[6],dayCounts[0]];
+
+    activityChart = new Chart(ctxA, {
+        type: 'bar',
+        data: { labels: ['Mo','Tu','We','Th','Fr','Sa','Su'], datasets: [{ data: dayData, backgroundColor: 'rgba(65,105,225,0.7)', borderRadius: 6, barThickness: 14 }] },
+        options: { ...chartDefaults, animation: { duration: 1500 }, scales: { y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#71717a', font: { size: 10 } } }, x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 10 } } } } }
+    });
+
+    const now = new Date();
+    const monthLabels = [], monthData = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthLabels.push(d.toLocaleDateString('en-US', { month: 'short' }));
+        monthData.push(complaints.filter(c => { const cd = new Date(c.createdAt); return cd.getFullYear() === d.getFullYear() && cd.getMonth() === d.getMonth(); }).length);
+    }
+    const grad = ctxW.createLinearGradient(0, 0, 0, 200);
+    grad.addColorStop(0, 'rgba(65,105,225,0.35)'); grad.addColorStop(1, 'rgba(65,105,225,0)');
+    
+    weeklyChart = new Chart(ctxW, {
+        type: 'line',
+        data: { labels: monthLabels, datasets: [{ data: monthData, borderColor: '#4169E1', backgroundColor: grad, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#4169E1' }] },
+        options: { ...chartDefaults, animation: { duration: 2000 }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 10 } } } } }
+    });
+
+    categoryChart = new Chart(ctxC, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending','In Progress','Lupon','Resolved','Flagged'],
+            datasets: [{ data: [stats.pending||0, stats.progress||0, stats.lupon||0, stats.resolved||0, stats.flagged||0], backgroundColor: ['#ff6467','#fe9a00','#fbbf24','#00bc7d','#71717a'], borderWidth: 0, hoverOffset: 10 }]
+        },
+        options: { ...chartDefaults, cutout: '80%', animation: { animateRotate: true, duration: 1500 }, plugins: { legend: { display: true, position: 'bottom', labels: { color: '#71717a', font: { size: 9 }, boxWidth: 10, padding: 8 } } } }
+    });
+}
+
+async function loadComplaints() {
+    const filterValue = document.getElementById('statusFilter').value;
     try {
-        const { note, adminName } = req.body;
-        const complaint = await Complaint.findOne({ trackingId: req.params.id });
-        if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found.' });
+        const res = await fetch(`${BACKEND_URL}/api/complaints`);
+        const data = await res.json();
+        
+        const stats = {
+            pending: data.complaints.filter(c => !c.status || c.status.toLowerCase() === 'pending').length,
+            progress: data.complaints.filter(c => c.status?.toLowerCase() === 'in progress').length,
+            resolved: data.complaints.filter(c => c.status?.toLowerCase() === 'resolved').length,
+            lupon: data.complaints.filter(c => c.status?.toLowerCase().includes('lupon')).length,
+            flagged: data.complaints.filter(c => c.status?.toLowerCase().includes('flagged')).length
+        };
+        
+        document.getElementById('count-total').innerText = data.complaints.length;
+        document.getElementById('count-pending').innerText = stats.pending;
+        document.getElementById('count-progress').innerText = stats.progress;
+        document.getElementById('count-resolved').innerText = stats.resolved;
+        
+        initCharts(data.complaints, stats);
+        allComplaintsCache = data.complaints;
+        renderNotifications(data.complaints);
 
-        const analysis = await analyzeLuponEligibility(complaint.description || '');
+        currentFilteredData = data.complaints.filter(c => {
+            const s = c.status || 'Pending';
+            if (filterValue === 'All') return true;
+            return s.toLowerCase() === filterValue.toLowerCase();
+        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        if (!analysis.eligible || !analysis.hasContact) {
-              return res.status(400).json({
-                success: false,
-                message: `⚖️ Lupon referral rejected: The complaint description must include the respondent's contact number (e.g., 09XXXXXXXXX) for Lupon to schedule mediation. No strike added.`
-            });
+        renderTable(currentFilteredData);
+    } catch (err) { console.error('loadComplaints error:', err); }
+}
+
+function renderTable(data) {
+    const tableBody = document.getElementById('dashboard-table-body');
+    tableBody.innerHTML = '';
+
+    const filtered = searchTerm
+        ? data.filter(c => (c.trackingId||'').toLowerCase().includes(searchTerm) || (c.citizenName||'').toLowerCase().includes(searchTerm) || (c.barangay||'').toLowerCase().includes(searchTerm) || (c.category||'').toLowerCase().includes(searchTerm))
+        : data;
+
+    document.getElementById('table-count-badge').innerText = filtered.length + ' records';
+
+    if (filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:3rem; color:var(--muted);">No records found.</td></tr>`;
+        return;
+    }
+
+    const statusMap = { 'pending': ['pill-pending','Pending'], 'in progress': ['pill-inprogress','In Progress'], 'resolved': ['pill-resolved','Resolved'], 'rejected & flagged': ['pill-flagged','Flagged'], 'referred to lupon': ['pill-lupon','Lupon'], 'lupon: scheduled': ['pill-lupon-sch','Lupon: Scheduled'], 'lupon: settled': ['pill-lupon-settled','Lupon: Settled'], 'lupon: unresolved': ['pill-lupon-unresolved','Lupon: Unresolved'] };
+
+    filtered.forEach((c, i) => {
+        const isClosedStatus = ['Resolved','Rejected & Flagged','Referred to Lupon','Lupon: Settled','Lupon: Unresolved'].includes(c.status);
+        const pv = c.priority || 'MEDIUM';
+        const isCritical = pv === 'CRITICAL' && !isClosedStatus;
+        const row = document.createElement('tr');
+        if (isCritical) row.className = 'critical-row';
+        row.style.animation = `rowIn 0.25s ease calc(${Math.min(i,20)} * 0.03s) both`;
+        row.onclick = () => openReportDetails(c);
+
+        const st = (c.status||'pending').toLowerCase();
+        const [pillClass, pillText] = statusMap[st] || ['pill-pending','Pending'];
+        const priorityClasses = { CRITICAL: 'priority-critical', HIGH: 'priority-high', MEDIUM: 'priority-medium', LOW: 'priority-low' };
+        const priorityClass = priorityClasses[pv] || 'priority-medium';
+
+        row.innerHTML = `
+            <td><div class="tracking-id">${c.trackingId}</div></td>
+            <td style="color:var(--muted); white-space:nowrap;">${new Date(c.createdAt).toLocaleDateString('en-PH', { month:'short', day:'numeric' })}</td>
+            <td><div style="font-weight:600; color:white;">${c.citizenName || 'Anonymous'}</div><div style="color:var(--muted); font-size:0.75rem;">${c.barangay}</div></td>
+            <td style="color:var(--primary); font-size:0.82rem;">${c.category}</td>
+            <td><span class="pill ${pillClass}">${pillText}</span></td>
+            <td><span class="priority-tag ${priorityClass}">${pv}</span></td>
+            <td>${isClosedStatus ? '<span style="color:var(--muted); font-size:0.75rem;">Closed</span>' : `<button class="quick-resolve" onclick="event.stopPropagation(); updateStatus('${c.trackingId}', 'Resolved')">✓ Finish</button>`}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+async function updateStatus(trackingId, newStatus, note) {
+    const noteEl = document.getElementById(`note-${trackingId}`);
+    const finalNote = note || (noteEl ? noteEl.value : '') || `Status updated to ${newStatus}.`;
+    await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, note: finalNote, adminName: currentAdminName })
+    });
+    closeModal(); loadComplaints();
+}
+
+async function loadLuponCases() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints`);
+        const data = await res.json();
+        const cases = data.complaints.filter(c => ['Referred to Lupon','Lupon: Scheduled','Lupon: Settled','Lupon: Unresolved'].includes(c.status));
+        const tbody = document.getElementById('lupon-table-body');
+        tbody.innerHTML = '';
+        if (!cases.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--muted);">No Lupon cases.</td></tr>`; return; }
+        cases.forEach(c => {
+            const row = document.createElement('tr');
+            const refDate = c.history?.find(h => h.status === 'Referred to Lupon');
+            const dateStr = refDate ? new Date(refDate.updatedAt).toLocaleDateString('en-PH', { month:'short', day:'numeric' }) : 'N/A';
+            const isClosed = ['Lupon: Settled','Lupon: Unresolved'].includes(c.status);
+            let btns = '';
+            if (isClosed) {
+                btns = `<span class="pill ${c.status === 'Lupon: Settled' ? 'pill-lupon-settled' : 'pill-lupon-unresolved'}">${c.status}</span>`;
+            } else if (c.status === 'Referred to Lupon') {
+                btns = `<button class="a-btn a-btn-lupon" style="font-size:0.72rem;" onclick="luponStage('${c.trackingId}','Lupon: Scheduled','Hearing has been scheduled.')">📅 Schedule</button><button class="a-btn a-btn-neutral" style="font-size:0.72rem;" onclick="returnToReports('${c.trackingId}')">🔙 Return</button>`;
+            } else if (c.status === 'Lupon: Scheduled') {
+                btns = `<button class="a-btn a-btn-resolve" style="font-size:0.72rem;" onclick="luponStage('${c.trackingId}','Lupon: Settled','Amicable settlement reached.')">✅ Settled</button><button class="a-btn a-btn-reject" style="font-size:0.72rem;" onclick="luponStage('${c.trackingId}','Lupon: Unresolved','Mediation failed.')">❌ Unresolved</button>`;
+            }
+            row.innerHTML = `
+                <td style="font-weight:700; font-family:'Courier New',monospace;">${c.trackingId}</td>
+                <td style="color:var(--muted);">${dateStr}</td>
+                <td>${c.citizenName || 'Anonymous'}</td>
+                <td style="color:var(--primary);">${c.category}</td>
+                <td>${c.barangay}</td>
+                <td>
+                    <div style="margin-bottom:0.4rem; display:flex; gap:0.5rem;">
+                        <input type="text" placeholder="Notes..." id="lupon-note-${c.trackingId}" class="note-input" style="flex:1; margin:0; font-size:0.75rem;">
+                        <input type="date" id="lupon-date-${c.trackingId}" class="note-input" style="flex:0.7; margin:0; font-size:0.75rem; color:var(--muted);">
+                    </div>
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">${btns}</div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch(err) { console.error('Lupon load error:', err); }
+}
+
+async function luponStage(trackingId, newStatus, defaultNote) {
+    const noteEl = document.getElementById(`lupon-note-${trackingId}`);
+    const dateEl = document.getElementById(`lupon-date-${trackingId}`);
+    const note = (noteEl?.value ? noteEl.value : '') + (dateEl?.value ? ' | Hearing: ' + dateEl.value : '') || defaultNote;
+    await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, note, adminName: currentAdminName })
+    });
+    loadLuponCases(); if (document.getElementById('inprogress-section').style.display !== 'none') loadInProgressComplaints();
+}
+
+async function referToLupon(trackingId) {
+    const noteEl = document.getElementById(`note-${trackingId}`);
+    const alertEl = document.getElementById('lupon-modal-alert');
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/refer-lupon`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: noteEl?.value || '', adminName: currentAdminName }) });
+        const data = await res.json();
+        if (!res.ok) { if (alertEl) { alertEl.style.display = 'block'; alertEl.textContent = data.message || 'Lupon referral rejected.'; } return; }
+        closeModal(); loadComplaints();
+    } catch(err) { if (alertEl) { alertEl.style.display = 'block'; alertEl.textContent = 'Network error.'; } }
+}
+
+async function returnToReports(trackingId) {
+    await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Pending', note: 'Returned to reports queue.', adminName: currentAdminName }) });
+    closeModal(); loadComplaints(); loadLuponCases();
+}
+
+async function loadInProgressComplaints() {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints`);
+        const data = await res.json();
+        const inProgress = data.complaints.filter(c => c.status === 'In Progress');
+        const luponQ = data.complaints.filter(c => ['Referred to Lupon','Lupon: Scheduled'].includes(c.status));
+
+        const activeList = document.getElementById('active-cases-list');
+        if (!inProgress.length) { activeList.innerHTML = '<p style="color:var(--muted); text-align:center; padding:1rem;">No active cases.</p>'; } 
+        else {
+            const pColors = { CRITICAL:'#ef4444', HIGH:'#f97316', MEDIUM:'#3b82f6', LOW:'#94a3b8' };
+            activeList.innerHTML = inProgress.map(c => {
+                const pc = pColors[c.priority || 'MEDIUM'] || '#3b82f6';
+                return `<div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:1rem; margin-bottom:0.8rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-weight:700; font-family:'Courier New',monospace;">${c.trackingId}</span>
+                        <span style="background:${pc}22; color:${pc}; padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:800;">${c.priority||'MEDIUM'}</span>
+                    </div>
+                    <div style="color:#d1d1d1; font-size:0.82rem; margin-bottom:0.2rem;">👤 ${c.citizenName||'Anonymous'} · ${c.barangay}</div>
+                    <div style="color:var(--primary); font-size:0.78rem; margin-bottom:0.7rem;">📁 ${c.category}</div>
+                    <textarea id="inprog-note-${c.trackingId}" class="note-input" rows="2" placeholder="Add update note..." style="resize:vertical; font-size:0.78rem;">${c.lguNote||''}</textarea>
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <button class="a-btn a-btn-resolve" style="font-size:0.72rem;" onclick="updateStatusFromInProgress('${c.trackingId}','Resolved')">✓ Resolve</button>
+                        <button class="a-btn a-btn-lupon" style="font-size:0.72rem;" onclick="referToLuponFromInProgress('${c.trackingId}')">⚖️ Refer to Lupon</button>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        await Complaint.findOneAndUpdate(
-            { trackingId: req.params.id },
-            {
-                $set: { status: 'Referred to Lupon', lguNote: note || 'Escalated to Barangay Lupon Tagapamayapa for mediation.' },
-                $push: {
-                    history: {
-                         status: 'Referred to Lupon',
-                        note: note || 'Escalated to Barangay Lupon Tagapamayapa for mediation.',
-                        updatedBy: adminName || 'LGU Admin'
-                    }
-                }
-            }
-        );
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, error: 'Failed to refer to Lupon.' }); }
-});
-
-app.get('/api/complaints/track/:id', rateLimit({ windowMs: 60000, max: 30 }), async (req, res) => {
-    const complaint = await Complaint.findOne({ trackingId: req.params.id });
-    if (!complaint) return res.status(404).json({ message: 'Report not found.' });
-    res.json({ complaint: {
-        trackingId: complaint.trackingId,
-        category: complaint.category,
-        barangay: complaint.barangay,
-        status: complaint.status,
-        priority: complaint.priority,
-        lguNote: complaint.lguNote,
-        history: complaint.history,
-        createdAt: complaint.createdAt,
-        affidavitApproved: complaint.affidavitApproved
-    }});
-});
-
-app.post('/api/complaints/:id/request-affidavit', rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
-    try {
-        const complaint = await Complaint.findOneAndUpdate({ trackingId: req.params.id }, { $set: { affidavitRequested: true } });
-        if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found.' });
-        broadcast('complaint_update', { action: 'affidavit_requested', trackingId: req.params.id });
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, error: 'Failed to request affidavit.' }); }
-});
-
-app.post('/api/complaints/:id/approve-affidavit', rateLimit({ windowMs: 60000, max: 10 }), async (req, res) => {
-    try {
-        const complaint = await Complaint.findOneAndUpdate({ trackingId: req.params.id }, { $set: { affidavitApproved: true } });
-        if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found.' });
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, error: 'Failed to approve affidavit.' }); }
-});
-
-app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max: 10 }), memoryUpload.single('photo'), async (req, res) => {
-    try {
-        const { note, adminName } = req.body;
-        if (!req.file) return res.status(400).json({ error: 'No photo uploaded.' });
-
-        const photoUrl = await new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
-                if (error) reject(error);
-                else resolve(result.secure_url);
-            });
-            stream.end(req.file.buffer);
-        });
-
-        const complaint = await Complaint.findOneAndUpdate(
-            { trackingId: req.params.id },
-            { $push: { history: { status: 'Progress Update', note: note || 'LGU uploaded a progress photo.', updatedBy: adminName || 'LGU Admin', photoUrl } } }
-        );
-        if (!complaint) return res.status(404).json({ error: 'Complaint not found.' });
-        broadcast('complaint_update', { action: 'progress_photo' });
-        res.json({ success: true, photoUrl });
-    } catch (error) { res.status(500).json({ error: 'Failed to upload progress photo.' }); }
-});
-
-// Chat endpoint
-app.post('/api/ai-chat', async (req, res) => {
-    try {
-        const { message, history } = req.body;
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            systemInstruction: `You are 'Sumbong-Bot', official AI of Kalapp. Tone: Empathetic, uses 'po/opo', Taglish. 
-            Rules: No Markdown (** or #). Keep it plain text. Ask 4 Ws only if reporting. Direct to form for submission.`
-        });
-        const chat = model.startChat({ history: history || [] });
-        const result = await chat.sendMessage(message);
-        res.json({ reply: result.response.text() });
-    } catch (error) {
-        console.error('❌ AI ERROR', error);
-        res.status(500).json({ error: 'AI Error' });
-    }
-});
-
-// --- COMMUNITY FEED ---
-app.get('/api/complaints/feed', rateLimit({ windowMs: 60000, max: 60 }), async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-        const feed = await Complaint.find({
-            citizenName: { $exists: true, $ne: '' },
-            status: { $nin: ['Rejected & Flagged'] },
-            category: { $nin: ['Inter-Personal Disputes (Lupon / Mediation)'] }
-        }).sort({ createdAt: -1 }).skip(skip).limit(limit);
-        
-        const total = await Complaint.countDocuments({
-            citizenName: { $exists: true, $ne: '' },
-            status: { $nin: ['Rejected & Flagged'] },
-            category: { $nin: ['Inter-Personal Disputes (Lupon / Mediation)'] }
-        });
-        res.json({ feed, total, page, pages: Math.ceil(total / limit) });
-    } catch (error) { res.status(500).json({ error: 'Failed to load feed.' }); }
-});
-
-app.post('/api/complaints/:id/comment', rateLimit({ windowMs: 60000, max: 20 }), async (req, res) => {
-    try {
-        const { text, authorName } = req.body;
-        if (!text || !text.trim()) return res.status(400).json({ error: 'Comment text is required.' });
-        const complaint = await Complaint.findOneAndUpdate(
-            { trackingId: req.params.id },
-            { $push: { comments: { text: text.trim(), authorName: authorName || 'Anonymous' } } },
-            { new: true }
-        );
-        if (!complaint) return res.status(404).json({ error: 'Complaint not found.' });
-        broadcast('complaint_update', { action: 'comment' });
-        res.json({ success: true, comments: complaint.comments });
-    } catch (error) { res.status(500).json({ error: 'Failed to post comment.' }); }
-});
-
-// --- 🚨 GLOBAL ERROR CATCHER ---
-app.use((err, req, res, next) => {
-    console.error("🚨 CRITICAL MIDDLEWARE ERROR CAUGHT:", err);
-    res.status(500).json({ 
-        success: false, 
-        message: "A backend service crashed before processing.", 
-        details: err.message || err 
-    });
-});
-
-// --- HTTP + WebSocket Server ---
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
-
-wss.on('connection', (ws) => {
-    ws.isAlive = true;
-    ws.on('pong', () => { ws.isAlive = true; });
-    ws.on('message', () => {}); // ignore incoming messages
-});
-
-function broadcast(type, payload) {
-    const msg = JSON.stringify({ type, payload });
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) client.send(msg);
-    });
+        const luponList = document.getElementById('lupon-cases-list');
+        if (!luponQ.length) { luponList.innerHTML = '<p style="color:var(--muted); text-align:center; padding:1rem;">No Lupon cases.</p>'; } 
+        else {
+            const scMap = { 'Referred to Lupon': 'pill-lupon', 'Lupon: Scheduled': 'pill-lupon-sch' };
+            luponList.innerHTML = luponQ.map(c => {
+                const sc = scMap[c.status] || 'pill-lupon';
+                let btns = '';
+                if (c.status === 'Referred to Lupon') btns = `<button class="a-btn a-btn-lupon" style="font-size:0.72rem;" onclick="luponStage('${c.trackingId}','Lupon: Scheduled','Hearing has been scheduled.')">📅 Schedule</button><button class="a-btn a-btn-neutral" style="font-size:0.72rem;" onclick="returnToReports('${c.trackingId}')">🔙 Return</button>`;
+                else btns = `<button class="a-btn a-btn-resolve" style="font-size:0.72rem;" onclick="luponStage('${c.trackingId}','Lupon: Settled','Amicable settlement reached.')">✅ Settled</button><button class="a-btn a-btn-reject" style="font-size:0.72rem;" onclick="luponStage('${c.trackingId}','Lupon: Unresolved','Mediation failed.')">❌ Unresolved</button>`;
+                return `<div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:1rem; margin-bottom:0.8rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                        <span style="font-weight:700; font-family:'Courier New',monospace;">${c.trackingId}</span>
+                        <span class="pill ${sc}" style="font-size:0.68rem;">${c.status}</span>
+                    </div>
+                    <div style="color:#d1d1d1; font-size:0.82rem; margin-bottom:0.2rem;">👤 ${c.citizenName||'Anonymous'} · ${c.barangay}</div>
+                    <div style="color:var(--primary); font-size:0.78rem; margin-bottom:0.7rem;">📁 ${c.category}</div>
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">${btns}</div>
+                </div>`;
+            }).join('');
+        }
+    } catch(err) { console.error('loadInProgressComplaints error:', err); }
 }
 
-setInterval(() => {
-    wss.clients.forEach(ws => {
-        if (!ws.isAlive) return ws.terminate();
-        ws.isAlive = false;
-        ws.ping();
-    });
-}, 30000);
+async function updateStatusFromInProgress(trackingId, status) {
+    const noteEl = document.getElementById(`inprog-note-${trackingId}`);
+    await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, note: noteEl?.value || `Status updated to ${status}`, adminName: currentAdminName }) });
+    loadInProgressComplaints(); loadComplaints();
+}
 
-server.listen(PORT, () => console.log(`🚀 Master Server running on port ${PORT}`));
+async function referToLuponFromInProgress(trackingId) {
+    const noteEl = document.getElementById(`inprog-note-${trackingId}`);
+    await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/refer-lupon`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: noteEl?.value || '', adminName: currentAdminName }) });
+    loadInProgressComplaints(); loadComplaints();
+}
+
+function openReportDetails(complaint) {
+    currentComplaint = complaint;
+    document.getElementById('modal-id').innerText = complaint.trackingId;
+    document.getElementById('modal-citizen').innerText = complaint.citizenName || 'Guest';
+    document.getElementById('modal-issue').innerText = complaint.category;
+    document.getElementById('modal-barangay').innerText = complaint.barangay || 'N/A';
+    document.getElementById('modal-priority').innerText = complaint.priority || 'MEDIUM';
+    document.getElementById('modal-desc').innerText = complaint.description || 'No details provided.';
+    document.getElementById('modal-note').innerText = complaint.lguNote || 'No feedback yet.';
+
+    const statusMap2 = { 'pending': 'pill-pending', 'in progress': 'pill-inprogress', 'resolved': 'pill-resolved', 'rejected & flagged': 'pill-flagged', 'referred to lupon': 'pill-lupon', 'lupon: scheduled': 'pill-lupon-sch', 'lupon: settled': 'pill-lupon-settled', 'lupon: unresolved': 'pill-lupon-unresolved' };
+    const st = (complaint.status || 'Pending').toLowerCase();
+    const sp = document.getElementById('modal-status-pill');
+    sp.className = 'pill ' + (statusMap2[st] || 'pill-pending');
+    sp.innerText = complaint.status || 'Pending';
+
+    const pp = document.getElementById('modal-priority-pill');
+    const pv = complaint.priority || 'MEDIUM';
+    const pClasses = { CRITICAL: 'priority-critical', HIGH: 'priority-high', MEDIUM: 'priority-medium', LOW: 'priority-low' };
+    pp.className = 'priority-tag ' + (pClasses[pv] || 'priority-medium');
+    pp.innerText = pv;
+
+    const cEl = document.getElementById('modal-contact');
+    cEl.innerHTML = complaint.contactNumber ? `<a href="tel:${complaint.contactNumber}" style="color:var(--primary)">${complaint.contactNumber}</a>` : '<span style="color:var(--muted)">Not provided</span>';
+
+    const locEl = document.getElementById('modal-location');
+    const mapDiv = document.getElementById('modal-map');
+    if (complaint.locationLat && complaint.locationLng) {
+        const addr = complaint.locationAddress ? `<br><small style="color:var(--muted);">${complaint.locationAddress}</small>` : '';
+        locEl.innerHTML = `${complaint.locationLat}, ${complaint.locationLng}${addr}<br><a href="https://www.google.com/maps?q=${complaint.locationLat},${complaint.locationLng}" target="_blank" style="color:var(--primary); font-size:0.78rem; font-weight:600;">🗺️ Open in Google Maps</a>`;
+        mapDiv.style.display = 'block';
+        if (lguModalMap) { lguModalMap.remove(); lguModalMap = null; }
+        lguModalMap = L.map('modal-map', { zoomControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, tap: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(lguModalMap);
+        lguModalMap.setView([complaint.locationLat, complaint.locationLng], 16);
+        const pinIcon = L.divIcon({ className: '', html: '<div style="font-size:1.8rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🔶</div>', iconSize: [28,28], iconAnchor: [14,26] });
+        L.marker([complaint.locationLat, complaint.locationLng], { icon: pinIcon }).addTo(lguModalMap).bindPopup(complaint.locationAddress || `${complaint.locationLat}, ${complaint.locationLng}`).openPopup();
+    } else if (complaint.locationAddress) { locEl.innerHTML = complaint.locationAddress; mapDiv.style.display = 'none'; } 
+    else { locEl.innerHTML = '<span style="color:var(--muted)">Not provided</span>'; mapDiv.style.display = 'none'; }
+
+    document.getElementById('priority-confirm-row').style.display = 'flex';
+    document.getElementById('priority-override-row').style.display = 'none';
+    document.getElementById('priority-override-select').value = pv;
+
+    const upvotes = complaint.upvotes || 0;
+    document.getElementById('modal-upvote-badge').innerHTML = `👥 ${upvotes} confirmations` + (upvotes >= 5 ? ' <span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:2px 8px; border-radius:6px; font-size:0.68rem; font-weight:700;">HIGH CONCERN</span>' : '');
+
+    const timeline = document.getElementById('modal-history-timeline');
+    const statusColors2 = { 'Pending':'#ff6467','In Progress':'#fe9a00','Resolved':'#00bc7d','Rejected & Flagged':'#71717a','Referred to Lupon':'#fbbf24','Lupon: Scheduled':'#8b5cf6','Lupon: Settled':'#00bc7d','Lupon: Unresolved':'#ff6467','Progress Update':'#4169E1' };
+    if (complaint.history?.length) {
+        timeline.innerHTML = complaint.history.map(h => `
+            <div class="timeline-item">
+                <div class="timeline-dot" style="background:${statusColors2[h.status]||'#71717a'};"></div>
+                <div class="timeline-content">
+                    <strong style="color:${statusColors2[h.status]||'inherit'};">${h.status}</strong>
+                    <span>${h.note||''}</span>
+                    <small>by ${h.updatedBy||'System'} · ${new Date(h.updatedAt).toLocaleString('en-PH')}</small>
+                    ${h.photoUrl ? `<br><a href="${h.photoUrl.startsWith('http') ? h.photoUrl : BACKEND_URL + h.photoUrl}" target="_blank"><img src="${h.photoUrl.startsWith('http') ? h.photoUrl : BACKEND_URL + h.photoUrl}" style="width:100%; border-radius:8px; margin-top:0.4rem; max-height:160px; object-fit:cover;" onerror="this.style.display='none'"></a>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } else { timeline.innerHTML = '<p style="color:var(--muted); font-size:0.82rem;">No history yet.</p>'; }
+
+    const actionsDiv = document.getElementById('modal-actions-div');
+    const isClosedStatus = ['Resolved','Rejected & Flagged','Lupon: Settled','Lupon: Unresolved'].includes(complaint.status);
+    const isLuponStage = ['Referred to Lupon','Lupon: Scheduled'].includes(complaint.status);
+    const aiSection = document.getElementById('ai-priority-section');
+    const progressSection = document.getElementById('progress-photo-section');
+    const affidavitSection = document.getElementById('affidavit-section');
+
+    if (isClosedStatus) {
+        actionsDiv.innerHTML = `<p style="color:var(--muted); font-size:0.82rem; font-style:italic;">This complaint is closed.</p>`;
+        aiSection.style.display = 'none'; progressSection.style.display = 'none';
+    } else if (isLuponStage) {
+        aiSection.style.display = 'none'; progressSection.style.display = 'block';
+        let luponBtns = '';
+        if (complaint.status === 'Referred to Lupon') luponBtns = `<button class="a-btn a-btn-lupon" onclick="updateStatus('${complaint.trackingId}','Lupon: Scheduled','Hearing has been scheduled.')">📅 Schedule Hearing</button><button class="a-btn a-btn-neutral" onclick="returnToReports('${complaint.trackingId}')">🔙 Return</button>`;
+        else luponBtns = `<button class="a-btn a-btn-resolve" onclick="updateStatus('${complaint.trackingId}','Lupon: Settled','Amicable settlement reached.')">✅ Settled</button><button class="a-btn a-btn-reject" onclick="updateStatus('${complaint.trackingId}','Lupon: Unresolved','Mediation failed.')">❌ Unresolved</button>`;
+        actionsDiv.innerHTML = `<input type="text" id="note-${complaint.trackingId}" class="note-input" placeholder="LGU Feedback..." value="${complaint.lguNote||''}"><div id="lupon-modal-alert" style="display:none; padding:0.7rem; border-radius:8px; background:rgba(255,100,103,0.1); color:var(--danger); font-size:0.8rem; border:1px solid rgba(255,100,103,0.2); margin-bottom:0.5rem;"></div><div class="action-btns">${luponBtns}</div>`;
+    } else {
+        aiSection.style.display = 'block'; progressSection.style.display = 'none';
+        actionsDiv.innerHTML = `
+            <input type="text" id="note-${complaint.trackingId}" class="note-input" placeholder="LGU Feedback..." value="${complaint.lguNote||''}">
+            <div id="lupon-modal-alert" style="display:none; padding:0.7rem; border-radius:8px; background:rgba(255,100,103,0.1); color:var(--danger); font-size:0.8rem; border:1px solid rgba(255,100,103,0.2); margin-bottom:0.5rem;"></div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:0.8rem; margin-bottom:0.8rem;">
+                <div style="font-size:0.78rem; color:var(--muted); margin-bottom:0.5rem; font-weight:600;">📸 Attach Progress Photo (optional)</div>
+                <input type="file" id="progress-photo-input" accept="image/*" style="color:white; font-size:0.78rem; width:100%;" onchange="previewProgressPhoto(this)">
+                <div id="progress-photo-preview" style="margin-top:0.4rem;"></div>
+            </div>
+            <div class="action-btns">
+                <button class="a-btn a-btn-accept" onclick="updateStatus('${complaint.trackingId}','In Progress')">🔄 In Progress</button>
+                <button class="a-btn a-btn-resolve" onclick="updateStatus('${complaint.trackingId}','Resolved')">✓ Resolve</button>
+                <button class="a-btn a-btn-lupon" onclick="referToLupon('${complaint.trackingId}')">⚖️ Refer to Lupon</button>
+                <button class="a-btn a-btn-reject" onclick="if(confirm('Flag as fake/spam?')) updateStatus('${complaint.trackingId}','Rejected & Flagged')">🚩 Flag</button>
+            </div>
+        `;
+    }
+
+    if (complaint.affidavitRequested && !complaint.affidavitApproved) {
+        affidavitSection.style.display = 'block';
+        const date = new Date(complaint.createdAt).toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+        document.getElementById('affidavit-preview').innerHTML = `<strong>Ref:</strong> ${complaint.trackingId}<br><strong>Citizen:</strong> ${complaint.citizenName}<br><strong>Category:</strong> ${complaint.category}<br><strong>Barangay:</strong> ${complaint.barangay}<br><strong>Date Filed:</strong> ${date}<br><strong>Description:</strong> ${complaint.description}`;
+    } else { affidavitSection.style.display = 'none'; }
+
+    const img = document.getElementById('modal-img');
+    img.style.display = '';
+    img.src = complaint.imageUrl ? (complaint.imageUrl.startsWith('http') ? complaint.imageUrl : `${BACKEND_URL}${complaint.imageUrl}`) : 'https://via.placeholder.com/600x300?text=No+Photo+Evidence';
+
+    document.getElementById('reportModal').style.display = 'block';
+}
+
+function closeModal() { document.getElementById('reportModal').style.display = 'none'; currentComplaint = null; if (lguModalMap) { lguModalMap.remove(); lguModalMap = null; } }
+document.getElementById('reportModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+function confirmAIPriority() { if (!currentComplaint) return; document.getElementById('priority-confirm-row').style.display = 'none'; document.getElementById('priority-override-row').style.display = 'none'; }
+function showPriorityOverride() { document.getElementById('priority-override-row').style.display = 'flex'; }
+async function applyPriorityOverride() {
+    if (!currentComplaint) return;
+    const newPriority = document.getElementById('priority-override-select').value;
+    await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: currentComplaint.status, note: `Priority overridden to ${newPriority} by LGU`, adminName: currentAdminName, priority: newPriority }) });
+    document.getElementById('modal-priority').innerText = newPriority; document.getElementById('priority-confirm-row').style.display = 'none'; document.getElementById('priority-override-row').style.display = 'none';
+}
+
+async function approveAffidavit() {
+    if (!currentComplaint) return;
+    await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/approve-affidavit`, { method: 'POST' });
+    document.getElementById('affidavit-section').innerHTML = '<p style="color:var(--success);">✅ Affidavit approved and released.</p>';
+}
+async function uploadProgressPhoto() {
+    if (!currentComplaint) return;
+    const fileInput = document.getElementById('progress-photo-input');
+    if (!fileInput?.files?.length) return;
+    const fd = new FormData();
+    fd.append('photo', fileInput.files[0]); fd.append('note', document.getElementById('progress-photo-note')?.value || 'LGU uploaded a progress photo.'); fd.append('adminName', currentAdminName);
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints/${currentComplaint.trackingId}/progress-photo`, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) document.getElementById('progress-photo-preview').innerHTML = `<img src="${data.photoUrl}" style="width:100%; border-radius:10px; max-height:180px; object-fit:cover;">`;
+    } catch(e) { console.error(e); }
+}
+function previewProgressPhoto(input) {
+    const preview = document.getElementById('progress-photo-preview');
+    if (!preview) return;
+    if (input.files?.[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { preview.innerHTML = `<img src="${e.target.result}" style="width:100%; border-radius:10px; max-height:140px; object-fit:cover; margin-top:0.3rem;">`; };
+        reader.readAsDataURL(input.files[0]);
+    } else { preview.innerHTML = ''; }
+}
+
+function downloadCSV() {
+    let csv = "Tracking ID,Priority,Date,Citizen,Barangay,Category,Description,Status,LGU Note\n";
+    currentFilteredData.forEach(c => { csv += `"${c.trackingId}","${c.priority||'MEDIUM'}","${new Date(c.createdAt).toLocaleDateString()}","${c.citizenName||'Anonymous'}","${c.barangay||''}","${c.category||''}","${(c.description||'').replace(/"/g,'""')}","${c.status||'Pending'}","${(c.lguNote||'').replace(/"/g,'""')}"\n`; });
+    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `Kalapp_${new Date().toISOString().split('T')[0]}.csv`; link.click();
+}
+
+let notifStore = [];
+function renderNotifications(complaints) {
+    const critical = complaints.filter(c => c.priority === 'CRITICAL' && !['Resolved','Rejected & Flagged','Lupon: Settled','Lupon: Unresolved'].includes(c.status));
+    const pending = complaints.filter(c => (!c.status || c.status === 'Pending'));
+    notifStore = [...critical.map(c => ({ id: c.trackingId, msg: `🔴 CRITICAL: ${c.trackingId} — ${c.category} in ${c.barangay}`, time: c.createdAt })), ...pending.slice(0, 5).map(c => ({ id: c.trackingId, msg: `🟡 Pending: ${c.trackingId} — ${c.category}`, time: c.createdAt }))];
+    const badge = document.getElementById('notif-badge');
+    const count = notifStore.length;
+    badge.style.display = count ? 'flex' : 'none'; badge.innerText = count > 9 ? '9+' : count;
+    const list = document.getElementById('notif-list');
+    list.innerHTML = notifStore.length ? notifStore.map(n => `<div style="padding:0.6rem 0; border-bottom:1px solid var(--border); cursor:pointer;" onclick="toggleNotifPanel()"><div style="font-size:0.8rem; color:var(--dark);">${n.msg}</div><div style="font-size:0.7rem; color:var(--muted); margin-top:2px;">${new Date(n.time).toLocaleDateString('en-PH')}</div></div>`).join('') : `<p style="color:var(--muted); font-size:0.8rem; text-align:center; padding:1rem;">No notifications</p>`;
+}
+
+function toggleNotifPanel() { const panel = document.getElementById('notif-panel'); panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; }
+function markAllRead() { document.getElementById('notif-badge').style.display = 'none'; document.getElementById('notif-list').innerHTML = '<p style="color:var(--muted); font-size:0.8rem; text-align:center; padding:1rem;">All caught up!</p>'; document.getElementById('notif-panel').style.display = 'none'; }
+document.addEventListener('click', function(e) { const panel = document.getElementById('notif-panel'); if (!e.target.closest('#notif-panel') && !e.target.closest('.icon-btn')) { if (panel) panel.style.display = 'none'; } });
+
+function switchTab(tabName) {
+    ['chart-row', 'reports-table-card', 'lupon-section', 'inprogress-section', 'feed-section'].forEach(id => document.getElementById(id).style.display = 'none');
+    document.getElementById('stats-grid').style.display = 'none';
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+    const tabMap = { overview: 0, reports: 1, inprogress: 2, lupon: 3, feed: 4 };
+    const navBtns = document.querySelectorAll('.sidebar-nav .nav-item');
+    if (tabMap[tabName] !== undefined && navBtns[tabMap[tabName]]) navBtns[tabMap[tabName]].classList.add('active');
+
+    const titles = { overview: ['Overview', 'Platform statistics and analytics'], reports: ['All Reports', 'Browse and filter complaints'], inprogress: ['In Progress', 'Active and Lupon queue'], lupon: ['Lupon Cases', 'Lupon Tagapamayapa management'], feed: ['Community Feed', 'Public complaints and vouches'] };
+    const [title, sub] = titles[tabName] || ['Overview', ''];
+    document.getElementById('page-title').innerText = title; document.getElementById('page-breadcrumb').innerText = sub;
+
+    if (tabName === 'overview') { document.getElementById('stats-grid').style.display = 'grid'; document.getElementById('chart-row').style.display = 'grid'; } 
+    else if (tabName === 'reports') { document.getElementById('stats-grid').style.display = 'grid'; document.getElementById('reports-table-card').style.display = 'block'; } 
+    else if (tabName === 'lupon') { document.getElementById('lupon-section').style.display = 'block'; loadLuponCases(); } 
+    else if (tabName === 'inprogress') { document.getElementById('inprogress-section').style.display = 'block'; loadInProgressComplaints(); } 
+    else if (tabName === 'feed') { document.getElementById('feed-section').style.display = 'block'; feedPage = 1; loadFeed(); } 
+    else { document.getElementById('stats-grid').style.display = 'grid'; document.getElementById('chart-row').style.display = 'grid'; }
+}
+
+let feedPage = 1;
+const lguFeedCommentStore = {};
+let currentFeedCommentId = null;
+
+async function loadFeed(append = false) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${feedPage}&limit=9`);
+        const data = await res.json();
+        const container = document.getElementById('feed-cards');
+        const loadMoreBtn = document.getElementById('feed-load-more');
+        if (!append) container.innerHTML = '';
+        const items = data.complaints || data.items || data.feed || [];
+        if (!items.length && !append) { container.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem; grid-column:1/-1;">No posts in community feed yet.</p>'; return; }
+        items.forEach(c => {
+            lguFeedCommentStore[c.trackingId] = c.comments || [];
+            const card = document.createElement('div');
+            card.style.cssText = 'background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; transition:0.2s;';
+            card.onmouseenter = () => card.style.borderColor = 'rgba(65,105,225,0.3)'; card.onmouseleave = () => card.style.borderColor = 'rgba(255,255,255,0.07)';
+            const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
+            const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' });
+            const safeDesc = String(c.description||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
+            const desc = safeDesc.substring(0, 100) + (safeDesc.length > 100 ? '...' : '');
+            card.innerHTML = `
+                ${imgSrc ? `<img src="${imgSrc}" style="width:100%; height:160px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                <div style="padding:1rem;">
+                    <div style="font-weight:700; font-size:0.85rem; margin-bottom:0.2rem; color:var(--primary);">${escAttr(c.category||'')}</div>
+                    <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.5rem;">📍 ${escAttr(c.barangay||'')} · ${date}</div>
+                    <p style="font-size:0.8rem; color:#d1d1d1; line-height:1.5; margin-bottom:0.7rem;">${desc}</p>
+                    <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.7rem;">👤 ${escAttr(c.citizenName||'Anonymous')}</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button onclick="feedUpvote('${escAttr(c.trackingId)}',this)" style="background:rgba(0,188,125,0.08); border:1px solid rgba(0,188,125,0.25); color:var(--success); padding:4px 10px; border-radius:7px; cursor:pointer; font-size:0.75rem; font-weight:600;">👍 Vouch (${c.upvotes||0})</button>
+                        <button onclick="openLguCommentModal('${escAttr(c.trackingId)}')" style="background:rgba(65,105,225,0.08); border:1px solid rgba(65,105,225,0.25); color:var(--primary); padding:4px 10px; border-radius:7px; cursor:pointer; font-size:0.75rem; font-weight:600;">💬 ${(c.comments||[]).length}</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        loadMoreBtn.style.display = data.pages > feedPage ? 'inline-block' : 'none';
+    } catch(e) { console.error('Feed error:', e); }
+}
+
+async function feedUpvote(trackingId, btn) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/upvote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentAdminName }) });
+        const data = await res.json();
+        btn.textContent = data.success ? `👍 Vouched (${data.upvotes})` : '✅ Already vouched'; btn.disabled = true;
+    } catch(e) { console.error(e); }
+}
+
+function loadMoreFeed() { feedPage++; loadFeed(true); }
+
+function openLguCommentModal(trackingId) {
+    currentFeedCommentId = trackingId;
+    const list = document.getElementById('lgu-comments-list');
+    const arr = lguFeedCommentStore[trackingId] || [];
+    list.innerHTML = arr.length ? arr.map(c => `<div style="padding:0.5rem 0; border-bottom:1px solid var(--border);"><strong style="font-size:0.78rem; color:var(--primary);">${String(c.authorName||'Anonymous').replace(/</g,'&lt;')}</strong><p style="font-size:0.8rem; color:#d1d1d1; margin-top:0.2rem;">${String(c.text||'').replace(/</g,'&lt;')}</p><small style="color:var(--muted);">${new Date(c.createdAt).toLocaleDateString('en-PH')}</small></div>`).join('') : '<p style="font-size:0.8rem; color:var(--muted); text-align:center; padding:1rem;">No comments yet.</p>';
+    document.getElementById('lgu-comment-modal').style.display = 'block';
+}
+
+function closeLguCommentModal() { document.getElementById('lgu-comment-modal').style.display = 'none'; document.getElementById('lgu-comment-text').value = ''; currentFeedCommentId = null; }
+
+async function submitLguComment() {
+    if (!currentFeedCommentId) return;
+    const text = document.getElementById('lgu-comment-text').value.trim();
+    if (!text) return;
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/complaints/${currentFeedCommentId}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, authorName: currentAdminName + ' (LGU)' }) });
+        const data = await res.json();
+        if (data.success) { lguFeedCommentStore[currentFeedCommentId] = data.comments; openLguCommentModal(currentFeedCommentId); document.getElementById('lgu-comment-text').value = ''; }
+    } catch(e) { console.error(e); }
+}
+
+function logout() { localStorage.removeItem('kalapp_username'); window.location.href = '/login.html'; }
+
+let wsReconnectDelay = 1000;
+function connectWebSocket() {
+    const wsUrl = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
+    const badge = document.getElementById('ws-badge');
+    let ws;
+    try { ws = new WebSocket(wsUrl); } catch(e) { return; }
+    ws.onopen = () => { wsReconnectDelay = 1000; badge.textContent = '🟢 Live'; badge.style.display = 'inline'; badge.style.background = 'rgba(0,188,125,0.12)'; badge.style.color = 'var(--success)'; };
+    ws.onmessage = () => { loadComplaints(); if (document.getElementById('lupon-section').style.display !== 'none') loadLuponCases(); if (document.getElementById('inprogress-section').style.display !== 'none') loadInProgressComplaints(); if (document.getElementById('feed-section').style.display !== 'none') { feedPage = 1; loadFeed(); } };
+    ws.onclose = () => { badge.textContent = '🔴 Reconnecting'; badge.style.background = 'rgba(255,100,103,0.1)'; badge.style.color = 'var(--danger)'; setTimeout(connectWebSocket, Math.min(wsReconnectDelay, 30000)); wsReconnectDelay = Math.min(wsReconnectDelay * 2, 30000); };
+    ws.onerror = () => ws.close();
+}
+
+switchTab('overview');
+connectWebSocket();
+loadComplaints();
+</script>
+</body>
+</html>
