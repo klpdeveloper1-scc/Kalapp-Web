@@ -60,13 +60,6 @@
         .btn-submit:hover { background: #e67e00; }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* TABLE */
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: var(--card-padding); }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
-        th { padding: 0.8rem 1rem; color: var(--color-dark); border-bottom: 2px solid var(--color-light); font-size: 0.85rem; white-space: nowrap; }
-        td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--color-light); color: var(--color-dark); font-size: 0.88rem; }
-        .photo-thumbnail { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; }
-
         /* STATUS */
         .status-pending   { color: var(--color-danger); font-weight: bold; }
         .status-inprogress{ color: var(--color-warning); font-weight: bold; }
@@ -223,8 +216,6 @@
             main { display: block; width: 100% !important; margin-top: 65px !important; padding: 1rem 1rem 5rem; }
             .card { border-radius: 1rem; padding: 1rem; }
             .mobile-header, .mobile-nav { display: flex; }
-            .table-wrapper { padding: 0.5rem; }
-            table { min-width: 480px; }
         }
 
         /* ── LOCATION MAP ── */
@@ -353,17 +344,10 @@
 
         <main id="history-page" style="display:none;">
             <h1>My Complaints</h1>
-            <div class="card" style="padding:0;">
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Photo</th><th>Date & ID</th><th>Issue & Location</th><th>Status</th><th>LGU Feedback</th><th>Trail</th></tr>
-                        </thead>
-                        <tbody id="history-body">
-                            <tr><td colspan="6" style="text-align:center; padding:2rem;">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">Track the status of your reports. Tap a card to view LGU feedback and request legal affidavits.</p>
+            
+            <div id="history-container" style="display:flex; flex-direction:column; gap:1rem;">
+                <p style="text-align:center; padding:2rem; color:var(--color-info-dark);">Loading records...</p>
             </div>
         </main>
 
@@ -1002,33 +986,86 @@
             } catch(e) {}
         }
 
-        /* ── LOAD MY HISTORY & SYNC PROFILE STATS ── */
+        /* ── EXPANDABLE LIST FOR COMPLAINTS HISTORY ── */
+        function toggleHistoryDetails(id) {
+            const details = document.getElementById(`details-${id}`);
+            const icon = document.querySelector(`.expand-icon-${id}`);
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                details.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function loadMyHistory() {
-            const tbody = document.getElementById('history-body');
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem;">Loading records...</td></tr>`;
+            const container = document.getElementById('history-container');
+            container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">Loading records...</p>`;
+            
             fetch(`${BACKEND_URL}/api/complaints`).then(r => r.json()).then(data => {
                 const mine = data.complaints.filter(c => c.citizenName === username);
                 
-                // Update BOTH Desktop and Mobile profile stats
+                // Update Profile stats
                 document.querySelectorAll('.stat-reports-count').forEach(el => el.innerText = mine.length);
                 const totalVouches = mine.reduce((sum, c) => sum + (c.upvotes || 0), 0);
                 document.querySelectorAll('.stat-vouches-count').forEach(el => el.innerText = totalVouches);
                 
-                if (!mine.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--color-info-dark);">No complaints found.</td></tr>`; return; }
-                tbody.innerHTML = '';
-                mine.forEach(c => {
+                if (!mine.length) { container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">No complaints found.</p>`; return; }
+                
+                container.innerHTML = mine.map(c => {
                     const statusMap = { 'In Progress':'status-inprogress', 'Resolved':'status-resolved', 'Rejected & Flagged':'status-flagged', 'Referred to Lupon':'status-lupon', 'Lupon: Scheduled':'status-lupon-scheduled', 'Lupon: Settled':'status-lupon-settled', 'Lupon: Unresolved':'status-lupon-unresolved' };
                     const sc = statusMap[c.status] || 'status-pending';
-                    const photo = c.imageUrl ? `<img src="${c.imageUrl}" class="photo-thumbnail">` : '<span style="font-size:0.75rem; color:gray;">No Photo</span>';
                     const date  = new Date(c.createdAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+                    
+                    const photoSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
+                    const photoHTML = photoSrc 
+                        ? `<img src="${photoSrc}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; flex-shrink:0;">` 
+                        : `<div style="width:55px; height:55px; border-radius:10px; background:var(--color-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><span class="material-icons-sharp" style="color:var(--color-info-dark);">image_not_supported</span></div>`;
+                    
                     const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
 
-                    const row = document.createElement('tr');
-                    // Removed Affidavit Request column from here
-                    row.innerHTML = `<td>${photo}</td><td>${date}<br><small style="font-weight:700; color:var(--color-primary);">${c.trackingId}</small></td><td><strong>${c.category}</strong><br><small>${c.barangay}</small></td><td class="${sc}">${c.status||'Pending'}</td><td>${note}</td><td><button onclick="viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.78rem;border:none;white-space:nowrap;">🔍 Trail</button></td>`;
-                    tbody.appendChild(row);
-                });
-            }).catch(() => { document.getElementById('history-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Error loading history.</td></tr>`; });
+                    let affidavitBtn = '';
+                    if (c.affidavitApproved) affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Affidavit</button>`;
+                    else if (c.affidavitRequested) affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested</div>`;
+                    else if (c.status === 'Resolved') affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Affidavit</button>`;
+
+                    return `
+                    <div class="card" style="padding:1rem; margin-top:0; border:1px solid var(--color-light); cursor:pointer; transition:0.2s;" onclick="toggleHistoryDetails('${c.trackingId}')">
+                        
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            ${photoHTML}
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <strong style="color:var(--color-primary); font-size:1rem;">${c.trackingId}</strong>
+                                    <small style="color:var(--color-info-dark); font-size:0.75rem;">${date}</small>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
+                                    <span style="font-size:0.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.category}</span>
+                                    <span class="${sc}" style="font-size:0.75rem; white-space:nowrap; margin-left:0.5rem;">${c.status||'Pending'}</span>
+                                </div>
+                            </div>
+                            <span class="material-icons-sharp expand-icon-${c.trackingId}" style="color:var(--color-info-dark); transition:transform 0.3s;">expand_more</span>
+                        </div>
+                        
+                        <div id="details-${c.trackingId}" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--color-light); animation: fadeIn 0.3s ease;">
+                            <p style="font-size:0.85rem; margin-bottom:0.5rem;"><strong>📍 Location:</strong> ${c.barangay}</p>
+                            <p style="font-size:0.85rem; margin-bottom:0.8rem; color:var(--color-dark);"><strong>📝 Description:</strong> ${c.description}</p>
+                            
+                            <div style="background:rgba(132, 139, 200, 0.08); padding:0.8rem; border-radius:8px; margin-bottom:0.8rem;">
+                                <p style="font-size:0.8rem; font-weight:600; margin-bottom:0.2rem;">LGU Feedback:</p>
+                                <p style="font-size:0.85rem;">${note}</p>
+                            </div>
+                            
+                            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                                <button onclick="event.stopPropagation(); viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;font-weight:600;">🔍 View Full Trail</button>
+                                ${affidavitBtn}
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }).catch(() => { document.getElementById('history-container').innerHTML = `<p style="text-align:center;color:red;padding:2rem;">Error loading history.</p>`; });
         }
 
         /* ── DEDICATED DOCUMENTS/AFFIDAVITS PAGE LOGIC ── */
@@ -1072,6 +1109,11 @@
             }
         }
 
+        async function requestAffidavit(trackingId, btn) {
+            try { await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/request-affidavit`, { method: 'POST' });
+                btn.outerHTML = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested — Awaiting LGU Approval</div>`;
+            } catch(e) {}
+        }
         function downloadAffidavit(trackingId) { window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit`, '_blank'); }
 
         /* ── FORM SUBMIT ── */
@@ -1173,7 +1215,7 @@
             ws.onopen = () => { citizenWsReconnectDelay = 1000; if (badge) { badge.textContent = '🟢 Live'; badge.style.display = 'inline-block'; } };
             ws.onmessage = () => {
                 // Live update history/stats if visible
-                const historyBody = document.getElementById('history-body');
+                const historyBody = document.getElementById('history-container');
                 if (historyBody && document.getElementById('history-page') && document.getElementById('history-page').style.display !== 'none') { loadMyHistory(); }
                 
                 // Live update documents page if visible
