@@ -57,6 +57,8 @@ mongoose.connect(process.env.MONGODB_URI)
 // --- Schemas & Models ---
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
+    firstName: { type: String, default: '' }, // NEW: For Account Settings
+    lastName: { type: String, default: '' },  // NEW: For Account Settings
     email: { type: String },
     password: { type: String },
     role: { type: String, default: 'citizen' },
@@ -249,6 +251,50 @@ app.post('/api/login', async (req, res) => {
         res.json({ success: true, username: user.username, role: user.role });
     } else { res.status(401).json({ message: 'Invalid credentials.' }); }
 });
+
+// --- ⚙️ USER ACCOUNT SETTINGS ENDPOINTS ---
+
+// Update Name
+app.patch('/api/users/:username/name', async (req, res) => {
+    try {
+        const { firstName, lastName } = req.body;
+        await User.findOneAndUpdate({ username: req.params.username }, { firstName, lastName });
+        res.json({ success: true, message: 'Name updated successfully.' });
+    } catch (error) { res.status(500).json({ success: false, error: 'Failed to update name.' }); }
+});
+
+// Update Email
+app.patch('/api/users/:username/email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const existing = await User.findOne({ email });
+        // Make sure the new email isn't already used by someone else
+        if (existing && existing.username !== req.params.username) {
+            return res.status(400).json({ success: false, error: 'That email is already registered.' });
+        }
+        await User.findOneAndUpdate({ username: req.params.username }, { email });
+        res.json({ success: true, message: 'Email address updated successfully.' });
+    } catch (error) { res.status(500).json({ success: false, error: 'Failed to update email.' }); }
+});
+
+// Update Password
+app.patch('/api/users/:username/password', async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findOne({ username: req.params.username });
+        if (!user) return res.status(404).json({ success: false, error: 'User not found.' });
+        
+        // Security check: Must know old password to set new one
+        if (user.password !== currentPassword) {
+            return res.status(400).json({ success: false, error: 'Incorrect current password.' });
+        }
+        
+        user.password = newPassword;
+        await user.save();
+        res.json({ success: true, message: 'Password successfully changed.' });
+    } catch (error) { res.status(500).json({ success: false, error: 'Failed to update password.' }); }
+});
+
 
 // --- AI CLASSIFY PREVIEW ENDPOINT ---
 app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, res) => {

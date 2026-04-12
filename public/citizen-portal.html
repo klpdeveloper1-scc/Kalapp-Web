@@ -482,11 +482,13 @@
             
             <span onclick="closeSettingsModal()" style="position:absolute; top:1.2rem; right:1.5rem; cursor:pointer; font-size:1.8rem; color:var(--color-info-dark); line-height:1;">&times;</span>
             
-            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.8rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.2rem;">
                 <span id="settings-back-btn" class="material-icons-sharp" style="display:none; cursor:pointer; color:var(--color-dark);" onclick="backToSettingsMain()">arrow_back</span>
                 <h2 id="settings-title-text" style="color:var(--color-dark); font-size: 1.3rem; margin:0;">⚙️ Account Settings</h2>
             </div>
             
+            <div id="settings-msg" style="margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600; text-align: center;"></div>
+
             <div id="settings-main-view">
                 <button class="settings-menu-btn" onclick="openSettingsView('name')">
                     <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">badge</span> Change Name</div>
@@ -505,34 +507,33 @@
             <div id="settings-name-view" style="display:none; animation: fadeIn 0.3s ease;">
                 <div class="form-group" style="margin-bottom: 1.2rem;">
                     <label>New First Name</label>
-                    <input type="text" class="form-control" placeholder="Enter first name">
+                    <input type="text" id="settings-fname" class="form-control" placeholder="Enter first name">
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label>New Last Name</label>
-                    <input type="text" class="form-control" placeholder="Enter last name">
+                    <input type="text" id="settings-lname" class="form-control" placeholder="Enter last name">
                 </div>
-                <button class="btn-submit" onclick="saveSettingsDummy(this, 'Name')">Save Name</button>
+                <button class="btn-submit" onclick="saveSettingsName(this)">Save Name</button>
             </div>
 
             <div id="settings-email-view" style="display:none; animation: fadeIn 0.3s ease;">
-                <p style="font-size:0.85rem; color:var(--color-info-dark); margin-bottom:1.2rem;">We will send a verification code to your new email address.</p>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label>New Email Address</label>
-                    <input type="email" class="form-control" placeholder="e.g. new.email@example.com">
+                    <input type="email" id="settings-email" class="form-control" placeholder="e.g. new.email@example.com">
                 </div>
-                <button class="btn-submit" onclick="saveSettingsDummy(this, 'Email')">Send Verification Code</button>
+                <button class="btn-submit" onclick="saveSettingsEmail(this)">Update Email</button>
             </div>
 
             <div id="settings-password-view" style="display:none; animation: fadeIn 0.3s ease;">
                 <div class="form-group" style="margin-bottom: 1.2rem;">
                     <label>Current Password</label>
-                    <input type="password" class="form-control" placeholder="Enter current password">
+                    <input type="password" id="settings-current-pw" class="form-control" placeholder="Enter current password">
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label>New Password</label>
-                    <input type="password" class="form-control" placeholder="Enter new password">
+                    <input type="password" id="settings-new-pw" class="form-control" placeholder="Enter new password">
                 </div>
-                <button class="btn-submit" onclick="saveSettingsDummy(this, 'Password')">Update Password</button>
+                <button class="btn-submit" onclick="saveSettingsPassword(this)">Update Password</button>
             </div>
 
         </div>
@@ -562,7 +563,6 @@
         // --- SECURITY ROLE CHECK (THE BOUNCER) ---
         const userRole = localStorage.getItem('kalapp_role');
         if (userRole && userRole !== 'citizen') {
-            // If an LGU Admin tries to open the Citizen Portal, clear the storage and kick them out
             localStorage.removeItem('kalapp_username');
             localStorage.removeItem('kalapp_role');
             window.location.href = '/login.html';
@@ -576,24 +576,16 @@
         document.getElementById('mobile-modal-name-display').innerText = username;
 
         /* ── DYNAMIC AVATAR LOGIC (Initials vs Photo) ── */
-        // Function to determine if placeholder or photo should be shown
         function updateAllAvatars(username, photoUrl) {
-            const containers = [
-                'header-avatar-circle',
-                'desktop-avatar-circle',
-                'modal-avatar-circle'
-            ];
-            
+            const containers = ['header-avatar-circle', 'desktop-avatar-circle', 'modal-avatar-circle'];
             containers.forEach(id => {
                 const el = document.getElementById(id);
                 if(!el) return;
                 
                 if (photoUrl) {
-                    // Show Photo
                     el.innerHTML = `<img src="${photoUrl}" class="profile-photo" alt="${escAttr(username)}">`;
                     el.style.background = 'none';
                 } else {
-                    // Show First Letter Placeholder
                     const initial = username.charAt(0).toUpperCase();
                     el.innerHTML = `<span class="initials">${initial}</span>`;
                     el.style.background = 'var(--color-primary)';
@@ -601,16 +593,12 @@
             });
         }
         
-        // Load initial avatars (Defaults to the user's first letter!)
         updateAllAvatars(username, null); 
 
-        // Quick File Input Handler for Avatar
         function handleQuickPhotoUpload(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    updateAllAvatars(username, e.target.result);
-                }
+                reader.onload = function(e) { updateAllAvatars(username, e.target.result); }
                 reader.readAsDataURL(input.files[0]);
             }
         }
@@ -619,10 +607,10 @@
         function openMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'block'; }
         function closeMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'none'; }
         
-        /* ── ACCOUNT SETTINGS MODAL LOGIC (REDESIGNED) ── */
+        /* ── ACCOUNT SETTINGS MODAL LOGIC (FULLY HOOKED UP) ── */
         function openSettingsModal() { 
             document.getElementById('settings-modal').style.display = 'block'; 
-            backToSettingsMain(); // Always reset to main menu when opening
+            backToSettingsMain(); 
         }
         
         function closeSettingsModal() { 
@@ -630,16 +618,13 @@
         }
 
         function openSettingsView(viewName) {
-            // Hide everything first
             document.getElementById('settings-main-view').style.display = 'none';
             document.getElementById('settings-name-view').style.display = 'none';
             document.getElementById('settings-email-view').style.display = 'none';
             document.getElementById('settings-password-view').style.display = 'none';
-            
-            // Show the back button
             document.getElementById('settings-back-btn').style.display = 'inline-block';
+            document.getElementById('settings-msg').innerText = ''; // Clear messages
             
-            // Show requested view
             if (viewName === 'name') {
                 document.getElementById('settings-title-text').innerText = 'Change Name';
                 document.getElementById('settings-name-view').style.display = 'block';
@@ -657,24 +642,111 @@
             document.getElementById('settings-name-view').style.display = 'none';
             document.getElementById('settings-email-view').style.display = 'none';
             document.getElementById('settings-password-view').style.display = 'none';
-            
-            // Reset header
             document.getElementById('settings-title-text').innerText = '⚙️ Account Settings';
             document.getElementById('settings-back-btn').style.display = 'none';
+            document.getElementById('settings-msg').innerText = ''; 
         }
 
-        // Dummy function to simulate saving data
-        function saveSettingsDummy(btn, type) {
-            const originalText = btn.innerText;
-            btn.innerText = 'Saving...';
-            btn.disabled = true;
+        // --- BACKEND API CONNECTIONS FOR SETTINGS ---
+
+        async function saveSettingsName(btn) {
+            const fname = document.getElementById('settings-fname').value.trim();
+            const lname = document.getElementById('settings-lname').value.trim();
+            const msgBox = document.getElementById('settings-msg');
             
-            setTimeout(() => {
-                alert(`Success: Your ${type} has been updated. (Backend hook coming soon)`);
-                btn.innerText = originalText;
-                btn.disabled = false;
-                backToSettingsMain(); // Return to menu after save
-            }, 800);
+            if (!fname || !lname) {
+                msgBox.style.color = 'var(--color-danger)';
+                msgBox.innerText = 'Please enter both first and last names.';
+                return;
+            }
+            
+            btn.innerText = 'Saving...'; btn.disabled = true;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/name`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName: fname, lastName: lname })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    msgBox.style.color = 'var(--color-success)';
+                    msgBox.innerText = '✅ ' + data.message;
+                    setTimeout(backToSettingsMain, 1500);
+                } else {
+                    msgBox.style.color = 'var(--color-danger)';
+                    msgBox.innerText = '❌ ' + data.error;
+                }
+            } catch(e) {
+                msgBox.style.color = 'var(--color-danger)';
+                msgBox.innerText = '❌ Network Error. Please try again.';
+            }
+            btn.innerText = 'Save Name'; btn.disabled = false;
+        }
+
+        async function saveSettingsEmail(btn) {
+            const email = document.getElementById('settings-email').value.trim();
+            const msgBox = document.getElementById('settings-msg');
+            
+            if (!email || !email.includes('@')) {
+                msgBox.style.color = 'var(--color-danger)';
+                msgBox.innerText = 'Please enter a valid email address.';
+                return;
+            }
+            
+            btn.innerText = 'Updating...'; btn.disabled = true;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/email`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    msgBox.style.color = 'var(--color-success)';
+                    msgBox.innerText = '✅ ' + data.message;
+                    setTimeout(backToSettingsMain, 1500);
+                } else {
+                    msgBox.style.color = 'var(--color-danger)';
+                    msgBox.innerText = '❌ ' + data.error;
+                }
+            } catch(e) {
+                msgBox.style.color = 'var(--color-danger)';
+                msgBox.innerText = '❌ Network Error. Please try again.';
+            }
+            btn.innerText = 'Update Email'; btn.disabled = false;
+        }
+
+        async function saveSettingsPassword(btn) {
+            const currentPw = document.getElementById('settings-current-pw').value;
+            const newPw = document.getElementById('settings-new-pw').value;
+            const msgBox = document.getElementById('settings-msg');
+            
+            if (!currentPw || !newPw) {
+                msgBox.style.color = 'var(--color-danger)';
+                msgBox.innerText = 'Please fill out both password fields.';
+                return;
+            }
+            
+            btn.innerText = 'Updating...'; btn.disabled = true;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/password`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    msgBox.style.color = 'var(--color-success)';
+                    msgBox.innerText = '✅ ' + data.message;
+                    document.getElementById('settings-current-pw').value = '';
+                    document.getElementById('settings-new-pw').value = '';
+                    setTimeout(backToSettingsMain, 1500);
+                } else {
+                    msgBox.style.color = 'var(--color-danger)';
+                    msgBox.innerText = '❌ ' + data.error;
+                }
+            } catch(e) {
+                msgBox.style.color = 'var(--color-danger)';
+                msgBox.innerText = '❌ Network Error. Please try again.';
+            }
+            btn.innerText = 'Update Password'; btn.disabled = false;
         }
 
         /* ── PAGE NAVIGATION ── */
@@ -690,11 +762,10 @@
             });
             const mobileIdx = { complaint: 0, history: 1, feed: 2, affidavits: 3, directory: 3, hotline: 4 }; // updated index
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
-                // Note: Directory is hidden on mobile now, so index 3 is Documents
                 btn.classList.toggle('active', btn.textContent.includes(pageId === 'complaint' ? 'File' : pageId==='affidavits' ? 'Documents' : pageId.charAt(0).toUpperCase() + pageId.slice(1)));
             });
             if (pageId === 'history') loadMyHistory();
-            if (pageId === 'affidavits') loadMyAffidavits(); // Load Documents page
+            if (pageId === 'affidavits') loadMyAffidavits(); 
             if (pageId === 'hotline') renderHotlines(hotlineData);
             if (pageId === 'directory') renderDirectory(barangayDirectoryData);
             if (pageId === 'complaint') initLocationMap();
@@ -730,7 +801,7 @@
             renderHotlines(hotlineData.filter(h => h.name.toLowerCase().includes(q.toLowerCase())));
         }
 
-        /* ── BARANGAY DIRECTORY DATA (Desktop Only) ── */
+        /* ── BARANGAY DIRECTORY DATA ── */
         const barangayDirectoryData = [
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Main Office', phone: '(02) 288-1031' },
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Tanod', phone: '0917-103-0001' },
@@ -790,14 +861,12 @@
             const isDark = document.body.classList.contains('dark-theme');
             localStorage.setItem('kalapp-theme', isDark ? 'dark' : 'light');
             
-            // Update desktop icon if visible
             const desktopToggler = document.getElementById('theme-toggler');
             if(desktopToggler) {
                 desktopToggler.querySelector('span:nth-child(1)').classList.toggle('active', !isDark);
                 desktopToggler.querySelector('span:nth-child(2)').classList.toggle('active', isDark);
             }
             
-            // Update minimal mobile icon
             const mobileIcon = document.getElementById('mobile-theme-icon');
             if(mobileIcon) {
                 mobileIcon.textContent = isDark ? 'dark_mode' : 'light_mode';
@@ -817,7 +886,7 @@
         
         document.getElementById('theme-toggler').addEventListener('click', toggleTheme);
 
-        /* ── AI PHOTO PREVIEW ── */
+        /* ── AI PHOTO PREVIEW & MAP ── */
         let aiSuggestedCategory = null;
         let mapInitialized = false;
         let locationMap = null;
@@ -928,7 +997,6 @@
                 aiSuggestedCategory = result.category;
                 const selected = document.getElementById('issue').value;
 
-                // SAVE AI PRIORITY TO HIDDEN FIELD SO BACKEND DOESN'T RE-CALCULATE IT
                 document.getElementById('aiPriority').value = result.priority || 'MEDIUM';
 
                 if (result.accepted === false) {
@@ -1096,7 +1164,6 @@
             fetch(`${BACKEND_URL}/api/complaints`).then(r => r.json()).then(data => {
                 const mine = data.complaints.filter(c => c.citizenName === username);
                 
-                // Update Profile stats
                 document.querySelectorAll('.stat-reports-count').forEach(el => el.innerText = mine.length);
                 const totalVouches = mine.reduce((sum, c) => sum + (c.upvotes || 0), 0);
                 document.querySelectorAll('.stat-vouches-count').forEach(el => el.innerText = totalVouches);
@@ -1115,7 +1182,6 @@
                     
                     const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
 
-                    // --- UPDATED AFFIDAVIT BUTTON LOGIC ---
                     let affidavitBtn = '';
                     if (c.affidavitApproved) {
                         affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'affidavit')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
@@ -1124,7 +1190,6 @@
                     } else if (c.status === 'Resolved') {
                         affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Official Affidavit</button>`;
                     } else if (c.status === 'In Progress') {
-                        // NEW: Proof of Report available when In Progress!
                         affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'proof')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
                     }
 
@@ -1176,7 +1241,6 @@
                 const res = await fetch(`${BACKEND_URL}/api/complaints`);
                 const data = await res.json();
                 
-                // Filter only Approved Affidavits for THIS citizen
                 const approved = data.complaints.filter(c => c.citizenName === username && c.affidavitApproved);
 
                 if (approved.length === 0) {
@@ -1186,7 +1250,6 @@
 
                 container.innerHTML = approved.map(c => {
                     const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-                    // Truncate description for card
                     const desc = (c.description || '').substring(0, 80);
                     
                     return `
@@ -1213,7 +1276,6 @@
             } catch(e) {}
         }
         
-        // FIXED: ADDED TYPE PARAMETER TO HANDLE PROOF VS AFFIDAVIT
         function downloadAffidavit(trackingId, type = 'affidavit') { 
             window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit?type=${type}`, '_blank'); 
         }
@@ -1227,7 +1289,6 @@
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
 
-            // --- NEW MANDATORY LOCATION CHECK ---
             const lat = document.getElementById('locationLat').value;
             const lng = document.getElementById('locationLng').value;
             const address = document.getElementById('locationAddressInput').value;
@@ -1235,9 +1296,8 @@
             if (!lat && !lng && !address) {
                 formMsg.style.color = 'var(--color-danger)';
                 formMsg.innerText = '📍 Action Required: Please provide the incident location by dragging the map pin, clicking "Start from My Current Location", or typing a landmark.';
-                return; // Stops the submission!
+                return;
             }
-            // -------------------------------------
 
             formMsg.innerText = '';
             document.getElementById('ai-preview-box').style.display = 'none';
@@ -1302,7 +1362,6 @@
                         locationMap.setView([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], MAP_DEFAULT_ZOOM);
                         locationMarker.setLatLng([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG]);
                     }
-                    // Auto reload history to update stats
                     loadMyHistory();
                 })
                 .catch(err => {
@@ -1319,7 +1378,7 @@
 
         function logout() { 
             localStorage.removeItem('kalapp_username'); 
-            localStorage.removeItem('kalapp_role'); // Clear role on logout
+            localStorage.removeItem('kalapp_role');
             window.location.href = '/login.html'; 
         }
 
@@ -1332,11 +1391,9 @@
             try { ws = new WebSocket(wsUrl); } catch(e) { return; }
             ws.onopen = () => { citizenWsReconnectDelay = 1000; if (badge) { badge.textContent = '🟢 Live'; badge.style.display = 'inline-block'; } };
             ws.onmessage = () => {
-                // Live update history/stats if visible
                 const historyBody = document.getElementById('history-container');
                 if (historyBody && document.getElementById('history-page') && document.getElementById('history-page').style.display !== 'none') { loadMyHistory(); }
                 
-                // Live update documents page if visible
                 const affidavitsList = document.getElementById('affidavits-list');
                 if (affidavitsList && document.getElementById('affidavits-page') && document.getElementById('affidavits-page').style.display !== 'none') { loadMyAffidavits(); }
             };
