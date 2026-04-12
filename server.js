@@ -164,12 +164,17 @@ app.post('/api/request-otp', async (req, res) => {
         user.otpExpires = new Date(Date.now() + 10 * 60000);
         await user.save();
 
-        // --- SIMPLE NODEMAILER WITH APP PASSWORD ---
+        // --- SIMPLE NODEMAILER WITH APP PASSWORD (FIXED FOR RENDER IPv6) ---
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true, // Use SSL/TLS to bypass the IPv6 routing timeout
             auth: {
                 user: process.env.GMAIL_ADDRESS,
                 pass: process.env.GMAIL_APP_PASSWORD
+            },
+            tls: {
+                rejectUnauthorized: false
             }
         });
 
