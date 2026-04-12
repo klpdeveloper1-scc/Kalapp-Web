@@ -372,7 +372,7 @@
                 background: var(--surface); border-top: 1px solid var(--border); 
                 justify-content: space-around; padding: 0.5rem; z-index: 1000; 
             }
-            .mobile-bottom-nav button { background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; cursor: pointer; gap: 0.2rem; }
+            .mobile-bottom-nav button { background: none; color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; cursor: pointer; gap: 0.2rem; border: none; }
             .content { margin-bottom: 60px; padding: 1.2rem; }
         }
         @keyframes rowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
@@ -713,10 +713,15 @@
 const BACKEND_URL = window.location.origin;
 const currentAdminName = localStorage.getItem('kalapp_username') || 'Official';
 
+// BULLETPROOF TEXT ESCAPING TO PREVENT SYNTAX ERRORS
 function escAttr(str) {
+    if (!str) return '';
     return String(str)
-        .replace(/&/g, '&').replace(/"/g, '"')
-        .replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 document.getElementById('lgu-name-display').innerText = currentAdminName;
@@ -791,6 +796,8 @@ async function loadComplaints() {
     try {
         const res = await fetch(`${BACKEND_URL}/api/complaints`);
         const data = await res.json();
+        
+        // Accurate statistics including all statuses
         const stats = {
             pending: data.complaints.filter(c => !c.status || c.status.toLowerCase() === 'pending').length,
             progress: data.complaints.filter(c => c.status?.toLowerCase() === 'in progress').length,
@@ -798,10 +805,12 @@ async function loadComplaints() {
             lupon: data.complaints.filter(c => c.status?.toLowerCase().includes('lupon')).length,
             flagged: data.complaints.filter(c => c.status?.toLowerCase().includes('flagged')).length
         };
+        
         document.getElementById('count-total').innerText = data.complaints.length;
         document.getElementById('count-pending').innerText = stats.pending;
         document.getElementById('count-progress').innerText = stats.progress;
         document.getElementById('count-resolved').innerText = stats.resolved;
+        
         initCharts(data.complaints, stats);
         allComplaintsCache = data.complaints;
         renderNotifications(data.complaints);
@@ -809,8 +818,8 @@ async function loadComplaints() {
         currentFilteredData = data.complaints.filter(c => {
             const s = c.status || 'Pending';
             if (filterValue === 'All') return true;
-            return s.toLowerCase() === filterValue.toLowerCase();
-        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            return s.toLowerCase() === filterValue.toLowerCase(); // Case-insensitive fix
+        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by date
 
         renderTable(currentFilteredData);
     } catch (err) { console.error('loadComplaints error:', err); }
