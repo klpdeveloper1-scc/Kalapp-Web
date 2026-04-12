@@ -8,7 +8,8 @@ const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
-// 📧 Google APIs (Replacing Nodemailer)
+// 📧 Mailer Dependencies (NEW)
+const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
 
 // 🤖 Google Generative AI & Auth
@@ -17,7 +18,6 @@ const { OAuth2Client } = require('google-auth-library');
 
 // ☁️ Cloudinary Configuration for Permanent Storage
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -33,48 +33,20 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// --- GMAIL API CONFIGURATION ---
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GMAIL_CLIENT_ID,
-  process.env.GMAIL_CLIENT_SECRET,
-  'https://developers.google.com/oauthplayground'
+// --- Google Mailer Configuration ---
+const mailerOAuth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    'https://developers.google.com/oauthplayground'
 );
-
-oauth2Client.setCredentials({
-  refresh_token: process.env.GMAIL_REFRESH_TOKEN,
-});
-
-const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-async function sendEmail(to, otp) {
-  const message = [
-    `To: ${to}`,
-    'Subject: Your Verification Code',
-    'Content-Type: text/html; charset=utf-8',
-    '',
-    `<h2>Code: ${otp}</h2>`
-  ].join('\n');
-
-  const encodedMessage = Buffer.from(message)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: {
-      raw: encodedMessage,
-    },
-  });
-}
+mailerOAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
 // --- Middleware ---
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Temp Memory Storage ---
+// --- Temp Memory Storage (Used for both Preview AND Final Upload) ---
 const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 // --- MongoDB Connection ---
@@ -132,12 +104,12 @@ const complaintSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Complaint = mongoose.model('Complaint', complaintSchema);
 
-// --- 🚀 FAST AI MODERATOR ---
+// --- 🚀 FAST AI MODERATOR (Reads from Memory Buffer) ---
 async function scanImageBufferWithAI(buffer, mimeType, category) {
     try {
         const model = genAI.getGenerativeModel({ 
             model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: "application/json" }
+            generationConfig: { responseMimeType: "application/json" } 
         });
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
@@ -161,11 +133,12 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
         };
         const result = await model.generateContent([prompt, imagePart]);
         const parsed = JSON.parse(result.response.text()); 
+        
         console.log(`🤖 AI Scan Result for [${category}] accepted=${parsed.accepted}`);
         return parsed.accepted === true;
     } catch (error) {
         console.error('AI Scan Error', error);
-        return true; 
+        return true; // fail open
     }
 }
 
@@ -203,12 +176,29 @@ app.post('/api/request-otp', async (req, res) => {
         await user.save();
 
         try {
-            await sendEmail(email, otp);
-            console.log(`✅ OTP sent to ${email} via Gmail API`);
+            const accessToken = await mailerOAuth2Client.getAccessToken();
+            const transport = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    type: 'OAuth2',
+                    user: process.env.GMAIL_ADDRESS,
+                    clientId: process.env.GMAIL_CLIENT_ID,
+                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+                    accessToken: accessToken.token,
+                },
+            });
+            const mailOptions = {
+                from: `System Admin <${process.env.GMAIL_ADDRESS}>`,
+                to: email,
+                subject: "Your Kalapp Verification Code",
+                html: `<h2>Code: ${otp}</h2>`,
+            };
+            await transport.sendMail(mailOptions);
             res.json({ message: 'OTP sent!' });
             
         } catch (error) {
-            console.error('GMAIL API ERROR:', error);
+            console.error('GMAIL MAILER ERROR:', error);
             res.status(500).json({ message: 'Failed to send OTP.' });
         }
     } catch (outerError) { 
@@ -271,6 +261,7 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
         });
         
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
+
         Your job is to:
         1. Analyze the uploaded photo and assign the most fitting category from ONLY these 5 options:
            - Infrastructure & Public Works
@@ -278,11 +269,13 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
            - Peace, Order & Public Safety
            - Inter-Personal Disputes (Lupon / Mediation)
            - Business & Ordinance Violations
+
         2. Assign a priority level: CRITICAL, HIGH, MEDIUM, or LOW.
            - CRITICAL: Immediate danger to life, health, or safety
            - HIGH: Significant disruption or public health risk
            - MEDIUM: Notable community issue needing action within days
            - LOW: Minor concern or informational
+
         3. Write a short AI summary (1-2 sentences) describing what you observe.
         IMPORTANT RULES — BE LENIENT AND HELPFUL
         - ACCEPT the report if the photo shows ANY real-world scene.
@@ -324,6 +317,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: 'No photo uploaded.' });
         }
 
+        // 1. Instantly scan the image from memory
         const isApproved = await scanImageBufferWithAI(req.file.buffer, req.file.mimetype, issue);
         
         if (!isApproved) {
@@ -339,6 +333,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
         }
 
+        // 2. Upload to Cloudinary securely using stream 
         const imageUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
                 if (error) reject(error);
@@ -347,11 +342,12 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             stream.end(req.file.buffer);
         });
 
+        // 3. Save to Database using the locked-in priority from the frontend
         const newComplaint = new Complaint({
             trackingId: 'KAL-' + Math.floor(1000 + Math.random() * 9000),
             citizenName: username, barangay, category: issue, description, imageUrl,
             status: 'Pending',
-            priority: priority || 'MEDIUM',
+            priority: priority || 'MEDIUM', // Uses exact priority from frontend preview
             contactNumber: contactNumber || '',
             locationLat: locationLat ? parseFloat(locationLat) : null,
             locationLng: locationLng ? parseFloat(locationLng) : null,
@@ -475,6 +471,7 @@ app.post('/api/complaints/:trackingId/upvote', rateLimit({ windowMs: 60000, max:
     res.json({ success: true, upvotes: complaint.upvotes, priority: complaint.priority });
 });
 
+// --- 📄 DUAL DOCUMENT GENERATOR (Proof of Report vs Affidavit) ---
 app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, max: 15 }), async (req, res) => {
     const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
     if (!complaint) return res.status(404).send('Not found');

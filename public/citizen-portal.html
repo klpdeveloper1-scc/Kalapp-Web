@@ -60,13 +60,6 @@
         .btn-submit:hover { background: #e67e00; }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* TABLE */
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: var(--card-padding); }
-        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
-        th { padding: 0.8rem 1rem; color: var(--color-dark); border-bottom: 2px solid var(--color-light); font-size: 0.85rem; white-space: nowrap; }
-        td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--color-light); color: var(--color-dark); font-size: 0.88rem; }
-        .photo-thumbnail { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; }
-
         /* STATUS */
         .status-pending   { color: var(--color-danger); font-weight: bold; }
         .status-inprogress{ color: var(--color-warning); font-weight: bold; }
@@ -539,6 +532,16 @@
 
     <script>
         const BACKEND_URL = window.location.origin;
+        
+        // --- SECURITY ROLE CHECK (THE BOUNCER) ---
+        const userRole = localStorage.getItem('kalapp_role');
+        if (userRole && userRole !== 'citizen') {
+            // If an LGU Admin tries to open the Citizen Portal, clear the storage and kick them out
+            localStorage.removeItem('kalapp_username');
+            localStorage.removeItem('kalapp_role');
+            window.location.href = '/login.html';
+        }
+
         const username = localStorage.getItem('kalapp_username') || 'Anonymous';
         
         // Setup Usernames
@@ -1035,12 +1038,15 @@
                     // --- UPDATED AFFIDAVIT BUTTON LOGIC ---
                     let affidavitBtn = '';
                     if (c.affidavitApproved) {
-                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
+                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')", 'affidavit' style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
                     } else if (c.affidavitRequested) {
                         affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Official Affidavit Requested</div>`;
                     } else if (c.status === 'Resolved') {
+                        affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Official Affidavit</button>`;
+                    } else if (c.status === 'In Progress') {
+                        // NEW: Proof of Report available when In Progress!
                         affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'proof')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
-                    } 
+                    }
 
                     return `
                     <div class="card" style="padding:1rem; margin-top:0; border:1px solid var(--color-light); cursor:pointer; transition:0.2s;" onclick="toggleHistoryDetails('${c.trackingId}')">
@@ -1111,7 +1117,7 @@
                             </div>
                             <p style="font-size:0.88rem; font-weight:600; margin-bottom:0.4rem; color:var(--color-dark);">${escAttr(c.category)}</p>
                             <p style="font-size:0.82rem; color:var(--color-info-dark); margin-bottom:1rem; line-height:1.4;">${escAttr(desc)}...</p>
-                            <button onclick="downloadAffidavit('${escAttr(c.trackingId)}')" class="btn-submit" style="padding:0.6rem; font-size:0.85rem; background:#00bc7d;">📥 Download Affidavit</button>
+                            <button onclick="downloadAffidavit('${escAttr(c.trackingId)}')", 'affidavit' class="btn-submit" style="padding:0.6rem; font-size:0.85rem; background:#00bc7d;">📥 Download Affidavit</button>
                         </div>
                     `;
                 }).join('');
@@ -1126,9 +1132,11 @@
                 btn.outerHTML = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested — Awaiting LGU Approval</div>`;
             } catch(e) {}
         }
+        
+        // FIXED: ADDED TYPE PARAMETER TO HANDLE PROOF VS AFFIDAVIT
         function downloadAffidavit(trackingId, type = 'affidavit') { 
-    window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit?type=${type}`, '_blank'); 
-         }
+            window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit?type=${type}`, '_blank'); 
+        }
 
         /* ── FORM SUBMIT ── */
         document.getElementById('complaint-form').addEventListener('submit', function (e) {
@@ -1217,7 +1225,11 @@
             });
         });
 
-        function logout() { localStorage.removeItem('kalapp_username'); window.location.href = '/login.html'; }
+        function logout() { 
+            localStorage.removeItem('kalapp_username'); 
+            localStorage.removeItem('kalapp_role'); // Clear role on logout
+            window.location.href = '/login.html'; 
+        }
 
         // --- WEBSOCKET LIVE UPDATES ---
         let citizenWsReconnectDelay = 1000;
