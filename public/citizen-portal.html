@@ -60,6 +60,13 @@
         .btn-submit:hover { background: #e67e00; }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
+        /* TABLE */
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: var(--card-padding); }
+        table { width: 100%; border-collapse: collapse; text-align: left; min-width: 500px; }
+        th { padding: 0.8rem 1rem; color: var(--color-dark); border-bottom: 2px solid var(--color-light); font-size: 0.85rem; white-space: nowrap; }
+        td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--color-light); color: var(--color-dark); font-size: 0.88rem; }
+        .photo-thumbnail { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; }
+
         /* STATUS */
         .status-pending   { color: var(--color-danger); font-weight: bold; }
         .status-inprogress{ color: var(--color-warning); font-weight: bold; }
@@ -1025,10 +1032,18 @@
                     
                     const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
 
+                    // --- UPDATED AFFIDAVIT BUTTON LOGIC ---
                     let affidavitBtn = '';
-                    if (c.affidavitApproved) affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Affidavit</button>`;
-                    else if (c.affidavitRequested) affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested</div>`;
-                    else if (c.status === 'Resolved') affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Affidavit</button>`;
+                    if (c.affidavitApproved) {
+                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
+                    } else if (c.affidavitRequested) {
+                        affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Official Affidavit Requested</div>`;
+                    } else if (c.status === 'Resolved') {
+                        affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Official Affidavit</button>`;
+                    } else if (c.status === 'In Progress') {
+                        // NEW: Proof of Report available when In Progress!
+                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
+                    }
 
                     return `
                     <div class="card" style="padding:1rem; margin-top:0; border:1px solid var(--color-light); cursor:pointer; transition:0.2s;" onclick="toggleHistoryDetails('${c.trackingId}')">
