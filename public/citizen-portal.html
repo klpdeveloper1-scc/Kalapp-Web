@@ -1147,6 +1147,17 @@
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
 
+            // --- NEW MANDATORY LOCATION CHECK ---
+            const lat = document.getElementById('locationLat').value;
+            const lng = document.getElementById('locationLng').value;
+            const address = document.getElementById('locationAddressInput').value;
+
+            if (!lat && !lng && !address) {
+                formMsg.style.color = 'var(--color-danger)';
+                formMsg.innerText = '📍 Action Required: Please provide the incident location by dragging the map pin, clicking "Start from My Current Location", or typing a landmark.';
+                return; // Stops the submission!
+            }
+
             formMsg.innerText = '';
             document.getElementById('ai-preview-box').style.display = 'none';
             document.getElementById('ai-preview-box').className = '';
