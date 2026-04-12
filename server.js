@@ -478,35 +478,103 @@ app.post('/api/complaints/:trackingId/upvote', rateLimit({ windowMs: 60000, max:
 app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, max: 15 }), async (req, res) => {
     const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
     if (!complaint) return res.status(404).send('Not found');
+    
     const date = new Date(complaint.createdAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-    res.send(`
-        <!DOCTYPE html><html><head><title>Affidavit - ${complaint.trackingId}</title>
-        <style>
-            body { font-family: 'Times New Roman', serif; max-width: 700px; margin: 40px auto; padding: 40px; line-height: 1.8; color: #000; }
-            h1 { text-align: center; text-transform: uppercase; font-size: 1.2rem; margin-bottom: 5px; }
-            h2 { text-align: center; font-size: 1rem; margin-bottom: 30px; }
-            .section { margin: 20px 0; }
-            .label { font-weight: bold; }
-            .signature-line { border-top: 1px solid #000; width: 300px; margin-top: 60px; }
-            @media print { body { margin: 0; } button { display: none; } }
-        </style></head>
-        <body>
-            <h1>Republic of the Philippines</h1>
-            <h2>Barangay Complaint Affidavit</h2>
-            <p>I, <strong>${complaint.citizenName}</strong>, of legal age, resident of <strong>${complaint.barangay}</strong>, hereby declare that:</p>
-            <div class="section">
-                <p><span class="label">Complaint Reference:</span> ${complaint.trackingId}</p>
-                <p><span class="label">Date Filed:</span> ${date}</p>
-                <p><span class="label">Category:</span> ${complaint.category}</p>
-                <p><span class="label">Description:</span> ${complaint.description}</p>
-            </div>
-            <p>I attest that the information provided is true and correct to the best of my knowledge.</p>
-            <div class="signature-line"></div>
-            <p>${complaint.citizenName}<br><small>Complainant's Signature over Printed Name</small></p>
-            <br>
-            <button onclick="window.print()">🖨️ Print Affidavit</button>
-        </body></html>
-    `);
+    const today = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const type = req.query.type || 'affidavit'; // Defaults to affidavit if no type is passed
+
+    if (type === 'proof') {
+        // --- 📝 FORMAL PROOF OF REPORT TEMPLATE ---
+        res.send(`
+            <!DOCTYPE html><html><head><title>Proof of Report - ${complaint.trackingId}</title>
+            <style>
+                body { font-family: 'Times New Roman', serif; max-width: 800px; margin: 40px auto; padding: 40px; color: #000; line-height: 1.6; }
+                .center { text-align: center; }
+                .header { margin-bottom: 30px; }
+                .title { font-size: 1.5rem; font-weight: bold; text-decoration: underline; margin: 40px 0; }
+                .content { text-align: justify; text-justify: inter-word; margin-bottom: 40px; font-size: 1.1rem; }
+                .signature { margin-top: 50px; float: right; width: 300px; text-align: center; }
+                .line { border-top: 1px solid #000; margin-bottom: 5px; }
+                @media print { body { margin: 0; padding: 20px; } button { display: none; } }
+                button { display: block; margin: 20px auto; padding: 10px 20px; font-size: 1rem; cursor: pointer; background: #00bc7d; color: white; border: none; border-radius: 8px; font-family: sans-serif; font-weight: bold; }
+            </style>
+            </head>
+            <body>
+                <div class="center header">
+                    <p>Republic of the Philippines<br>City of Caloocan<br><strong>BARANGAY ${complaint.barangay.toUpperCase()}</strong></p>
+                    <p>OFFICE OF THE PUNONG BARANGAY</p>
+                </div>
+                <div class="center title">CERTIFICATION OF REPORT</div>
+                <div class="content">
+                    <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
+                    <p>This is to certify that <strong>${complaint.citizenName.toUpperCase()}</strong>, of legal age, and a resident of ${complaint.barangay}, Caloocan City, has formally logged a report through the Kalapp Complaint Management System on <strong>${date}</strong>.</p>
+                    <p>The report has been recorded in our digital blotter under <strong>Tracking Number: ${complaint.trackingId}</strong> and is currently classified as <strong>${complaint.category}</strong>. The incident described is as follows:</p>
+                    <p style="margin-left: 40px; font-style: italic;">"${complaint.description}"</p>
+                    <p>This report is currently marked as <strong>${complaint.status.toUpperCase()}</strong> and is undergoing verification and appropriate action by the Barangay authorities.</p>
+                    <p>This certification is issued upon the request of the interested party for employment, academic, or any legal purpose it may serve.</p>
+                    <p>Issued this <strong>${today}</strong> at ${complaint.barangay}, Caloocan City, Philippines.</p>
+                </div>
+                <div class="signature">
+                    <div class="line"></div>
+                    <strong>BARANGAY SYSTEM ADMINISTRATOR</strong><br>Kalapp Automated Issuance
+                </div>
+                <div style="clear: both;"></div>
+                <button onclick="window.print()">🖨️ Print Certificate</button>
+            </body></html>
+        `);
+    } else {
+        // --- 📄 FORMAL SWORN AFFIDAVIT TEMPLATE ---
+        res.send(`
+            <!DOCTYPE html><html><head><title>Affidavit - ${complaint.trackingId}</title>
+            <style>
+                body { font-family: 'Times New Roman', serif; max-width: 800px; margin: 40px auto; padding: 40px; color: #000; line-height: 1.6; }
+                .center { text-align: center; }
+                .header { margin-bottom: 30px; }
+                .title { font-size: 1.5rem; font-weight: bold; margin: 40px 0; }
+                .content { text-align: justify; text-justify: inter-word; margin-bottom: 40px; font-size: 1.1rem; }
+                .jurat { margin-top: 40px; }
+                .signature { margin-top: 50px; float: right; width: 300px; text-align: center; }
+                .line { border-top: 1px solid #000; margin-bottom: 5px; }
+                @media print { body { margin: 0; padding: 20px; } button { display: none; } }
+                button { display: block; margin: 20px auto; padding: 10px 20px; font-size: 1rem; cursor: pointer; background: #ff8c00; color: white; border: none; border-radius: 8px; font-family: sans-serif; font-weight: bold; }
+            </style>
+            </head>
+            <body>
+                <div class="center header">
+                    <p>Republic of the Philippines<br>City of Caloocan<br><strong>BARANGAY ${complaint.barangay.toUpperCase()}</strong></p>
+                    <p>OFFICE OF THE LUPON TAGAPAMAYAPA</p>
+                </div>
+                <div class="center title">SWORN AFFIDAVIT OF COMPLAINT</div>
+                <div class="content">
+                    <p>I, <strong>${complaint.citizenName.toUpperCase()}</strong>, of legal age, Filipino, and a resident of ${complaint.barangay}, Caloocan City, after having been duly sworn to in accordance with law, hereby depose and state that:</p>
+                    <ol>
+                        <li style="margin-bottom: 10px;">On <strong>${date}</strong>, I filed a formal complaint through the Kalapp Complaint Management System (Tracking Number: <strong>${complaint.trackingId}</strong>).</li>
+                        <li style="margin-bottom: 10px;">The nature of the complaint falls under the category of <strong>${complaint.category}</strong>.</li>
+                        <li style="margin-bottom: 10px;">The complete details of the incident are truthfully recounted as follows:
+                            <br><br><em>"${complaint.description}"</em><br><br>
+                        </li>
+                        <li style="margin-bottom: 10px;">The Barangay authorities have processed this complaint and marked it as <strong>${complaint.status.toUpperCase()}</strong> in the digital registry.</li>
+                        <li style="margin-bottom: 10px;">I am executing this affidavit to attest to the truth of the foregoing facts and to support the filing of formal charges, insurance claims, or mediation proceedings as necessary.</li>
+                    </ol>
+                </div>
+                <div class="signature">
+                    <strong>${complaint.citizenName.toUpperCase()}</strong><br>
+                    <div class="line" style="margin-top: 40px;"></div>
+                    <small>Affiant's Signature over Printed Name</small>
+                </div>
+                <div style="clear: both;"></div>
+                <div class="jurat content">
+                    <p><strong>SUBSCRIBED AND SWORN</strong> to before me this <strong>${today}</strong> at ${complaint.barangay}, Caloocan City, Philippines. I hereby certify that I have personally examined the affiant and that I am satisfied that they voluntarily executed and understood their affidavit.</p>
+                </div>
+                <div class="signature" style="float: left;">
+                    <div class="line" style="margin-top: 40px;"></div>
+                    <strong>PUNONG BARANGAY / ADMINISTERING OFFICER</strong>
+                </div>
+                <div style="clear: both;"></div>
+                <button onclick="window.print()">🖨️ Print Affidavit</button>
+            </body></html>
+        `);
+    }
 });
 
 // --- AI LUPON ELIGIBILITY ANALYZER ---

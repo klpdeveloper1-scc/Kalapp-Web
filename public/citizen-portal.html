@@ -1039,11 +1039,8 @@
                     } else if (c.affidavitRequested) {
                         affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Official Affidavit Requested</div>`;
                     } else if (c.status === 'Resolved') {
-                        affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Official Affidavit</button>`;
-                    } else if (c.status === 'In Progress') {
-                        // NEW: Proof of Report available when In Progress!
-                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
-                    }
+                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'proof')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
+                    } 
 
                     return `
                     <div class="card" style="padding:1rem; margin-top:0; border:1px solid var(--color-light); cursor:pointer; transition:0.2s;" onclick="toggleHistoryDetails('${c.trackingId}')">
@@ -1129,7 +1126,9 @@
                 btn.outerHTML = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested — Awaiting LGU Approval</div>`;
             } catch(e) {}
         }
-        function downloadAffidavit(trackingId) { window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit`, '_blank'); }
+        function downloadAffidavit(trackingId, type = 'affidavit') { 
+    window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit?type=${type}`, '_blank'); 
+         }
 
         /* ── FORM SUBMIT ── */
         document.getElementById('complaint-form').addEventListener('submit', function (e) {
