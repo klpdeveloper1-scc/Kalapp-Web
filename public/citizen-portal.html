@@ -11,19 +11,23 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
-            --color-primary: #ff8c00; --color-danger: #ff7782; --color-success: #41f1b6; --color-warning: #ffbb55;
+            --color-primary: #ff8c00;
+            --color-danger: #ff7782; --color-success: #41f1b6; --color-warning: #ffbb55;
             --color-white: #fff; --color-info-dark: #7d8da1; --color-info-light: #dce1eb; --color-dark: #363949;
-            --color-light: rgba(132, 139, 200, 0.18); --color-background: #f6f6f9;
+            --color-light: rgba(132, 139, 200, 0.18);
+            --color-background: #f6f6f9;
             --card-border-radius: 1.5rem; --border-radius-1: 0.8rem; --card-padding: 1.5rem; --box-shadow: 0 2rem 3rem var(--color-light);
         }
         .dark-theme {
-            --color-background: #181a1e; --color-white: #202528; --color-dark: #edeffd;
+            --color-background: #181a1e;
+            --color-white: #202528; --color-dark: #edeffd;
             --color-light: rgba(0, 0, 0, 0.4); --box-shadow: 0 2rem 3rem var(--color-light);
         }
         * { margin: 0; padding: 0; outline: 0; border: 0; text-decoration: none; list-style: none; box-sizing: border-box; }
 
         body {
-            font-family: 'Poppins', sans-serif; font-size: 0.95rem; background: var(--color-background);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem; background: var(--color-background);
             color: var(--color-dark); overflow-x: hidden; transition: all 300ms ease;
         }
 
@@ -37,7 +41,6 @@
         aside .sidebar { display: flex; flex-direction: column; height: 86vh; position: relative; top: 3rem; }
         aside .sidebar a { display: flex; color: var(--color-info-dark); margin-left: 2rem; gap: 1rem; align-items: center; position: relative; height: 3.7rem; transition: all 300ms ease; cursor: pointer; }
         aside .sidebar a span { font-size: 1.6rem; transition: all 300ms ease; }
-        aside .sidebar a:last-child { position: absolute; bottom: 2rem; width: 100%; }
         aside .sidebar a.active { background: var(--color-light); color: var(--color-primary); margin-left: 0; }
         aside .sidebar a.active:before { content: ''; width: 6px; height: 100%; background: var(--color-primary); }
         aside .sidebar a:hover { color: var(--color-primary); }
@@ -80,26 +83,133 @@
         #ai-preview-box.mismatch{ border-color: #ff7782; background: rgba(255,119,130,0.07); }
         #ai-preview-box.scanning{ border-color: #ffbb55; background: rgba(255,187,85,0.07); }
 
-        #approved-section { display: none; margin-top: 1.5rem; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* RIGHT PANEL */
+        /* RIGHT PANEL & PROFILE CARD (DESKTOP) */
         .right { margin-top: 1.4rem; }
         .right .header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 1.2rem; }
         .right .theme-toggler { background: var(--color-light); display: flex; align-items: center; height: 1.6rem; width: 4.2rem; cursor: pointer; border-radius: var(--border-radius-1); }
         .right .theme-toggler span { font-size: 1.2rem; width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .right .theme-toggler span.active { background: var(--color-primary); color: white; border-radius: var(--border-radius-1); }
-        .right .profile { display: flex; gap: 1rem; align-items: center; text-align: right; }
+        
+        .profile-card {
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            padding: var(--card-padding);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1.5rem;
+            width: 100%;
+            transition: all 300ms ease;
+        }
+        
+        /* ── DYNAMIC AVATAR & EDIT ICON STYLES ── */
+        .avatar-holder {
+            position: relative;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .avatar-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .profile-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Initial/Letter size based on container */
+        .header-actions .avatar-holder { width: 40px; height: 40px; margin-right: 0.6rem; cursor: pointer; }
+        .header-actions .avatar-circle { font-size: 1.2rem; }
+
+        .profile-card-header .avatar-holder { width: 60px; height: 60px; margin-right: 1rem; }
+        .profile-card-header .avatar-circle { font-size: 1.8rem; }
+        
+        .mobile-profile-content .avatar-holder { width: 65px; height: 65px; margin-right: 1rem; }
+        .mobile-profile-content .avatar-circle { font-size: 2rem; }
+
+        /* The Edit Photo Button Overlay */
+        .edit-photo-btn {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            background: var(--color-dark);
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: 0.2s;
+        }
+        .edit-photo-btn:hover { background: var(--color-primary); }
+        .edit-photo-btn span { font-size: 14px !important; }
+
+        .profile-card-header { display: flex; align-items: center; gap: 0rem; margin-bottom: 1.2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-light); }
+        .profile-card-stats { display: flex; justify-content: space-between; margin-bottom: 1.2rem; text-align: center; padding: 0 0.5rem; }
+        .profile-card-stats .stat-item p { font-size: 0.75rem; color: var(--color-info-dark); margin-bottom: 0.2rem; }
+        .profile-card-stats .stat-item h4 { font-size: 1.1rem; color: var(--color-dark); }
+        
+        .profile-card-menu { display: flex; flex-direction: column; gap: 0.4rem; }
+        .profile-card-menu a { display: flex; align-items: center; gap: 1rem; color: var(--color-dark); font-size: 0.85rem; font-weight: 500; transition: all 300ms ease; padding: 0.7rem; border-radius: 8px; }
+        .profile-card-menu a:hover { background: var(--color-light); color: var(--color-primary); padding-left: 1rem; }
+        .profile-card-menu span { font-size: 1.2rem; color: var(--color-info-dark); transition: all 300ms ease; }
+        .profile-card-menu a:hover span { color: var(--color-primary); }
+
         .search-container { background: var(--color-white); padding: 1rem; border-radius: var(--border-radius-1); box-shadow: var(--box-shadow); margin-top: 1rem; }
+        
         #mobile-search-card { display: none; }
         @media screen and (max-width: 768px) { #mobile-search-card { display: block; margin-bottom: 1rem; } }
 
         /* ── MOBILE HEADER & NAV ── */
-        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: var(--color-white); align-items: center; justify-content: space-between; padding: 0 1rem; z-index: 999; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 65px; background: var(--color-white); align-items: center; justify-content: space-between; padding: 0 1rem; z-index: 999; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
         .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-white); justify-content: space-around; align-items: center; padding: 0.4rem 0 0.6rem; z-index: 999; box-shadow: 0 -2px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--color-light); }
         .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.8rem; border-radius: 12px; transition: color 0.2s; }
         .mobile-nav button span.material-icons-sharp { font-size: 1.5rem; }
         .mobile-nav button.active { color: var(--color-primary); }
+
+        /* ── MOBILE PROFILE MODAL DROPDOWN ── */
+        #mobile-profile-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            backdrop-filter: blur(2px);
+            animation: fadeIn 0.2s ease;
+        }
+        .mobile-profile-content {
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            width: 320px;
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ── TABLET & MOBILE RESPONSIVENESS ── */
         @media screen and (max-width: 1200px) {
@@ -110,7 +220,7 @@
         @media screen and (max-width: 768px) {
             .container { display: block !important; width: 100% !important; padding: 0; }
             aside, .right  { display: none !important; }
-            main { display: block; width: 100% !important; margin-top: 56px !important; padding: 1rem 1rem 5rem; }
+            main { display: block; width: 100% !important; margin-top: 65px !important; padding: 1rem 1rem 5rem; }
             .card { border-radius: 1rem; padding: 1rem; }
             .mobile-header, .mobile-nav { display: flex; }
             .table-wrapper { padding: 0.5rem; }
@@ -124,12 +234,23 @@
 </head>
 <body>
 
+    <input type="file" id="quick-profile-photo-upload" accept="image/*" style="display:none;" onchange="handleQuickPhotoUpload(this)">
+
     <header class="mobile-header">
         <div style="display:flex; align-items:center; gap:0.6rem;">
-            <img src="logokalapp.png" alt="Kalapp" style="width:32px; height:32px; border-radius:8px;">
-            <strong style="font-size:1.1rem;">KAL<span style="color:var(--color-primary)">APP</span></strong>
+            <img src="logokalapp.png" alt="Kalapp" style="width:34px; height:34px; border-radius:8px;">
+            <strong style="font-size:1.2rem;">KAL<span style="color:var(--color-primary)">APP</span></strong>
         </div>
-        <span id="mobile-username" style="font-size:0.8rem; font-weight:600; color:var(--color-info-dark);"></span>
+        
+        <div style="display:flex; align-items:center; cursor:pointer;" onclick="openMobileProfile()">
+            <div style="text-align:right; display:flex; flex-direction:column; justify-content:center; margin-right:0.6rem;">
+                <span id="mobile-username-header" style="font-size:0.85rem; font-weight:700; color:var(--color-dark); line-height:1.2;"></span>
+                <span style="font-size:0.65rem; color:var(--color-primary); font-weight:600;">Profile ▼</span>
+            </div>
+            <div class="avatar-holder">
+                <div class="avatar-circle initial-avatar" id="header-avatar-circle"></div>
+            </div>
+        </div>
     </header>
 
     <div class="container">
@@ -144,10 +265,9 @@
             <div class="sidebar">
                 <a href="#" class="active" onclick="showPage('complaint')"><span class="material-icons-sharp">add_circle_outline</span><h3>File Complaint</h3></a>
                 <a href="#" onclick="showPage('history')"><span class="material-icons-sharp">history</span><h3>My History</h3></a>
-                <a href="#" onclick="showPage('feed')"><span class="material-icons-sharp">dynamic_feed</span><h3>Community Feed</h3></a>
+                <a href="#" onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span><h3>My Documents</h3></a>
                 <a href="#" onclick="showPage('directory')"><span class="material-icons-sharp">location_on</span><h3>Barangay Directory</h3></a>
                 <a href="#" onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span><h3>Hotline</h3></a>
-                <a href="#" onclick="logout()"><span class="material-icons-sharp">logout</span><h3>Logout</h3></a>
             </div>
         </aside>
 
@@ -223,7 +343,6 @@
                     <input type="hidden" id="locationLng" name="locationLng">
                     <input type="hidden" id="locationAddress" name="locationAddress">
                     <input type="hidden" id="locationSource" name="locationSource">
-                    
                     <input type="hidden" id="aiPriority" name="aiPriority">
                     
                     <div id="form-msg" style="margin-bottom:1rem; font-weight:600; font-size:0.88rem; text-align:center; line-height:1.6;"></div>
@@ -238,14 +357,21 @@
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th>Photo</th><th>Date & ID</th><th>Issue & Location</th><th>Status</th><th>LGU Feedback</th><th>Trail</th><th>Actions</th></tr>
+                            <tr><th>Photo</th><th>Date & ID</th><th>Issue & Location</th><th>Status</th><th>LGU Feedback</th><th>Trail</th></tr>
                         </thead>
                         <tbody id="history-body">
-                            <tr><td colspan="7" style="text-align:center; padding:2rem;">Loading...</td></tr>
+                            <tr><td colspan="6" style="text-align:center; padding:2rem;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </main>
+
+        <main id="affidavits-page" style="display:none;">
+            <h1>My Documents</h1>
+            <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">List of approved affidavits available for download based on your resolved reports.</p>
+            <div id="affidavits-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                </div>
         </main>
 
         <main id="hotline-page" style="display:none;">
@@ -278,25 +404,57 @@
 
         <div class="right">
             <div class="header-actions">
-                <div style="display:flex; align-items:center; gap:1rem;">
+                <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom:1rem;">
                     <div class="theme-toggler" id="theme-toggler">
                         <span class="material-icons-sharp active">light_mode</span>
                         <span class="material-icons-sharp">dark_mode</span>
                     </div>
-                    <div class="profile">
-                        <div style="text-align:right;">
-                            <p style="font-weight:600;">Hey, <b id="citizen-name-display">Citizen</b></p>
-                            <small style="color:var(--color-info-dark);">Verified Resident</small>
+                </div>
+
+                <div class="profile-card">
+                    <div class="profile-card-header">
+                        <div class="avatar-holder">
+                            <div class="avatar-circle" id="desktop-avatar-circle"></div>
+                            <div class="edit-photo-btn" onclick="document.getElementById('quick-profile-photo-upload').click()">
+                                <span class="material-icons-sharp">photo_camera</span>
+                            </div>
                         </div>
-                        <img src="https://via.placeholder.com/40" style="width:40px; height:40px; border-radius:50%; border:2px solid var(--color-primary);">
+                        <div>
+                            <h3 id="desktop-citizen-name-display" style="font-size: 1.1rem;">Citizen</h3>
+                            <p style="font-size:0.8rem; color:var(--color-info-dark);">Verified Resident 🛡️</p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-card-stats">
+                        <div class="stat-item">
+                            <p>Reports</p>
+                            <h4 class="stat-reports-count">0</h4>
+                        </div>
+                        <div class="stat-item">
+                            <p>Vouches</p>
+                            <h4 class="stat-vouches-count">0</h4>
+                        </div>
+                        <div class="stat-item">
+                            <p>Strikes</p>
+                            <h4 style="color:var(--color-danger);">0</h4>
+                        </div>
+                    </div>
+
+                    <div class="profile-card-menu">
+                        <a href="#" onclick="openSettingsModal()"><span class="material-icons-sharp">settings</span> Account Settings</a>
+                        <a href="#"><span class="material-icons-sharp">security</span> Privacy & Security</a>
+                        <a href="#" onclick="logout()" style="color: var(--color-danger); margin-top: 0.5rem; border-top: 1px solid var(--color-light); border-radius: 0; padding-top: 1rem;">
+                            <span class="material-icons-sharp" style="color: var(--color-danger);">logout</span> Log Out
+                        </a>
                     </div>
                 </div>
+
                 <div class="search-container" style="width:100%;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
                         <h3 style="font-size:0.95rem; font-weight:700;">📢 Community Feed</h3>
                         <span id="citizen-ws-badge" style="font-size:0.72rem; padding:3px 8px; border-radius:12px; background:rgba(0,188,125,0.12); color:#41f1b6; font-weight:600; display:none;">🟢 Live</span>
                     </div>
-                    <div id="citizen-feed-container" style="max-height:70vh; overflow-y:auto;">
+                    <div id="citizen-feed-container" style="max-height:50vh; overflow-y:auto;">
                         <p style="font-size:0.85rem; color:var(--color-info-dark); text-align:center; padding:1rem;">Loading feed...</p>
                     </div>
                     <button id="citizen-feed-load-more" onclick="loadMoreCitizenFeed()" style="display:none; margin-top:0.6rem; width:100%; background:var(--color-light); border:none; border-radius:var(--border-radius-1); padding:0.6rem; cursor:pointer; font-family:'Poppins',sans-serif; color:var(--color-dark); font-size:0.8rem;">Load More</button>
@@ -304,14 +462,71 @@
             </div>
         </div>
 
-    </div><nav class="mobile-nav">
+    </div>
+    
+    <nav class="mobile-nav">
         <button onclick="showPage('complaint')"><span class="material-icons-sharp">add_circle_outline</span>File</button>
         <button onclick="showPage('history')"><span class="material-icons-sharp">history</span>History</button>
         <button onclick="showPage('feed')"><span class="material-icons-sharp">dynamic_feed</span>Feed</button>
-        <button onclick="showPage('directory')"><span class="material-icons-sharp">location_on</span>Directory</button>
+        <button onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span>Documents</button>
         <button onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span>Hotline</button>
-        <button onclick="logout()"><span class="material-icons-sharp">logout</span>Logout</button>
     </nav>
+
+    <div id="mobile-profile-modal" onclick="if(event.target===this) closeMobileProfile()">
+        <div class="mobile-profile-content">
+            
+            <div onclick="toggleTheme()" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--color-info-dark); background: var(--color-light); padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-sharp" id="mobile-theme-icon">light_mode</span>
+            </div>
+
+            <div class="profile-card-header" style="border-bottom:none;">
+                <div class="avatar-holder">
+                    <div class="avatar-circle" id="modal-avatar-circle"></div>
+                    <div class="edit-photo-btn" onclick="document.getElementById('quick-profile-photo-upload').click()">
+                        <span class="material-icons-sharp">photo_camera</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 id="mobile-modal-name-display" style="font-size: 1.1rem;">Citizen</h3>
+                    <p style="font-size:0.8rem; color:var(--color-info-dark);">Verified Resident 🛡️</p>
+                </div>
+            </div>
+            
+            <div class="profile-card-stats" style="margin-top: 0.5rem; border-top: 1px solid var(--color-light); padding-top: 1rem;">
+                <div class="stat-item"><p>Reports</p><h4 class="stat-reports-count">0</h4></div>
+                <div class="stat-item"><p>Vouches</p><h4 class="stat-vouches-count">0</h4></div>
+                <div class="stat-item"><p>Strikes</p><h4 style="color:var(--color-danger);">0</h4></div>
+            </div>
+
+            <div class="profile-card-menu">
+                <a href="#" onclick="closeMobileProfile(); openSettingsModal()"><span class="material-icons-sharp">settings</span> Account Settings</a>
+                <a href="#"><span class="material-icons-sharp">security</span> Privacy & Security</a>
+                <a href="#" onclick="logout()" style="color: var(--color-danger); margin-top: 0.5rem; border-top: 1px solid var(--color-light); border-radius: 0; padding-top: 1rem;">
+                    <span class="material-icons-sharp" style="color: var(--color-danger);">logout</span> Log Out
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
+        <div style="background:var(--color-white); max-width:480px; width:100%; margin:10% auto; padding:2.5rem 2rem; border-radius:var(--card-border-radius); position:relative;">
+            <span onclick="closeSettingsModal()" style="position:absolute; top:1.2rem; right:1.5rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
+            <h2 style="margin-bottom:1.5rem; color:var(--color-dark); font-size: 1.3rem;">⚙️ Account Settings</h2>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>📧 Update Email Address</label>
+                <input type="email" class="form-control" placeholder="New email address">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>🔒 Change Password</label>
+                <input type="password" class="form-control" placeholder="Current Password" style="margin-bottom:0.8rem;">
+                <input type="password" class="form-control" placeholder="New Password">
+            </div>
+            
+            <button class="btn-submit" style="margin-top:0.5rem;" onclick="closeSettingsModal()">Save Changes</button>
+        </div>
+    </div>
 
     <div id="trail-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
         <div style="background:var(--color-white); max-width:500px; width:100%; margin:5% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative;">
@@ -334,8 +549,59 @@
     <script>
         const BACKEND_URL = window.location.origin;
         const username = localStorage.getItem('kalapp_username') || 'Anonymous';
-        document.getElementById('citizen-name-display').innerText = username;
-        document.getElementById('mobile-username').innerText = username;
+        
+        // Setup Usernames
+        document.getElementById('desktop-citizen-name-display').innerText = username;
+        document.getElementById('mobile-username-header').innerText = username;
+        document.getElementById('mobile-modal-name-display').innerText = username;
+
+        /* ── DYNAMIC AVATAR LOGIC (Initials vs Photo) ── */
+        // Function to determine if placeholder or photo should be shown
+        function updateAllAvatars(username, photoUrl) {
+            const containers = [
+                'header-avatar-circle',
+                'desktop-avatar-circle',
+                'modal-avatar-circle'
+            ];
+            
+            containers.forEach(id => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                
+                if (photoUrl) {
+                    // Show Photo
+                    el.innerHTML = `<img src="${photoUrl}" class="profile-photo" alt="${escAttr(username)}">`;
+                    el.style.background = 'none';
+                } else {
+                    // Show First Letter Placeholder
+                    const initial = username.charAt(0).toUpperCase();
+                    el.innerHTML = `<span class="initials">${initial}</span>`;
+                    el.style.background = 'var(--color-primary)';
+                }
+            });
+        }
+        
+        // Load initial avatars (Defaults to the user's first letter!)
+        updateAllAvatars(username, null); 
+
+        // Quick File Input Handler for Avatar
+        function handleQuickPhotoUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    updateAllAvatars(username, e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        /* ── MOBILE PROFILE LOGIC ── */
+        function openMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'block'; }
+        function closeMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'none'; }
+        
+        /* ── ACCOUNT SETTINGS MODAL ── */
+        function openSettingsModal() { document.getElementById('settings-modal').style.display = 'block'; }
+        function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
 
         /* ── PAGE NAVIGATION ── */
         function showPage(pageId) {
@@ -343,17 +609,18 @@
             const page = document.getElementById(pageId + '-page');
             if (page) page.style.display = 'block';
 
-            const iconMap = { complaint: 'add_circle_outline', history: 'history', feed: 'dynamic_feed', directory: 'location_on', hotline: 'contact_emergency' };
+            const iconMap = { complaint: 'add_circle_outline', history: 'history', feed: 'dynamic_feed', directory: 'location_on', hotline: 'contact_emergency', affidavits: 'folder_shared' };
             document.querySelectorAll('.sidebar a').forEach(a => {
                 const ic = a.querySelector('.material-icons-sharp');
                 a.classList.toggle('active', ic && ic.textContent.trim() === iconMap[pageId]);
             });
-
-            const mobileIdx = { complaint: 0, history: 1, feed: 2, directory: 3, hotline: 4 };
+            const mobileIdx = { complaint: 0, history: 1, feed: 2, affidavits: 3, directory: 3, hotline: 4 }; // updated index
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
-                btn.classList.toggle('active', i === mobileIdx[pageId]);
+                // Note: Directory is hidden on mobile now, so index 3 is Documents
+                btn.classList.toggle('active', btn.textContent.includes(pageId === 'complaint' ? 'File' : pageId==='affidavits' ? 'Documents' : pageId.charAt(0).toUpperCase() + pageId.slice(1)));
             });
             if (pageId === 'history') loadMyHistory();
+            if (pageId === 'affidavits') loadMyAffidavits(); // Load Documents page
             if (pageId === 'hotline') renderHotlines(hotlineData);
             if (pageId === 'directory') renderDirectory(barangayDirectoryData);
             if (pageId === 'complaint') initLocationMap();
@@ -370,7 +637,6 @@
             { name: 'Bureau of Fire Protection', number: '(02) 426-0219', icon: '🔥' },
             { name: 'Philippine National Police', number: '117', icon: '👮' },
             { name: 'Red Cross', number: '143', icon: '🏥' },
-            { name: 'Barangay Emergency (General)', number: '0917-XXX-XXXX', icon: '🏘️' },
             { name: 'Calamity Hotline NDRRMC', number: '(02) 925-0274', icon: '🌊' },
             { name: 'DSWD Crisis Intervention', number: '(02) 931-8101', icon: '🤝' },
             { name: 'Suicide Prevention Hotline', number: '1553', icon: '💙' },
@@ -390,18 +656,12 @@
             renderHotlines(hotlineData.filter(h => h.name.toLowerCase().includes(q.toLowerCase())));
         }
 
-        /* ── BARANGAY DIRECTORY DATA ── */
+        /* ── BARANGAY DIRECTORY DATA (Desktop Only) ── */
         const barangayDirectoryData = [
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Main Office', phone: '(02) 288-1031' },
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Tanod', phone: '0917-103-0001' },
             { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Main Office', phone: '(02) 288-1041' },
             { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Tanod', phone: '0917-104-0002' },
-            { brgy: 'Barangay 105', address: 'Rizal Ave. Ext., Caloocan City', role: 'Main Office', phone: '(02) 288-1051' },
-            { brgy: 'Barangay 105', address: 'Rizal Ave. Ext., Caloocan City', role: 'Tanod', phone: '0917-105-0003' },
-            { brgy: 'Barangay 106', address: 'Samson Road, Caloocan City', role: 'Main Office', phone: '(02) 288-1061' },
-            { brgy: 'Barangay 106', address: 'Samson Road, Caloocan City', role: 'Tanod', phone: '0917-106-0004' },
-            { brgy: 'Barangay 107', address: 'M.H. del Pilar St., Caloocan City', role: 'Main Office', phone: '(02) 288-1071' },
-            { brgy: 'Barangay 107', address: 'M.H. del Pilar St., Caloocan City', role: 'Tanod', phone: '0917-107-0005' }
         ];
         function renderDirectory(list) {
             document.getElementById('directory-list').innerHTML = list.map(d => `
@@ -451,18 +711,37 @@
         }
 
         /* ── THEME TOGGLER ── */
-        const themeToggler = document.getElementById('theme-toggler');
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('kalapp-theme', isDark ? 'dark' : 'light');
+            
+            // Update desktop icon if visible
+            const desktopToggler = document.getElementById('theme-toggler');
+            if(desktopToggler) {
+                desktopToggler.querySelector('span:nth-child(1)').classList.toggle('active', !isDark);
+                desktopToggler.querySelector('span:nth-child(2)').classList.toggle('active', isDark);
+            }
+            
+            // Update minimal mobile icon
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            if(mobileIcon) {
+                mobileIcon.textContent = isDark ? 'dark_mode' : 'light_mode';
+            }
+        }
+
         if (localStorage.getItem('kalapp-theme') === 'dark') {
             document.body.classList.add('dark-theme');
-            themeToggler.querySelector('span:nth-child(1)').classList.remove('active');
-            themeToggler.querySelector('span:nth-child(2)').classList.add('active');
+            const desktopToggler = document.getElementById('theme-toggler');
+            if(desktopToggler) {
+                desktopToggler.querySelector('span:nth-child(1)').classList.remove('active');
+                desktopToggler.querySelector('span:nth-child(2)').classList.add('active');
+            }
+            const mobileIcon = document.getElementById('mobile-theme-icon');
+            if(mobileIcon) mobileIcon.textContent = 'dark_mode';
         }
-        themeToggler.addEventListener('click', () => {
-            document.body.classList.toggle('dark-theme');
-            themeToggler.querySelector('span:nth-child(1)').classList.toggle('active');
-            themeToggler.querySelector('span:nth-child(2)').classList.toggle('active');
-            localStorage.setItem('kalapp-theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
-        });
+        
+        document.getElementById('theme-toggler').addEventListener('click', toggleTheme);
 
         /* ── AI PHOTO PREVIEW ── */
         let aiSuggestedCategory = null;
@@ -572,7 +851,6 @@
                 fd.append('evidence', file);
                 const res    = await fetch(`${BACKEND_URL}/api/classify-preview`, { method:'POST', body: fd });
                 const result = await res.json();
-                
                 aiSuggestedCategory = result.category;
                 const selected = document.getElementById('issue').value;
 
@@ -625,7 +903,6 @@
         });
 
         /* ── COMMUNITY FEED & COMMENTS ── */
-        // (Keeping existing Community Feed logic intact)
         let citizenFeedPage = 1;
         let feedPageNum = 1;
         let currentCommentId = null;
@@ -637,6 +914,7 @@
             const desc = compact ? ((c.description || '').substring(0, 100) + ((c.description || '').length > 100 ? '...' : '')) : (c.description || '');
             const commentCount = (c.comments || []).length;
             feedCommentStore[c.trackingId] = c.comments || [];
+            
             return `<div style="background:var(--color-white); border-radius:var(--border-radius-1); overflow:hidden; box-shadow:var(--box-shadow); margin-bottom:1rem; border:1px solid var(--color-light);">
                 ${imgSrc ? `<img src="${imgSrc}" style="width:100%; max-height:220px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
                 <div style="padding:1rem;">
@@ -701,7 +979,8 @@
         function openCommentModal(trackingId) {
             currentCommentId = trackingId;
             const arr = feedCommentStore[trackingId] || [];
-            document.getElementById('comment-list').innerHTML = arr.length ? arr.map(c => `
+            document.getElementById('comment-list').innerHTML = arr.length ?
+            arr.map(c => `
                 <div style="padding:0.5rem 0; border-bottom:1px solid var(--color-light);">
                     <strong style="font-size:0.8rem; color:var(--color-primary);">${escAttr(c.authorName || 'Anonymous')}</strong>
                     <p style="font-size:0.85rem; margin-top:0.2rem;">${escAttr(c.text)}</p>
@@ -723,13 +1002,19 @@
             } catch(e) {}
         }
 
-        /* ── LOAD MY HISTORY ── */
+        /* ── LOAD MY HISTORY & SYNC PROFILE STATS ── */
         function loadMyHistory() {
             const tbody = document.getElementById('history-body');
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem;">Loading records...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem;">Loading records...</td></tr>`;
             fetch(`${BACKEND_URL}/api/complaints`).then(r => r.json()).then(data => {
                 const mine = data.complaints.filter(c => c.citizenName === username);
-                if (!mine.length) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--color-info-dark);">No complaints found.</td></tr>`; return; }
+                
+                // Update BOTH Desktop and Mobile profile stats
+                document.querySelectorAll('.stat-reports-count').forEach(el => el.innerText = mine.length);
+                const totalVouches = mine.reduce((sum, c) => sum + (c.upvotes || 0), 0);
+                document.querySelectorAll('.stat-vouches-count').forEach(el => el.innerText = totalVouches);
+                
+                if (!mine.length) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--color-info-dark);">No complaints found.</td></tr>`; return; }
                 tbody.innerHTML = '';
                 mine.forEach(c => {
                     const statusMap = { 'In Progress':'status-inprogress', 'Resolved':'status-resolved', 'Rejected & Flagged':'status-flagged', 'Referred to Lupon':'status-lupon', 'Lupon: Scheduled':'status-lupon-scheduled', 'Lupon: Settled':'status-lupon-settled', 'Lupon: Unresolved':'status-lupon-unresolved' };
@@ -738,21 +1023,55 @@
                     const date  = new Date(c.createdAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
                     const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
 
-                    let affidavitBtn = '';
-                    if (c.affidavitApproved) affidavitBtn = `<button onclick="downloadAffidavit('${escAttr(c.trackingId)}')" style="background:#00bc7d;color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.75rem;border:none;white-space:nowrap;margin-top:4px;">📥 Download Affidavit</button>`;
-                    else if (c.affidavitRequested) affidavitBtn = `<span style="font-size:0.75rem;color:var(--color-info-dark);">⏳ Affidavit Requested</span>`;
-                    else if (c.status === 'Resolved') affidavitBtn = `<button onclick="requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.75rem;border:none;white-space:nowrap;margin-top:4px;">📄 Request Affidavit</button>`;
-
                     const row = document.createElement('tr');
-                    row.innerHTML = `<td>${photo}</td><td>${date}<br><small style="font-weight:700; color:var(--color-primary);">${c.trackingId}</small></td><td><strong>${c.category}</strong><br><small>${c.barangay}</small></td><td class="${sc}">${c.status||'Pending'}</td><td>${note}</td><td><button onclick="viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.78rem;border:none;white-space:nowrap;">🔍 Trail</button></td><td>${affidavitBtn}</td>`;
+                    // Removed Affidavit Request column from here
+                    row.innerHTML = `<td>${photo}</td><td>${date}<br><small style="font-weight:700; color:var(--color-primary);">${c.trackingId}</small></td><td><strong>${c.category}</strong><br><small>${c.barangay}</small></td><td class="${sc}">${c.status||'Pending'}</td><td>${note}</td><td><button onclick="viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-primary);color:white;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.78rem;border:none;white-space:nowrap;">🔍 Trail</button></td>`;
                     tbody.appendChild(row);
                 });
-            }).catch(() => { document.getElementById('history-body').innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error loading history.</td></tr>`; });
+            }).catch(() => { document.getElementById('history-body').innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Error loading history.</td></tr>`; });
         }
 
-        async function requestAffidavit(trackingId, btn) {
-            try { await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/request-affidavit`, { method: 'POST' }); btn.outerHTML = `<span style="font-size:0.75rem;color:var(--color-info-dark);">⏳ Affidavit Requested — Awaiting LGU Approval</span>`; } catch(e) {}
+        /* ── DEDICATED DOCUMENTS/AFFIDAVITS PAGE LOGIC ── */
+        async function loadMyAffidavits() {
+            const container = document.getElementById('affidavits-list');
+            if (!container) return;
+            container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:2rem; color:var(--color-info-dark);">Loading documents...</p>';
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/complaints`);
+                const data = await res.json();
+                
+                // Filter only Approved Affidavits for THIS citizen
+                const approved = data.complaints.filter(c => c.citizenName === username && c.affidavitApproved);
+
+                if (approved.length === 0) {
+                    container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:2rem; color:var(--color-info-dark);">No approved affidavits are available for download yet.<br><small>If you have a Resolved case, the LGU will generate it soon.</small></p>';
+                    return;
+                }
+
+                container.innerHTML = approved.map(c => {
+                    const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+                    // Truncate description for card
+                    const desc = (c.description || '').substring(0, 80);
+                    
+                    return `
+                        <div class="card affidavit-card" style="margin-top:0; border:1px solid var(--color-light);">
+                            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:0.8rem;">
+                                <strong style="color:var(--color-primary); font-size:1.1rem;">${c.trackingId}</strong>
+                                <small style="color:var(--color-info-dark);">${date}</small>
+                            </div>
+                            <p style="font-size:0.88rem; font-weight:600; margin-bottom:0.4rem; color:var(--color-dark);">${escAttr(c.category)}</p>
+                            <p style="font-size:0.82rem; color:var(--color-info-dark); margin-bottom:1rem; line-height:1.4;">${escAttr(desc)}...</p>
+                            <button onclick="downloadAffidavit('${escAttr(c.trackingId)}')" class="btn-submit" style="padding:0.6rem; font-size:0.85rem; background:#00bc7d;">📥 Download Affidavit</button>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red;">Error loading documents.</p>';
+            }
         }
+
         function downloadAffidavit(trackingId) { window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit`, '_blank'); }
 
         /* ── FORM SUBMIT ── */
@@ -798,8 +1117,6 @@
                 fd.append('locationLng',      document.getElementById('locationLng').value);
                 fd.append('locationAddress',  document.getElementById('locationAddress').value);
                 fd.append('locationSource',   document.getElementById('locationSource').value);
-                
-                // NEW: Append the saved priority from the AI Preview so it matches exactly
                 fd.append('priority',         document.getElementById('aiPriority').value);
 
                 fetch(`${BACKEND_URL}/api/complaints`, { method:'POST', body: fd })
@@ -818,14 +1135,8 @@
                 })
                 .then(d => {
                     formMsg.style.color = 'var(--color-success)';
-                    const id = encodeURIComponent(d.trackingId || '');
-                    formMsg.innerHTML = `✅ Complaint submitted & verified by Gemini AI!
-                        <br><a href="${BACKEND_URL}/api/complaints/${id}/affidavit" target="_blank"
-                        style="display:inline-block; margin-top:0.6rem; background:var(--color-primary); color:white; padding:0.5rem 1.2rem; border-radius:8px; text-decoration:none; font-weight:600;">📄 Download Affidavit</a>`;
-                    
-                    // FIXED: Tell JS exactly which form to clear
+                    formMsg.innerHTML = `✅ Complaint submitted & verified by Gemini AI!<br>Your Tracking ID is <strong>${d.trackingId}</strong>.`;
                     document.getElementById('complaint-form').reset();
-                    
                     document.getElementById('locationAddressInput').value = '';
                     document.getElementById('exif-location-label').style.display = 'none';
                     document.getElementById('pin-coords').textContent = 'drag pin to set location';
@@ -835,6 +1146,7 @@
                         locationMap.setView([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], MAP_DEFAULT_ZOOM);
                         locationMarker.setLatLng([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG]);
                     }
+                    // Auto reload history to update stats
                     loadMyHistory();
                 })
                 .catch(err => {
@@ -860,12 +1172,13 @@
             try { ws = new WebSocket(wsUrl); } catch(e) { return; }
             ws.onopen = () => { citizenWsReconnectDelay = 1000; if (badge) { badge.textContent = '🟢 Live'; badge.style.display = 'inline-block'; } };
             ws.onmessage = () => {
-                const feedContainer = document.getElementById('citizen-feed-container');
-                if (feedContainer) { citizenFeedPage = 1; loadCitizenFeedSidebar(); }
-                const feedPageCards = document.getElementById('feed-page-cards');
-                if (feedPageCards && document.getElementById('feed-page') && document.getElementById('feed-page').style.display !== 'none') { feedPageNum = 1; loadFeedPage(); }
+                // Live update history/stats if visible
                 const historyBody = document.getElementById('history-body');
                 if (historyBody && document.getElementById('history-page') && document.getElementById('history-page').style.display !== 'none') { loadMyHistory(); }
+                
+                // Live update documents page if visible
+                const affidavitsList = document.getElementById('affidavits-list');
+                if (affidavitsList && document.getElementById('affidavits-page') && document.getElementById('affidavits-page').style.display !== 'none') { loadMyAffidavits(); }
             };
             ws.onclose = () => {
                 if (badge) { badge.textContent = '🔴 Reconnecting...'; badge.style.cssText = 'font-size:0.72rem; padding:3px 8px; border-radius:12px; background:rgba(255,119,130,0.1); color:var(--color-danger); font-weight:600; display:inline-block;'; }
@@ -875,6 +1188,7 @@
             };
             ws.onerror = () => ws.close();
         }
+        
         connectCitizenWebSocket();
         renderHotlines(hotlineData);
         loadCitizenFeedSidebar();
