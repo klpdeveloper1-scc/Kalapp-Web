@@ -10,7 +10,6 @@ const rateLimit = require('express-rate-limit');
 
 // 📧 Mailer Dependencies
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
 
 // 🤖 Google Generative AI & Auth
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -33,14 +32,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
-// --- Google Mailer OAuth2 Configuration ---
-const mailerOAuth2Client = new google.auth.OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    "https://developers.google.com/oauthplayground"
-);
-mailerOAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
 // --- Middleware ---
 app.use(express.json());
@@ -173,19 +164,12 @@ app.post('/api/request-otp', async (req, res) => {
         user.otpExpires = new Date(Date.now() + 10 * 60000);
         await user.save();
 
-        // OAuth2 Email Sending
-        const accessTokenResponse = await mailerOAuth2Client.getAccessToken();
-        const accessToken = accessTokenResponse.token;
-
+        // --- SIMPLE NODEMAILER WITH APP PASSWORD ---
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                type: 'OAuth2',
                 user: process.env.GMAIL_ADDRESS,
-                clientId: process.env.GMAIL_CLIENT_ID,
-                clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                accessToken: accessToken
+                pass: process.env.GMAIL_APP_PASSWORD
             }
         });
 
