@@ -127,7 +127,6 @@
             object-fit: cover;
         }
         
-        /* Initial/Letter size based on container */
         .header-actions .avatar-holder { width: 40px; height: 40px; margin-right: 0.6rem; cursor: pointer; }
         .header-actions .avatar-circle { font-size: 1.2rem; }
 
@@ -137,23 +136,10 @@
         .mobile-profile-content .avatar-holder { width: 65px; height: 65px; margin-right: 1rem; }
         .mobile-profile-content .avatar-circle { font-size: 2rem; }
 
-        /* The Edit Photo Button Overlay */
         .edit-photo-btn {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            background: var(--color-dark);
-            color: white;
-            border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: 0.2s;
+            position: absolute; bottom: -5px; right: -5px; background: var(--color-dark); color: white; border-radius: 50%;
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s;
         }
         .edit-photo-btn:hover { background: var(--color-primary); }
         .edit-photo-btn span { font-size: 14px !important; }
@@ -183,26 +169,25 @@
 
         /* ── MOBILE PROFILE MODAL DROPDOWN ── */
         #mobile-profile-modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 3000;
-            backdrop-filter: blur(2px);
-            animation: fadeIn 0.2s ease;
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease;
         }
         .mobile-profile-content {
-            position: absolute;
-            top: 70px;
-            right: 10px;
-            width: 320px;
-            background: var(--color-white);
-            border-radius: var(--card-border-radius);
-            padding: 1.5rem;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-            animation: slideDown 0.3s ease;
+            position: absolute; top: 70px; right: 10px; width: 320px; background: var(--color-white); border-radius: var(--card-border-radius);
+            padding: 1.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;
         }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── SETTINGS MENU BUTTONS ── */
+        .settings-menu-btn {
+            display: flex; justify-content: space-between; align-items: center; width: 100%;
+            padding: 1.2rem; background: var(--color-background); border: 1px solid var(--color-light);
+            border-radius: var(--border-radius-1); cursor: pointer; transition: all 0.2s ease;
+            color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 500;
+            margin-bottom: 0.8rem;
+        }
+        .settings-menu-btn:hover { border-color: var(--color-primary); background: rgba(255,140,0,0.05); transform: translateX(5px); }
+        .settings-menu-btn .material-icons-sharp { color: var(--color-info-dark); transition: 0.2s; }
+        .settings-menu-btn:hover .material-icons-sharp { color: var(--color-primary); }
 
         /* ── TABLET & MOBILE RESPONSIVENESS ── */
         @media screen and (max-width: 1200px) {
@@ -492,23 +477,64 @@
         </div>
     </div>
 
-    <div id="settings-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem;">
-        <div style="background:var(--color-white); max-width:480px; width:100%; margin:10% auto; padding:2.5rem 2rem; border-radius:var(--card-border-radius); position:relative;">
-            <span onclick="closeSettingsModal()" style="position:absolute; top:1.2rem; right:1.5rem; cursor:pointer; font-size:1.5rem; color:var(--color-info-dark);">&times;</span>
-            <h2 style="margin-bottom:1.5rem; color:var(--color-dark); font-size: 1.3rem;">⚙️ Account Settings</h2>
+    <div id="settings-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem; backdrop-filter: blur(2px);">
+        <div style="background:var(--color-white); max-width:480px; width:100%; margin:10% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
             
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label>📧 Update Email Address</label>
-                <input type="email" class="form-control" placeholder="New email address">
+            <span onclick="closeSettingsModal()" style="position:absolute; top:1.2rem; right:1.5rem; cursor:pointer; font-size:1.8rem; color:var(--color-info-dark); line-height:1;">&times;</span>
+            
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.8rem;">
+                <span id="settings-back-btn" class="material-icons-sharp" style="display:none; cursor:pointer; color:var(--color-dark);" onclick="backToSettingsMain()">arrow_back</span>
+                <h2 id="settings-title-text" style="color:var(--color-dark); font-size: 1.3rem; margin:0;">⚙️ Account Settings</h2>
             </div>
             
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label>🔒 Change Password</label>
-                <input type="password" class="form-control" placeholder="Current Password" style="margin-bottom:0.8rem;">
-                <input type="password" class="form-control" placeholder="New Password">
+            <div id="settings-main-view">
+                <button class="settings-menu-btn" onclick="openSettingsView('name')">
+                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">badge</span> Change Name</div>
+                    <span class="material-icons-sharp">chevron_right</span>
+                </button>
+                <button class="settings-menu-btn" onclick="openSettingsView('email')">
+                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">email</span> Update Email Address</div>
+                    <span class="material-icons-sharp">chevron_right</span>
+                </button>
+                <button class="settings-menu-btn" onclick="openSettingsView('password')">
+                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">lock</span> Change Password</div>
+                    <span class="material-icons-sharp">chevron_right</span>
+                </button>
             </div>
-            
-            <button class="btn-submit" style="margin-top:0.5rem;" onclick="closeSettingsModal()">Save Changes</button>
+
+            <div id="settings-name-view" style="display:none; animation: fadeIn 0.3s ease;">
+                <div class="form-group" style="margin-bottom: 1.2rem;">
+                    <label>New First Name</label>
+                    <input type="text" class="form-control" placeholder="Enter first name">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>New Last Name</label>
+                    <input type="text" class="form-control" placeholder="Enter last name">
+                </div>
+                <button class="btn-submit" onclick="saveSettingsDummy(this, 'Name')">Save Name</button>
+            </div>
+
+            <div id="settings-email-view" style="display:none; animation: fadeIn 0.3s ease;">
+                <p style="font-size:0.85rem; color:var(--color-info-dark); margin-bottom:1.2rem;">We will send a verification code to your new email address.</p>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>New Email Address</label>
+                    <input type="email" class="form-control" placeholder="e.g. new.email@example.com">
+                </div>
+                <button class="btn-submit" onclick="saveSettingsDummy(this, 'Email')">Send Verification Code</button>
+            </div>
+
+            <div id="settings-password-view" style="display:none; animation: fadeIn 0.3s ease;">
+                <div class="form-group" style="margin-bottom: 1.2rem;">
+                    <label>Current Password</label>
+                    <input type="password" class="form-control" placeholder="Enter current password">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label>New Password</label>
+                    <input type="password" class="form-control" placeholder="Enter new password">
+                </div>
+                <button class="btn-submit" onclick="saveSettingsDummy(this, 'Password')">Update Password</button>
+            </div>
+
         </div>
     </div>
 
@@ -593,9 +619,63 @@
         function openMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'block'; }
         function closeMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'none'; }
         
-        /* ── ACCOUNT SETTINGS MODAL ── */
-        function openSettingsModal() { document.getElementById('settings-modal').style.display = 'block'; }
-        function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
+        /* ── ACCOUNT SETTINGS MODAL LOGIC (REDESIGNED) ── */
+        function openSettingsModal() { 
+            document.getElementById('settings-modal').style.display = 'block'; 
+            backToSettingsMain(); // Always reset to main menu when opening
+        }
+        
+        function closeSettingsModal() { 
+            document.getElementById('settings-modal').style.display = 'none'; 
+        }
+
+        function openSettingsView(viewName) {
+            // Hide everything first
+            document.getElementById('settings-main-view').style.display = 'none';
+            document.getElementById('settings-name-view').style.display = 'none';
+            document.getElementById('settings-email-view').style.display = 'none';
+            document.getElementById('settings-password-view').style.display = 'none';
+            
+            // Show the back button
+            document.getElementById('settings-back-btn').style.display = 'inline-block';
+            
+            // Show requested view
+            if (viewName === 'name') {
+                document.getElementById('settings-title-text').innerText = 'Change Name';
+                document.getElementById('settings-name-view').style.display = 'block';
+            } else if (viewName === 'email') {
+                document.getElementById('settings-title-text').innerText = 'Update Email';
+                document.getElementById('settings-email-view').style.display = 'block';
+            } else if (viewName === 'password') {
+                document.getElementById('settings-title-text').innerText = 'Change Password';
+                document.getElementById('settings-password-view').style.display = 'block';
+            }
+        }
+
+        function backToSettingsMain() {
+            document.getElementById('settings-main-view').style.display = 'block';
+            document.getElementById('settings-name-view').style.display = 'none';
+            document.getElementById('settings-email-view').style.display = 'none';
+            document.getElementById('settings-password-view').style.display = 'none';
+            
+            // Reset header
+            document.getElementById('settings-title-text').innerText = '⚙️ Account Settings';
+            document.getElementById('settings-back-btn').style.display = 'none';
+        }
+
+        // Dummy function to simulate saving data
+        function saveSettingsDummy(btn, type) {
+            const originalText = btn.innerText;
+            btn.innerText = 'Saving...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                alert(`Success: Your ${type} has been updated. (Backend hook coming soon)`);
+                btn.innerText = originalText;
+                btn.disabled = false;
+                backToSettingsMain(); // Return to menu after save
+            }, 800);
+        }
 
         /* ── PAGE NAVIGATION ── */
         function showPage(pageId) {
@@ -1038,7 +1118,7 @@
                     // --- UPDATED AFFIDAVIT BUTTON LOGIC ---
                     let affidavitBtn = '';
                     if (c.affidavitApproved) {
-                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}')", 'affidavit' style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
+                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'affidavit')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
                     } else if (c.affidavitRequested) {
                         affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Official Affidavit Requested</div>`;
                     } else if (c.status === 'Resolved') {
@@ -1117,7 +1197,7 @@
                             </div>
                             <p style="font-size:0.88rem; font-weight:600; margin-bottom:0.4rem; color:var(--color-dark);">${escAttr(c.category)}</p>
                             <p style="font-size:0.82rem; color:var(--color-info-dark); margin-bottom:1rem; line-height:1.4;">${escAttr(desc)}...</p>
-                            <button onclick="downloadAffidavit('${escAttr(c.trackingId)}')", 'affidavit' class="btn-submit" style="padding:0.6rem; font-size:0.85rem; background:#00bc7d;">📥 Download Affidavit</button>
+                            <button onclick="downloadAffidavit('${escAttr(c.trackingId)}', 'affidavit')" class="btn-submit" style="padding:0.6rem; font-size:0.85rem; background:#00bc7d;">📥 Download Affidavit</button>
                         </div>
                     `;
                 }).join('');
@@ -1157,6 +1237,7 @@
                 formMsg.innerText = '📍 Action Required: Please provide the incident location by dragging the map pin, clicking "Start from My Current Location", or typing a landmark.';
                 return; // Stops the submission!
             }
+            // -------------------------------------
 
             formMsg.innerText = '';
             document.getElementById('ai-preview-box').style.display = 'none';
