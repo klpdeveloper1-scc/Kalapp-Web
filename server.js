@@ -7,15 +7,12 @@ const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-
 // 📧 Mailer Dependencies (NEW)
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
-
 // 🤖 Google Generative AI & Auth
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { OAuth2Client } = require('google-auth-library');
-
 // ☁️ Cloudinary Configuration for Permanent Storage
 const cloudinary = require('cloudinary').v2;
 
@@ -26,13 +23,11 @@ const PORT = process.env.PORT || 3001;
 // --- API Configurations ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
 // --- Google Mailer Configuration ---
 const mailerOAuth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_ID,
@@ -45,10 +40,8 @@ mailerOAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOK
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
-
 // --- Temp Memory Storage (Used for both Preview AND Final Upload) ---
 const memoryUpload = multer({ storage: multer.memoryStorage() });
-
 // --- MongoDB Connection ---
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ Connected to MongoDB Atlas!'))
@@ -64,6 +57,7 @@ const userSchema = new mongoose.Schema({
     role: { type: String, default: 'citizen' },
     status: { type: String, default: 'active' },
     authMethod: { type: String, default: 'local' },
+    profilePhotoUrl: { type: String, default: '' }, // ✅ FIX: Added for profile photos
     otp: String,
     otpExpires: Date,
     strikes: { type: Number, default: 0 }
@@ -229,7 +223,7 @@ app.post('/api/google-login', async (req, res) => {
 
         let user = await User.findOne({ email });
         if (user) {
-            if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });
+             if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });
             if (user.authMethod !== 'google') return res.status(400).json({ message: 'Use OTP Login.' });
             return res.json({ success: true, username: user.username, role: user.role });
         }
@@ -286,7 +280,7 @@ app.patch('/api/users/:username/password', async (req, res) => {
         
         // Security check: Must know old password to set new one
         if (user.password !== currentPassword) {
-            return res.status(400).json({ success: false, error: 'Incorrect current password.' });
+             return res.status(400).json({ success: false, error: 'Incorrect current password.' });
         }
         
         user.password = newPassword;
@@ -295,6 +289,31 @@ app.patch('/api/users/:username/password', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, error: 'Failed to update password.' }); }
 });
 
+// Update Profile Photo (✅ FIX: NEW ENDPOINT)
+app.post('/api/users/:username/photo', memoryUpload.single('photo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No photo uploaded.' });
+        }
+
+        // 1. Upload to Cloudinary securely using stream
+        const photoUrl = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream({ folder: 'profile_photos' }, (error, result) => {
+                if (error) reject(error);
+                else resolve(result.secure_url);
+            });
+            stream.end(req.file.buffer);
+        });
+
+        // 2. Save the new URL to the Database
+        await User.findOneAndUpdate({ username: req.params.username }, { profilePhotoUrl: photoUrl });
+
+        res.json({ success: true, message: 'Profile photo updated!', photoUrl: photoUrl });
+    } catch (error) { 
+        console.error('PROFILE UPLOAD ERROR:', error);
+        res.status(500).json({ success: false, error: 'Failed to upload photo.' }); 
+    }
+});
 
 // --- AI CLASSIFY PREVIEW ENDPOINT ---
 app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, res) => {
@@ -373,7 +392,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
                 await user.save();
                 return res.status(400).json({
                     success: false,
-                    message: `❌ AI Rejected: Photo doesn't match category. Strike ${user.strikes}/3.${user.status === 'blocked' ? ' Your account is now BLOCKED.' : ''}`
+                    message: `❌ AI Rejected: Photo doesn't match category.\nStrike ${user.strikes}/3.${user.status === 'blocked' ? ' Your account is now BLOCKED.' : ''}`
                 });
             }
             return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
@@ -384,7 +403,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
                 if (error) reject(error);
                 else resolve(result.secure_url);
-            });
+             });
             stream.end(req.file.buffer);
         });
 
@@ -633,8 +652,7 @@ async function analyzeLuponEligibility(description) {
 
         Check for:
         1. Does the description mention a respondent (neighbor, person, kapwa, individual, katabi, etc.)
-        2. Does it contain a Philippine contact number?
-        Look for formats 09XXXXXXXXX, +639XXXXXXXXX, or a landline like (02) XXXX-XXXX or 8XXX-XXXX.
+        2. Does it contain a Philippine contact number? Look for formats 09XXXXXXXXX, +639XXXXXXXXX, or a landline like (02) XXXX-XXXX or 8XXX-XXXX.
         3. Is this a civil/community/interpersonal dispute (not a public infrastructure issue like potholes or broken streetlights)
 
         Respond ONLY with a valid JSON object in this schema:
@@ -663,7 +681,7 @@ app.post('/api/complaints/:id/refer-lupon', rateLimit({ windowMs: 60000, max: 10
         const analysis = await analyzeLuponEligibility(complaint.description || '');
 
         if (!analysis.eligible || !analysis.hasContact) {
-            return res.status(400).json({
+             return res.status(400).json({
                 success: false,
                 message: `⚖️ Lupon referral rejected: The complaint description must include the respondent's contact number (e.g., 09XXXXXXXXX) for Lupon to schedule mediation. No strike added.`
             });
@@ -726,7 +744,7 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
 
         const photoUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
-                if (error) reject(error);
+                 if (error) reject(error);
                 else resolve(result.secure_url);
             });
             stream.end(req.file.buffer);
