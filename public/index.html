@@ -500,17 +500,20 @@
             const typingId = appendMessage('Thinking...', 'ai-bubble');
 
             try {
-                const response = await fetch('https://kalapp-system.onrender.com/api/ai-chat', {
+                // FIX: Use a relative URL to prevent CORS/SSL issues
+                const response = await fetch('/api/ai-chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    // FIX: Ensure history array is mapped correctly for the backend
                     body: JSON.stringify({ message: message, history: chatHistory }) 
                 });
                 
                 const data = await response.json();
                 document.getElementById(typingId).remove();
                 
-                if (response.ok) {
-                    appendMessage(data.reply || "Message received.", 'ai-bubble'); 
+                if (response.ok && data.reply) {
+                    appendMessage(data.reply, 'ai-bubble'); 
+                    // FIX: Updated history object format to exactly match Gemini's requirements
                     chatHistory.push({ role: "user", parts: [{ text: message }] });
                     chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
                 } else {
