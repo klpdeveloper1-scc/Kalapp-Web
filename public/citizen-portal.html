@@ -171,6 +171,17 @@
         #mobile-profile-modal {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease;
         }
+
+        /* FIX: Ensure dropdown aligns properly on mobile */
+        @media (max-width: 768px) {
+            .mobile-profile-content {
+                position: absolute;
+                top: 70px;
+                right: 10px;
+                width: 320px;
+            }
+        }
+
         .mobile-profile-content {
             position: absolute; top: 70px; right: 10px; width: 320px; background: var(--color-white); border-radius: var(--card-border-radius);
             padding: 1.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;
@@ -595,11 +606,38 @@
         
         updateAllAvatars(username, null); 
 
-        function handleQuickPhotoUpload(input) {
+        // FIX: Upload photo to backend instead of just replacing it visually
+        async function handleQuickPhotoUpload(input) {
             if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Show local preview immediately for UX
                 const reader = new FileReader();
                 reader.onload = function(e) { updateAllAvatars(username, e.target.result); }
-                reader.readAsDataURL(input.files[0]);
+                reader.readAsDataURL(file);
+
+                // Upload to server
+                const fd = new FormData();
+                fd.append('photo', file);
+                
+                try {
+                    // FIX: Changed from http://localhost:3001 to BACKEND_URL
+                    const res = await fetch(`${BACKEND_URL}/api/users/${username}/photo`, {
+                        method: 'POST',
+                        body: fd
+                    });
+                    const data = await res.json();
+                    
+                    if(data.success && data.photoUrl) {
+                        updateAllAvatars(username, data.photoUrl);
+                    } else {
+                        console.error('Photo upload failed:', data.error);
+                        alert('Failed to save profile photo.');
+                    }
+                } catch(err) {
+                    console.error('Error uploading photo:', err);
+                    alert('Network error while saving profile photo.');
+                }
             }
         }
 
