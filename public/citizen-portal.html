@@ -102,6 +102,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            /* Note: overflow: hidden is deliberately kept off the holder so the edit button isn't cut off */
         }
         
         .avatar-circle {
@@ -109,7 +110,8 @@
             height: 100%;
             aspect-ratio: 1 / 1;   /* 🔥 ensures perfect circle */
             border-radius: 50%;
-            overflow: hidden;
+            position: relative;
+            overflow: hidden;      /* 🔥 MUST */
             border: 2px solid white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             background: var(--color-primary);
@@ -123,6 +125,9 @@
         }
         
         .profile-photo {
+            position: absolute;    /* 🔥 KEY FIX */
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
