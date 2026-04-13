@@ -2,204 +2,193 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Executive Access - City Hall</title>
-                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-                    <style>
-                            body { margin: 0; padding: 0; background-color: #0b0f19; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-                                    .login-box { background: #151b2b; padding: 50px 40px; border-radius: 12px; border-top: 4px solid #ef4444; width: 100%; max-width: 380px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-                                            .login-box h1 { font-weight: 900; margin: 0 0 5px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-                                                    .login-box p { color: #94a3b8; font-size: 13px; margin-bottom: 30px; }
-                                                            .form-group { margin-bottom: 20px; }
-                                                                    label { display: block; font-size: 12px; color: #cbd5e1; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-                                                                            input { width: 100%; padding: 14px; background: #0b0f19; border: 1px solid #334155; border-radius: 8px; color: white; font-family: 'Inter'; box-sizing: border-box; }
-                                                                                    input:focus { outline: none; border-color: #ef4444; }
-                                                                                            button { width: 100%; background: #ef4444; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; }
-                                                                                                    button:hover { background: #dc2626; }
-                                                                                                            #error-msg { color: #ef4444; font-size: 13px; font-weight: 700; margin-bottom: 15px; min-height: 18px; text-align: center; }
-                                                                                                                </style>
-                                                                                                                </head>
-                                                                                                                <body>
-                                                                                                                    <div class="login-box">
-                                                                                                                            <h1>System Override</h1>
-                                                                                                                                    <p>Restricted City Hall Executive Access Only.</p>
-                                                                                                                                            <div id="error-msg"></div>
-                                                                                                                                                    <form id="super-login-form">
-                                                                                                                                                                <div class="form-group">
-                                                                                                                                                                                <label>Executive ID</label>
-                                                                                                                                                                                                <input type="text" id="exec-id" required autocomplete="off">
-                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        <div class="form-group">
-                                                                                                                                                                                                                                        <label>Master Passcode</label>
-                                                                                                                                                                                                                                                        <input type="password" id="exec-pass" required>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                <button type="submit">Authenticate Session</button>
-                                                                                                                                                                                                                                                                                        </form>
-                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                <script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Access - City Hall</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; background-color: #0b0f19; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-box { background: #151b2b; padding: 50px 40px; border-radius: 12px; border-top: 4px solid #ef4444; width: 100%; max-width: 380px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .login-box h1 { font-weight: 900; margin: 0 0 5px 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .login-box p { color: #94a3b8; font-size: 13px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 12px; color: #cbd5e1; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input { width: 100%; padding: 14px; background: #0b0f19; border: 1px solid #334155; border-radius: 8px; color: white; font-family: 'Inter'; box-sizing: border-box; }
+        input:focus { outline: none; border-color: #ef4444; }
+        button { width: 100%; background: #ef4444; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #dc2626; }
+        #error-msg { color: #ef4444; font-size: 13px; font-weight: 700; margin-bottom: 15px; min-height: 18px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>System Override</h1>
+        <p>Restricted City Hall Executive Access Only.</p>
+        <div id="error-msg"></div>
+        <form id="super-login-form">
+            <div class="form-group">
+                <label>Executive ID</label>
+                <input type="text" id="exec-id" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Master Passcode</label>
+                <input type="password" id="exec-pass" required>
+            </div>
+            <button type="submit">Authenticate Session</button>
+        </form>
+    </div>
 
-                                                                                                                                                                                                                                                                                                        // ================= RATE LIMIT =================
-                                                                                                                                                                                                                                                                                                        let attempts = 0;
-                                                                                                                                                                                                                                                                                                        let lockUntil = 0;
+    <script>
+        // ================= RATE LIMIT =================
+        let attempts = 0;
+        let lockUntil = 0;
 
-                                                                                                                                                                                                                                                                                                        // ================= DEVICE FINGERPRINT =================
-                                                                                                                                                                                                                                                                                                        const deviceKey = "superadmin_device";
-                                                                                                                                                                                                                                                                                                        if (!localStorage.getItem(deviceKey)) {
-                                                                                                                                                                                                                                                                                                            localStorage.setItem(deviceKey, Math.random().toString(36).substring(2));
-                                                                                                                                                                                                                                                                                                        }
+        // ================= DEVICE FINGERPRINT =================
+        const deviceKey = "superadmin_device";
+        if (!localStorage.getItem(deviceKey)) {
+            localStorage.setItem(deviceKey, Math.random().toString(36).substring(2));
+        }
 
-                                                                                                                                                                                                                                                                                                        const deviceInfo = navigator.userAgent;
-                                                                                                                                                                                                                                                                                                        const screenRes = screen.width + "x" + screen.height;
-                                                                                                                                                                                                                                                                                                        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const deviceInfo = navigator.userAgent;
+        const screenRes = screen.width + "x" + screen.height;
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-                                                                                                                                                                                                                                                                                                        // ================= SESSION CONTROL =================
-                                                                                                                                                                                                                                                                                                        const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
+        // ================= SESSION CONTROL =================
+        const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
+        
+        function setSession() {
+            sessionStorage.setItem('superadmin_session', Date.now());
+            // FIX: Sets the local storage token so the dashboard recognizes the admin
+            localStorage.setItem('kalapp_superadmin', 'true');
+        }
 
-                                                                                                                                                                                                                                                                                                        function setSession() {
-                                                                                                                                                                                                                                                                                                            sessionStorage.setItem('superadmin_session', Date.now());
-                                                                                                                                                                                                                                                                                                        }
+        function checkSession() {
+            const session = sessionStorage.getItem('superadmin_session');
+            if (session && (Date.now() - session > SESSION_TIMEOUT)) {
+                silentLog("Session expired auto logout");
+                window.location.href = "/login.html";
+            }
+        }
 
-                                                                                                                                                                                                                                                                                                        function checkSession() {
-                                                                                                                                                                                                                                                                                                            const session = sessionStorage.getItem('superadmin_session');
-                                                                                                                                                                                                                                                                                                            if (session && (Date.now() - session > SESSION_TIMEOUT)) {
-                                                                                                                                                                                                                                                                                                                silentLog("Session expired auto logout");
-                                                                                                                                                                                                                                                                                                                window.location.href = "/login.html";
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                                        setInterval(checkSession, 60000);
+        setInterval(checkSession, 60000);
 
-                                                                                                                                                                                                                                                                                                        // ================= STEALTH LOGGER =================
-                                                                                                                                                                                                                                                                                                        function silentLog(action) {
-                                                                                                                                                                                                                                                                                                            fetch('/api/admin/logs', {
-                                                                                                                                                                                                                                                                                                                method: 'POST',
-                                                                                                                                                                                                                                                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                                                                                                                                                                                                                                                body: JSON.stringify({
-                                                                                                                                                                                                                                                                                                                    action,
-                                                                                                                                                                                                                                                                                                                    device: deviceInfo,
-                                                                                                                                                                                                                                                                                                                    screen: screenRes,
-                                                                                                                                                                                                                                                                                                                    timezone: timezone,
-                                                                                                                                                                                                                                                                                                                    time: new Date()
-                                                                                                                                                                                                                                                                                                                })
-                                                                                                                                                                                                                                                                                                            });
-                                                                                                                                                                                                                                                                                                        }
+        // ================= STEALTH LOGGER =================
+        function silentLog(action) {
+            fetch('/api/admin/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action,
+                    device: deviceInfo,
+                    screen: screenRes,
+                    timezone: timezone,
+                    time: new Date()
+                })
+            });
+        }
 
-                                                                                                                                                                                                                                                                                                        // ================= BEHAVIOR TRACKING =================
-                                                                                                                                                                                                                                                                                                        let clickCount = 0;
-                                                                                                                                                                                                                                                                                                        let keySpeed = 0;
-                                                                                                                                                                                                                                                                                                        let lastKeyTime = Date.now();
+        // ================= BEHAVIOR TRACKING =================
+        let clickCount = 0;
+        let keySpeed = 0;
+        let lastKeyTime = Date.now();
 
-                                                                                                                                                                                                                                                                                                        document.addEventListener('click', () => {
-                                                                                                                                                                                                                                                                                                            clickCount++;
-                                                                                                                                                                                                                                                                                                            if (clickCount > 80) {
-                                                                                                                                                                                                                                                                                                                silentLog("⚠️ Suspicious rapid clicking");
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                        });
+        document.addEventListener('click', () => {
+            clickCount++;
+            if (clickCount > 80) {
+                silentLog("⚠️ Suspicious rapid clicking");
+            }
+        });
 
-                                                                                                                                                                                                                                                                                                        document.addEventListener('keydown', () => {
-                                                                                                                                                                                                                                                                                                            const now = Date.now();
-                                                                                                                                                                                                                                                                                                            if (now - lastKeyTime < 50) {
-                                                                                                                                                                                                                                                                                                                keySpeed++;
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                            lastKeyTime = now;
+        document.addEventListener('keydown', () => {
+            const now = Date.now();
+            if (now - lastKeyTime < 50) {
+                keySpeed++;
+            }
+            lastKeyTime = now;
+            if (keySpeed > 20) {
+                silentLog("⚠️ Bot-like typing detected");
+            }
+        });
 
-                                                                                                                                                                                                                                                                                                            if (keySpeed > 20) {
-                                                                                                                                                                                                                                                                                                                silentLog("⚠️ Bot-like typing detected");
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                        });
+        // ================= GEO SIGNAL =================
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                silentLog("Login attempt from " + data.city + ", " + data.country);
+            });
 
-                                                                                                                                                                                                                                                                                                        // ================= GEO SIGNAL =================
-                                                                                                                                                                                                                                                                                                        fetch('https://ipapi.co/json/')
-                                                                                                                                                                                                                                                                                                        .then(res => res.json())
-                                                                                                                                                                                                                                                                                                        .then(data => {
-                                                                                                                                                                                                                                                                                                            silentLog("Login attempt from " + data.city + ", " + data.country);
-                                                                                                                                                                                                                                                                                                        });
+        // ================= LOGIN =================
+        document.getElementById('super-login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-                                                                                                                                                                                                                                                                                                        // ================= LOGIN =================
-                                                                                                                                                                                                                                                                                                        document.getElementById('super-login-form').addEventListener('submit', function(e) {
-                                                                                                                                                                                                                                                                                                                    e.preventDefault();
+            const now = Date.now();
+            if (now < lockUntil) {
+                document.getElementById('error-msg').innerText = "Too many attempts. Try later.";
+                silentLog("Blocked login attempt (rate limit)");
+                return;
+            }
 
-                                                                                                                                                                                                                                                                                                                                const now = Date.now();
-                                                                                                                                                                                                                                                                                                                                if (now < lockUntil) {
-                                                                                                                                                                                                                                                                                                                                    document.getElementById('error-msg').innerText = "Too many attempts. Try later.";
-                                                                                                                                                                                                                                                                                                                                    silentLog("Blocked login attempt (rate limit)");
-                                                                                                                                                                                                                                                                                                                                    return;
-                                                                                                                                                                                                                                                                                                                                }
+            const id = document.getElementById('exec-id').value;
+            const pass = document.getElementById('exec-pass').value;
+            const errorMsg = document.getElementById('error-msg');
+            const btn = document.querySelector('button');
 
-                                                                                                                                                                                                                                                                                                                                const id = document.getElementById('exec-id').value;
-                                                                                                                                                                                                                                                                                                                                const pass = document.getElementById('exec-pass').value;
-                                                                                                                                                                                                                                                                                                                                const errorMsg = document.getElementById('error-msg');
-                                                                                                                                                                                                                                                                                                                                const btn = document.querySelector('button');
+            btn.innerText = "Authenticating...";
+            btn.disabled = true;
 
-                                                                                                                                                                                                                                                                                                                                btn.innerText = "Authenticating...";
-                                                                                                                                                                                                                                                                                                                                btn.disabled = true;
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: id,
+                    password: pass,
+                    device: localStorage.getItem(deviceKey),
+                    deviceInfo: deviceInfo,
+                    screen: screenRes,
+                    timezone: timezone
+                })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Invalid credentials.");
+                return data;
+            })
+            .then(data => {
+                if (data.success && data.role === 'superadmin') {
+                    setSession();
+                    silentLog("✅ Superadmin login success: " + id);
+                    
+                    setInterval(() => {
+                        fetch('/api/refresh-session');
+                    }, 10 * 60 * 1000);
+                    
+                    setInterval(() => {
+                        fetch('/api/admin/ping');
+                    }, 300000);
+                    
+                    window.location.href = '/superadmin-dashboard.html';
+                } else {
+                    throw new Error("ACCESS DENIED: Insufficient privileges.");
+                }
+            })
+            .catch(err => {
+                attempts++;
+                if (attempts >= 5) {
+                    lockUntil = Date.now() + (2 * 60 * 1000);
+                    silentLog("⚠️ Account temporarily locked");
+                }
+                silentLog("❌ Failed login attempt: " + id);
+                errorMsg.innerText = err.message || "SYSTEM ERROR.";
+                btn.innerText = "Authenticate Session";
+                btn.disabled = false;
+            });
+        });
 
-                                                                                                                                                                                                                                                                                                                                fetch('/api/login', {
-                                                                                                                                                                                                                                                                                                                                    method: 'POST',
-                                                                                                                                                                                                                                                                                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                                                                                                                                                                                                                                                                                    body: JSON.stringify({
-                                                                                                                                                                                                                                                                                                                                        username: id,
-                                                                                                                                                                                                                                                                                                                                        password: pass,
-                                                                                                                                                                                                                                                                                                                                        device: localStorage.getItem(deviceKey),
-                                                                                                                                                                                                                                                                                                                                        deviceInfo: deviceInfo,
-                                                                                                                                                                                                                                                                                                                                        screen: screenRes,
-                                                                                                                                                                                                                                                                                                                                        timezone: timezone
-                                                                                                                                                                                                                                                                                                                                    })
-                                                                                                                                                                                                                                                                                                                                })
-                                                                                                                                                                                                                                                                                                                                .then(async res => {
-                                                                                                                                                                                                                                                                                                                                    const data = await res.json();
-                                                                                                                                                                                                                                                                                                                                    if (!res.ok) throw new Error(data.message || "Invalid credentials.");
-                                                                                                                                                                                                                                                                                                                                    return data;
-                                                                                                                                                                                                                                                                                                                                })
-                                                                                                                                                                                                                                                                                                                                .then(data => {
-
-                                                                                                                                                                                                                                                                                                                                    if (data.success && data.role === 'superadmin') {
-
-                                                                                                                                                                                                                                                                                                                                        setSession();
-
-                                                                                                                                                                                                                                                                                                                                        silentLog("✅ Superadmin login success: " + id);
-
-                                                                                                                                                                                                                                                                                                                                        setInterval(() => {
-                                                                                                                                                                                                                                                                                                                                            fetch('/api/refresh-session');
-                                                                                                                                                                                                                                                                                                                                        }, 10 * 60 * 1000);
-
-                                                                                                                                                                                                                                                                                                                                        setInterval(() => {
-                                                                                                                                                                                                                                                                                                                                            fetch('/api/admin/ping');
-                                                                                                                                                                                                                                                                                                                                        }, 300000);
-
-                                                                                                                                                                                                                                                                                                                                        window.location.href = '/superadmin-dashboard.html';
-
-                                                                                                                                                                                                                                                                                                                                    } else {
-                                                                                                                                                                                                                                                                                                                                        throw new Error("ACCESS DENIED: Insufficient privileges.");
-                                                                                                                                                                                                                                                                                                                                    }
-
-                                                                                                                                                                                                                                                                                                                                })
-                                                                                                                                                                                                                                                                                                                                .catch(err => {
-
-                                                                                                                                                                                                                                                                                                                                    attempts++;
-
-                                                                                                                                                                                                                                                                                                                                    if (attempts >= 5) {
-                                                                                                                                                                                                                                                                                                                                        lockUntil = Date.now() + (2 * 60 * 1000);
-                                                                                                                                                                                                                                                                                                                                        silentLog("⚠️ Account temporarily locked");
-                                                                                                                                                                                                                                                                                                                                    }
-
-                                                                                                                                                                                                                                                                                                                                    silentLog("❌ Failed login attempt: " + id);
-
-                                                                                                                                                                                                                                                                                                                                    errorMsg.innerText = err.message || "SYSTEM ERROR.";
-                                                                                                                                                                                                                                                                                                                                    btn.innerText = "Authenticate Session";
-                                                                                                                                                                                                                                                                                                                                    btn.disabled = false;
-
-                                                                                                                                                                                                                                                                                                                                });
-
-                                                                                                                                                                                                                                                                                                        });
-
-                                                                                                                                                                                                                                                                                                        // ================= TAB SWITCH DETECTION =================
-                                                                                                                                                                                                                                                                                                        document.addEventListener("visibilitychange", () => {
-                                                                                                                                                                                                                                                                                                            if (document.hidden) {
-                                                                                                                                                                                                                                                                                                                silentLog("User switched tab during login");
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                        });
-
-                                                                                                                                                                                                                                                                                                </script>
-                                                                                                                                                                                                                                                                                                </body>
-                                                                                                                                                                                                                                                                                                </html>
+        // ================= TAB SWITCH DETECTION =================
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                silentLog("User switched tab during login");
+            }
+        });
+    </script>
+</body>
+</html>
