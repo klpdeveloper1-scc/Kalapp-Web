@@ -16,6 +16,7 @@
             --color-white: #fff; --color-info-dark: #7d8da1; --color-info-light: #dce1eb; --color-dark: #363949;
             --color-light: rgba(132, 139, 200, 0.18);
             --color-background: #f6f6f9;
+            --color-chat: #2563eb; /* CHATBOT COLOR */
             --card-border-radius: 1.5rem; --border-radius-1: 0.8rem; --card-padding: 1.5rem; --box-shadow: 0 2rem 3rem var(--color-light);
         }
         .dark-theme {
@@ -102,16 +103,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Note: overflow: hidden is deliberately kept off the holder so the edit button isn't cut off */
         }
         
         .avatar-circle {
             width: 100%;
             height: 100%;
-            aspect-ratio: 1 / 1;   /* 🔥 ensures perfect circle */
+            aspect-ratio: 1 / 1;
             border-radius: 50%;
             position: relative;
-            overflow: hidden;      /* 🔥 MUST */
+            overflow: hidden;
             border: 2px solid white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             background: var(--color-primary);
@@ -125,7 +125,7 @@
         }
         
         .profile-photo {
-            position: absolute;    /* 🔥 KEY FIX */
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
@@ -133,7 +133,6 @@
             object-fit: cover;
         }
         
-        /* FIX: Adjusting specific sizes to ensure they are visible and large enough */
         .header-actions .avatar-holder { width: 45px; height: 45px; margin-right: 0.6rem; cursor: pointer; }
         .header-actions .avatar-circle { font-size: 1.2rem; }
 
@@ -207,6 +206,42 @@
         .settings-menu-btn .material-icons-sharp { color: var(--color-info-dark); transition: 0.2s; }
         .settings-menu-btn:hover .material-icons-sharp { color: var(--color-primary); }
 
+        /* ── CHATBOT UI ── */
+        #chatbot-toggle { 
+            position: fixed; bottom: 30px; right: 30px; width: 75px; height: 75px; 
+            border-radius: 50%; background: var(--color-chat); color: white; font-size: 35px;
+            border: none; cursor: pointer; z-index: 2000; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6);
+            transition: 0.3s ease; display: flex; align-items: center; justify-content: center;
+        }
+        #chatbot-toggle:hover { transform: scale(1.1); background: var(--color-primary); }
+        .pulse-anim { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        
+        #chatbot-window { 
+            position: fixed; bottom: 120px; right: 30px; width: 380px; height: 550px; 
+            max-width: calc(100% - 40px); z-index: 2000; overflow: hidden; 
+            display: flex; flex-direction: column; background: var(--color-white);
+            border-radius: var(--card-border-radius); box-shadow: var(--box-shadow);
+            border: 1px solid var(--color-light);
+            transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        #chatbot-window.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+        
+        .chat-header { background: var(--color-chat); color: white; padding: 18px 24px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .close-chat-btn { background: none; border: none; color: white; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.2s;}
+        .close-chat-btn:hover { transform: scale(1.2); color: var(--color-danger); }
+        
+        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: var(--color-background); }
+        /* 🔥 FIX: Included white-space: pre-wrap for bullet point formatting */
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; color: var(--color-dark); white-space: pre-wrap; }
+        .user-bubble { background: var(--color-chat); color: white; align-self: flex-end; border-bottom-right-radius: 4px;}
+        .ai-bubble { background: var(--color-white); border: 1px solid var(--color-light); align-self: flex-start; border-bottom-left-radius: 4px;}
+        
+        .chat-input-area { padding: 15px; background: var(--color-white); display: flex; gap: 10px; border-top: 1px solid var(--color-light); }
+        #chat-input { flex: 1; padding: 12px 20px; border-radius: 30px; border: 1px solid var(--color-info-light); background: var(--color-background); color: var(--color-dark); outline: none; font-family: 'Poppins', sans-serif; }
+        #send-chat { background: var(--color-chat); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        #send-chat:hover { background: var(--color-primary); transform: scale(1.05);}
+
         /* ── TABLET & MOBILE RESPONSIVENESS ── */
         @media screen and (max-width: 1200px) {
             .container { grid-template-columns: 7rem auto 20rem; width: 98%; }
@@ -219,6 +254,10 @@
             main { display: block; width: 100% !important; margin-top: 65px !important; padding: 1rem 1rem 5rem; }
             .card { border-radius: 1rem; padding: 1rem; }
             .mobile-header, .mobile-nav { display: flex; }
+            
+            /* CHATBOT MOBILE ADJUSTMENTS (Stays above mobile nav) */
+            #chatbot-window { height: 65vh; right: 15px; bottom: 85px; width: calc(100% - 30px);}
+            #chatbot-toggle { width: 60px; height: 60px; font-size: 26px; bottom: 85px; right: 15px; }
         }
 
         /* ── LOCATION MAP ── */
@@ -459,6 +498,22 @@
         <button onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span>Hotline</button>
     </nav>
 
+    <button id="chatbot-toggle" class="pulse-anim" type="button" title="Chat with Sumbong-Bot">💬</button>
+
+    <div id="chatbot-window">
+        <div class="chat-header">
+            <span>Sumbong-Bot 🤖</span>
+            <button id="close-chat" class="close-chat-btn" type="button">✕</button>
+        </div>
+        <div id="chat-messages">
+            <div class="chat-bubble ai-bubble">Hello po! I am Sumbong-Bot, your AI assistant. Do you have any questions about the system or how to file a complaint?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+            <button id="send-chat" type="button">✓</button>
+        </div>
+    </div>
+
     <div id="mobile-profile-modal" onclick="if(event.target===this) closeMobileProfile()">
         <div class="mobile-profile-content">
             
@@ -611,7 +666,7 @@
             });
         }
         
-        // FIX: Check browser storage on page load so the picture doesn't vanish on refresh!
+        // Check browser storage on page load
         const savedPhoto = localStorage.getItem('kalapp_profile_photo_' + username);
         updateAllAvatars(username, savedPhoto); 
 
@@ -620,12 +675,10 @@
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 
-                // Show local preview immediately for UX
                 const reader = new FileReader();
                 reader.onload = function(e) { updateAllAvatars(username, e.target.result); }
                 reader.readAsDataURL(file);
 
-                // Upload to server
                 const fd = new FormData();
                 fd.append('photo', file);
                 
@@ -637,7 +690,6 @@
                     const data = await res.json();
                     
                     if(data.success && data.photoUrl) {
-                        // FIX: Save the new URL into browser memory so it survives page reloads
                         localStorage.setItem('kalapp_profile_photo_' + username, data.photoUrl);
                         updateAllAvatars(username, data.photoUrl);
                     } else {
@@ -671,7 +723,7 @@
             document.getElementById('settings-email-view').style.display = 'none';
             document.getElementById('settings-password-view').style.display = 'none';
             document.getElementById('settings-back-btn').style.display = 'inline-block';
-            document.getElementById('settings-msg').innerText = ''; // Clear messages
+            document.getElementById('settings-msg').innerText = ''; 
             
             if (viewName === 'name') {
                 document.getElementById('settings-title-text').innerText = 'Change Name';
@@ -1458,6 +1510,75 @@
         renderHotlines(hotlineData);
         loadCitizenFeedSidebar();
         showPage('complaint');
+
+        /* ── CHATBOT LOGIC ── */
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const closeChat = document.getElementById('close-chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendChat = document.getElementById('send-chat');
+        const chatMessages = document.getElementById('chat-messages');
+
+        let chatHistory = [];
+
+        chatbotToggle.addEventListener('click', () => {
+            chatbotWindow.classList.add('active');
+            chatbotToggle.style.opacity = '0';
+            chatbotToggle.style.pointerEvents = 'none';
+        });
+        
+        closeChat.addEventListener('click', () => {
+            chatbotWindow.classList.remove('active');
+            chatbotToggle.style.opacity = '1';
+            chatbotToggle.style.pointerEvents = 'auto';
+        });
+
+        function appendChatMessage(text, className) {
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${className}`;
+            bubble.textContent = text;
+            const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+            bubble.id = id;
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
+            return id;
+        }
+
+        async function handleSendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendChatMessage(message, 'user-bubble');
+            chatInput.value = '';
+            const typingId = appendChatMessage('Thinking...', 'ai-bubble');
+
+            try {
+                const response = await fetch('/api/ai-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message, history: chatHistory }) 
+                });
+                
+                const data = await response.json();
+                document.getElementById(typingId).remove();
+                
+                if (response.ok && data.reply) {
+                    appendChatMessage(data.reply, 'ai-bubble'); 
+                    chatHistory.push({ role: "user", parts: [{ text: message }] });
+                    chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
+                } else {
+                    appendChatMessage("Error: Could not reach Sumbong-Bot.", 'ai-bubble');
+                }
+            } catch (error) {
+                document.getElementById(typingId).remove();
+                appendChatMessage("Connection error. Is the Master Server running?", 'ai-bubble');
+            }
+        }
+
+        sendChat.addEventListener('click', handleSendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSendMessage();
+        });
     </script>
 </body>
 </html>
