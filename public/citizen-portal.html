@@ -133,22 +133,23 @@
             object-fit: cover;
         }
         
-        .header-actions .avatar-holder { width: 40px; height: 40px; margin-right: 0.6rem; cursor: pointer; }
+        /* FIX: Adjusting specific sizes to ensure they are visible and large enough */
+        .header-actions .avatar-holder { width: 45px; height: 45px; margin-right: 0.6rem; cursor: pointer; }
         .header-actions .avatar-circle { font-size: 1.2rem; }
 
-        .profile-card-header .avatar-holder { width: 60px; height: 60px; margin-right: 1rem; }
-        .profile-card-header .avatar-circle { font-size: 1.8rem; }
+        .profile-card-header .avatar-holder { width: 75px; height: 75px; margin-right: 1rem; }
+        .profile-card-header .avatar-circle { font-size: 2rem; }
         
-        .mobile-profile-content .avatar-holder { width: 65px; height: 65px; margin-right: 1rem; }
+        .mobile-profile-content .avatar-holder { width: 75px; height: 75px; margin-right: 1rem; }
         .mobile-profile-content .avatar-circle { font-size: 2rem; }
 
         .edit-photo-btn {
             position: absolute; bottom: -5px; right: -5px; background: var(--color-dark); color: white; border-radius: 50%;
-            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer;
             border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s;
         }
         .edit-photo-btn:hover { background: var(--color-primary); }
-        .edit-photo-btn span { font-size: 14px !important; }
+        .edit-photo-btn span { font-size: 15px !important; }
 
         .profile-card-header { display: flex; align-items: center; gap: 0rem; margin-bottom: 1.2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-light); }
         .profile-card-stats { display: flex; justify-content: space-between; margin-bottom: 1.2rem; text-align: center; padding: 0 0.5rem; }
@@ -178,7 +179,6 @@
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease;
         }
 
-        /* FIX: Ensure dropdown aligns properly on mobile */
         @media (max-width: 768px) {
             .mobile-profile-content {
                 position: absolute;
@@ -241,7 +241,7 @@
                 <span id="mobile-username-header" style="font-size:0.85rem; font-weight:700; color:var(--color-dark); line-height:1.2;"></span>
                 <span style="font-size:0.65rem; color:var(--color-primary); font-weight:600;">Profile ▼</span>
             </div>
-            <div class="avatar-holder">
+            <div class="avatar-holder" style="width: 40px; height: 40px;">
                 <div class="avatar-circle initial-avatar" id="header-avatar-circle"></div>
             </div>
         </div>
@@ -611,9 +611,11 @@
             });
         }
         
-        updateAllAvatars(username, null); 
+        // FIX: Check browser storage on page load so the picture doesn't vanish on refresh!
+        const savedPhoto = localStorage.getItem('kalapp_profile_photo_' + username);
+        updateAllAvatars(username, savedPhoto); 
 
-        // FIX: Upload photo to backend instead of just replacing it visually
+        // Upload photo to backend
         async function handleQuickPhotoUpload(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
@@ -628,7 +630,6 @@
                 fd.append('photo', file);
                 
                 try {
-                    // FIX: Changed from http://localhost:3001 to BACKEND_URL
                     const res = await fetch(`${BACKEND_URL}/api/users/${username}/photo`, {
                         method: 'POST',
                         body: fd
@@ -636,6 +637,8 @@
                     const data = await res.json();
                     
                     if(data.success && data.photoUrl) {
+                        // FIX: Save the new URL into browser memory so it survives page reloads
+                        localStorage.setItem('kalapp_profile_photo_' + username, data.photoUrl);
                         updateAllAvatars(username, data.photoUrl);
                     } else {
                         console.error('Photo upload failed:', data.error);
