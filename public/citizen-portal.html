@@ -16,7 +16,7 @@
             --color-white: #fff; --color-info-dark: #7d8da1; --color-info-light: #dce1eb; --color-dark: #363949;
             --color-light: rgba(132, 139, 200, 0.18);
             --color-background: #f6f6f9;
-            --color-chat: #2563eb; /* CHATBOT COLOR */
+            --color-chat: #2563eb;
             --card-border-radius: 1.5rem; --border-radius-1: 0.8rem; --card-padding: 1.5rem; --box-shadow: 0 2rem 3rem var(--color-light);
         }
         .dark-theme {
@@ -48,7 +48,7 @@
         aside .sidebar a:hover span { margin-left: 0.5rem; }
 
         /* MAIN */
-        main { margin-top: 1.4rem; min-width: 0; }
+        main { margin-top: 1.4rem; min-width: 0; padding-bottom: 2rem; }
         .card { background: var(--color-white); padding: var(--card-padding); border-radius: var(--card-border-radius); margin-top: 1rem; margin-bottom: 1.5rem; box-shadow: var(--box-shadow); transition: all 300ms ease; }
         main h1 { margin-bottom: 0.8rem; color: var(--color-dark); font-size: 1.5rem; }
 
@@ -169,7 +169,7 @@
         /* ── MOBILE HEADER & NAV ── */
         .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 65px; background: var(--color-white); align-items: center; justify-content: space-between; padding: 0 1rem; z-index: 999; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
         .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-white); justify-content: space-around; align-items: center; padding: 0.4rem 0 0.6rem; z-index: 999; box-shadow: 0 -2px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--color-light); }
-        .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.8rem; border-radius: 12px; transition: color 0.2s; }
+        .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.6rem; border-radius: 12px; transition: color 0.2s; }
         .mobile-nav button span.material-icons-sharp { font-size: 1.5rem; }
         .mobile-nav button.active { color: var(--color-primary); }
 
@@ -206,33 +206,37 @@
         .settings-menu-btn .material-icons-sharp { color: var(--color-info-dark); transition: 0.2s; }
         .settings-menu-btn:hover .material-icons-sharp { color: var(--color-primary); }
 
-        /* ── CHATBOT UI ── */
-        #chatbot-toggle { 
-            position: fixed; bottom: 30px; right: 30px; width: 75px; height: 75px; 
-            border-radius: 50%; background: var(--color-chat); color: white; font-size: 35px;
-            border: none; cursor: pointer; z-index: 2000; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6);
-            transition: 0.3s ease; display: flex; align-items: center; justify-content: center;
-        }
-        #chatbot-toggle:hover { transform: scale(1.1); background: var(--color-primary); }
-        .pulse-anim { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        
-        #chatbot-window { 
-            position: fixed; bottom: 120px; right: 30px; width: 380px; height: 550px; 
-            max-width: calc(100% - 40px); z-index: 2000; overflow: hidden; 
-            display: flex; flex-direction: column; background: var(--color-white);
-            border-radius: var(--card-border-radius); box-shadow: var(--box-shadow);
+        /* ── DEDICATED CHAT PAGE UI ── */
+        .chat-container {
+            background: var(--color-white);
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--box-shadow);
             border: 1px solid var(--color-light);
-            transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex;
+            flex-direction: column;
+            height: 70vh; /* Adjusts height inside the main tab */
+            overflow: hidden;
+            margin-top: 1rem;
         }
-        #chatbot-window.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
-        
-        .chat-header { background: var(--color-chat); color: white; padding: 18px 24px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-        .close-chat-btn { background: none; border: none; color: white; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.2s;}
-        .close-chat-btn:hover { transform: scale(1.2); color: var(--color-danger); }
-        
-        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: var(--color-background); }
-        /* 🔥 FIX: Included white-space: pre-wrap for bullet point formatting */
+        .chat-header { 
+            background: var(--color-chat); 
+            color: white; 
+            padding: 1.2rem 1.5rem; 
+            font-weight: 700; 
+            font-size: 1.1rem;
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        #chat-messages { 
+            flex: 1; 
+            padding: 1.5rem; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            background: var(--color-background); 
+        }
         .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; color: var(--color-dark); white-space: pre-wrap; }
         .user-bubble { background: var(--color-chat); color: white; align-self: flex-end; border-bottom-right-radius: 4px;}
         .ai-bubble { background: var(--color-white); border: 1px solid var(--color-light); align-self: flex-start; border-bottom-left-radius: 4px;}
@@ -254,10 +258,7 @@
             main { display: block; width: 100% !important; margin-top: 65px !important; padding: 1rem 1rem 5rem; }
             .card { border-radius: 1rem; padding: 1rem; }
             .mobile-header, .mobile-nav { display: flex; }
-            
-            /* CHATBOT MOBILE ADJUSTMENTS (Stays above mobile nav) */
-            #chatbot-window { height: 65vh; right: 15px; bottom: 85px; width: calc(100% - 30px);}
-            #chatbot-toggle { width: 60px; height: 60px; font-size: 26px; bottom: 85px; right: 15px; }
+            .chat-container { height: calc(100vh - 220px); } /* Fills available mobile space perfectly */
         }
 
         /* ── LOCATION MAP ── */
@@ -301,6 +302,7 @@
                 <a href="#" onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span><h3>My Documents</h3></a>
                 <a href="#" onclick="showPage('directory')"><span class="material-icons-sharp">location_on</span><h3>Barangay Directory</h3></a>
                 <a href="#" onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span><h3>Hotline</h3></a>
+                <a href="#" onclick="showPage('chat')"><span class="material-icons-sharp">smart_toy</span><h3>Ask AI</h3></a>
             </div>
         </aside>
 
@@ -428,6 +430,24 @@
             </div>
         </main>
 
+        <main id="chat-page" style="display:none;">
+            <h1>Sumbong-Bot AI</h1>
+            <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">Need help? Ask our AI assistant about Kalapp and how to report barangay issues.</p>
+            
+            <div class="chat-container">
+                <div class="chat-header">
+                    <span class="material-icons-sharp">smart_toy</span> Sumbong-Bot
+                </div>
+                <div id="chat-messages">
+                    <div class="chat-bubble ai-bubble">Hello po! I am Sumbong-Bot, your AI assistant. Do you have any questions about the system or how to file a complaint?</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+                    <button id="send-chat" type="button">✓</button>
+                </div>
+            </div>
+        </main>
+
         <div class="right">
             <div class="header-actions">
                 <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom:1rem;">
@@ -494,25 +514,9 @@
         <button onclick="showPage('complaint')"><span class="material-icons-sharp">add_circle_outline</span>File</button>
         <button onclick="showPage('history')"><span class="material-icons-sharp">history</span>History</button>
         <button onclick="showPage('feed')"><span class="material-icons-sharp">dynamic_feed</span>Feed</button>
-        <button onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span>Documents</button>
-        <button onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span>Hotline</button>
+        <button onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span>Docs</button>
+        <button onclick="showPage('chat')"><span class="material-icons-sharp">smart_toy</span>Ask AI</button>
     </nav>
-
-    <button id="chatbot-toggle" class="pulse-anim" type="button" title="Chat with Sumbong-Bot">💬</button>
-
-    <div id="chatbot-window">
-        <div class="chat-header">
-            <span>Sumbong-Bot 🤖</span>
-            <button id="close-chat" class="close-chat-btn" type="button">✕</button>
-        </div>
-        <div id="chat-messages">
-            <div class="chat-bubble ai-bubble">Hello po! I am Sumbong-Bot, your AI assistant. Do you have any questions about the system or how to file a complaint?</div>
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
-            <button id="send-chat" type="button">✓</button>
-        </div>
-    </div>
 
     <div id="mobile-profile-modal" onclick="if(event.target===this) closeMobileProfile()">
         <div class="mobile-profile-content">
@@ -855,15 +859,15 @@
             const page = document.getElementById(pageId + '-page');
             if (page) page.style.display = 'block';
 
-            const iconMap = { complaint: 'add_circle_outline', history: 'history', feed: 'dynamic_feed', directory: 'location_on', hotline: 'contact_emergency', affidavits: 'folder_shared' };
+            const iconMap = { complaint: 'add_circle_outline', history: 'history', feed: 'dynamic_feed', directory: 'location_on', hotline: 'contact_emergency', affidavits: 'folder_shared', chat: 'smart_toy' };
             document.querySelectorAll('.sidebar a').forEach(a => {
                 const ic = a.querySelector('.material-icons-sharp');
                 a.classList.toggle('active', ic && ic.textContent.trim() === iconMap[pageId]);
             });
-            const mobileIdx = { complaint: 0, history: 1, feed: 2, affidavits: 3, directory: 3, hotline: 4 }; // updated index
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
-                btn.classList.toggle('active', btn.textContent.includes(pageId === 'complaint' ? 'File' : pageId==='affidavits' ? 'Documents' : pageId.charAt(0).toUpperCase() + pageId.slice(1)));
+                btn.classList.toggle('active', btn.textContent.includes(pageId === 'complaint' ? 'File' : pageId==='affidavits' ? 'Docs' : pageId==='chat' ? 'Ask AI' : pageId.charAt(0).toUpperCase() + pageId.slice(1)));
             });
+            
             if (pageId === 'history') loadMyHistory();
             if (pageId === 'affidavits') loadMyAffidavits(); 
             if (pageId === 'hotline') renderHotlines(hotlineData);
@@ -1511,27 +1515,11 @@
         loadCitizenFeedSidebar();
         showPage('complaint');
 
-        /* ── CHATBOT LOGIC ── */
-        const chatbotToggle = document.getElementById('chatbot-toggle');
-        const chatbotWindow = document.getElementById('chatbot-window');
-        const closeChat = document.getElementById('close-chat');
+        /* ── IN-PAGE CHATBOT LOGIC ── */
         const chatInput = document.getElementById('chat-input');
         const sendChat = document.getElementById('send-chat');
         const chatMessages = document.getElementById('chat-messages');
-
         let chatHistory = [];
-
-        chatbotToggle.addEventListener('click', () => {
-            chatbotWindow.classList.add('active');
-            chatbotToggle.style.opacity = '0';
-            chatbotToggle.style.pointerEvents = 'none';
-        });
-        
-        closeChat.addEventListener('click', () => {
-            chatbotWindow.classList.remove('active');
-            chatbotToggle.style.opacity = '1';
-            chatbotToggle.style.pointerEvents = 'auto';
-        });
 
         function appendChatMessage(text, className) {
             const bubble = document.createElement('div');
