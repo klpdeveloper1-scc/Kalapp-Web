@@ -1,11 +1,4 @@
 require('dotenv').config();
-
-const BrevoLib = require('@getbrevo/brevo');
-const Brevo = BrevoLib.default || BrevoLib;
-
-const brevoApi = new Brevo.TransactionalEmailsApi();
-
-
 const express = require('express');
 const http = require('http');
 const { WebSocketServer, WebSocket } = require('ws');
@@ -29,12 +22,6 @@ const PORT = process.env.PORT || 3001;
 // --- API Configurations ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-brevoApi.setApiKey(
-  Brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY
-);
-
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -119,14 +106,14 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
         Analyze the uploaded photo and determine if it is a legitimate barangay complaint image.
-        
+
         IMPORTANT RULES — BE LENIENT AND HELPFUL
         - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
         - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
         - Only REJECT if the photo is CLEARLY a troll.
         - When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
         - Do not reject just because the photo is dark, blurry, or taken at night.
-        
+
         Respond ONLY with this valid JSON schema:
         {
           "accepted": boolean,
@@ -196,7 +183,7 @@ app.post('/api/request-otp', async (req, res) => {
         user.otpExpires = new Date(Date.now() + 10 * 60000); // 10 minutes expiration
         await user.save();
 
-        // 4. Send Email using the Brevo SDK Helper
+        // 4. Send Email using the Native Fetch
         await sendOTP(email, otp);
 
         res.json({ message: 'OTP sent!' });
@@ -212,11 +199,15 @@ app.post('/api/request-otp', async (req, res) => {
 app.post('/api/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
     const user = await User.findOne({ email, otp, otpExpires: { $gt: Date.now() } });
+
     if (user) {
-        user.otp = undefined; user.otpExpires = undefined;
+        user.otp = undefined; 
+        user.otpExpires = undefined;
         await user.save();
         res.json({ message: 'Login successful!', username: user.username, role: user.role });
-    } else { res.status(400).json({ message: 'Invalid OTP.' }); }
+    } else { 
+        res.status(400).json({ message: 'Invalid OTP or OTP expired.' }); 
+    }
 });
 
 app.post('/api/google-login', async (req, res) => {
@@ -415,7 +406,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             locationSource: locationSource || '',
             history: [{ status: 'Pending', note: 'Complaint officially filed.', updatedBy: username || 'System' }]
         });
-        
+
         await newComplaint.save();
         broadcast('complaint_update', { action: 'new' });
         res.json({ success: true, message: 'Complaint submitted!', trackingId: newComplaint.trackingId });
@@ -464,7 +455,9 @@ app.patch('/api/complaints/:id/status', async (req, res) => {
         );
         broadcast('complaint_update', { action: 'status' });
         res.json({ success: true });
-    } catch (error) { res.status(500).json({ error: 'Failed to update status.' }); }
+    } catch (error) { 
+        res.status(500).json({ error: 'Failed to update status.' });
+    }
 });
 
 app.get('/api/admin/users', async (req, res) => {
@@ -645,7 +638,8 @@ async function analyzeLuponEligibility(description) {
 
         Check for:
         1. Does the description mention a respondent (neighbor, person, kapwa, individual, katabi, etc.)
-        2. Does it contain a Philippine contact number? Look for formats 09XXXXXXXXX, +639XXXXXXXXX, or a landline like (02) XXXX-XXXX or 8XXX-XXXX.
+        2. Does it contain a Philippine contact number?
+        Look for formats 09XXXXXXXXX, +639XXXXXXXXX, or a landline like (02) XXXX-XXXX or 8XXX-XXXX.
         3. Is this a civil/community/interpersonal dispute (not a public infrastructure issue like potholes or broken streetlights)
 
         Respond ONLY with a valid JSON object in this schema:
@@ -766,7 +760,6 @@ app.post('/api/ai-chat', async (req, res) => {
             1. BE EXTREMELY CONCISE. Maximum of 2 to 3 short sentences per response. 
             2. Do not over-explain. Give the direct answer immediately.
             3. Keep it plain text. Strictly NO Markdown (no **, #, or *).
-    
             4. If listing items, use bullet points (•) and use line breaks (Enter) to separate them cleanly.
 
             YOUR CORE KNOWLEDGE (ONLY answer based on this):
@@ -779,6 +772,7 @@ app.post('/api/ai-chat', async (req, res) => {
               • Business & Ordinance Violations (walang permit, illegal parking)
             - To file a report: Log in, use the 'File Complaint' form, provide a photo, description, and contact number.
             - To track a report: Use the Tracking ID (e.g., KAL-1234) on the homepage.
+            
             STRICT RULES & GUARDRAILS:
             1. DOMAIN LOCK: You only know about Kalapp and barangay complaints.
             2. NO CODING: NEVER write, explain, or output code. 
@@ -812,7 +806,9 @@ app.get('/api/complaints/feed', rateLimit({ windowMs: 60000, max: 60 }), async (
             category: { $nin: ['Inter-Personal Disputes (Lupon / Mediation)'] }
         });
         res.json({ feed, total, page, pages: Math.ceil(total / limit) });
-    } catch (error) { res.status(500).json({ error: 'Failed to load feed.' }); }
+    } catch (error) { 
+        res.status(500).json({ error: 'Failed to load feed.' });
+    }
 });
 
 app.post('/api/complaints/:id/comment', rateLimit({ windowMs: 60000, max: 20 }), async (req, res) => {
@@ -857,31 +853,45 @@ function broadcast(type, payload) {
     });
 }
 
+// --- NATIVE FETCH EMAIL HELPER (NO SDK REQUIRED) ---
 async function sendOTP(email, otp) {
     try {
-        await brevoApi.sendTransacEmail({
-            sender: {
-                email: process.env.BREVO_SENDER_EMAIL,
-                name: "Kalapp"
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': process.env.BREVO_API_KEY,
+                'content-type': 'application/json'
             },
-            to: [{ email }],
-            subject: "Your OTP Code",
-            htmlContent: `
-                <div style="font-family: Arial; text-align: center;">
-                    <h2>🔐 Your OTP Code</h2>
-                    <p style="font-size: 24px; font-weight: bold;">${otp}</p>
-                    <p>This code will expire in 5 minutes.</p>
-                </div>
-            `
+            body: JSON.stringify({
+                sender: { 
+                    email: process.env.BREVO_SENDER_EMAIL || "noreply@kalapp.com", 
+                    name: "Kalapp" 
+                },
+                to: [{ email: email }],
+                subject: "Your Kalapp Verification Code",
+                htmlContent: `
+                    <div style="font-family: Arial; text-align: center; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
+                        <h2 style="color: #ff8c00;">Kalapp Verification</h2>
+                        <p style="color: #333; font-size: 16px;">Your 6-digit verification code is:</p>
+                        <h1 style="font-size: 36px; letter-spacing: 5px; color: #1e3a8a; margin: 20px 0;">${otp}</h1>
+                        <p style="color: #666; font-size: 14px;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+                    </div>
+                `
+            })
         });
 
-        console.log("✅ OTP email sent via Brevo");
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('BREVO API REJECTED:', errorData);
+            throw new Error('Brevo API rejected the request');
+        }
+
+        console.log("✅ OTP email sent via Brevo (Native Fetch)");
 
     } catch (error) {
-        console.error("❌ Brevo error:", error.message);
-
-        // fallback (so you can still test)
-        console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`);
+        console.error("❌ Email sending error:", error.message);
+        console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`); 
         throw new Error("Email failed");
     }
 }
