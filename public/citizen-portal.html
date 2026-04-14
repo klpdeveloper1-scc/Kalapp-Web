@@ -172,9 +172,11 @@
         .leaflet-container { font-family: 'Poppins', sans-serif; }
         
         /* Privacy Toggle Style */
+        #anon-slider { background-color: #ccc; transition: .4s; }
         #anon-toggle:checked + #anon-slider { background-color: #00bc7d; }
         #anon-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
         #anon-toggle:checked + #anon-slider:before { transform: translateX(20px); }
+        
     </style>
 </head>
 <body>
@@ -243,11 +245,15 @@
                     </div>
                     <div class="form-group">
                         <label>Detailed Description</label>
-                        <textarea class="form-control" id="description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
-                        <div id="lupon-tip-box" style="display:none; margin-top:0.6rem; padding:0.8rem 1rem; border-radius:var(--border-radius-1); background:rgba(255,187,85,0.12); border:1.5px solid var(--color-warning); font-size:0.85rem; color:var(--color-dark); line-height:1.5;">
-                            ⚖️ <strong>Tip:</strong> If this involves a neighbor dispute that may go to Lupon mediation, include the respondent's contact number (e.g., 09XXXXXXXXX) in your description so authorities can reach them.
+                        <textarea class="form-control" id="description" rows="4" 
+                            placeholder="Describe the issue in detail... (minimum 30 characters)" 
+                            required oninput="updateDescCounter()"></textarea>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
+                            <div id="lupon-tip-box" style="display:none; ...">...</div>
+                            <small id="desc-counter" style="color:var(--color-info-dark); font-size:0.78rem; margin-left:auto;">0 / 30 min</small>
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label>Upload Photo Evidence</label>
                         <input type="file" class="form-control" id="evidence" accept="image/*" required>
@@ -341,7 +347,7 @@
                         </div>
                         <div>
                             <h3 id="desktop-citizen-name-display" style="font-size: 1.1rem;">Citizen</h3>
-                            <p style="font-size:0.8rem; color:var(--color-info-dark);">Verified Resident 🛡️</p>
+                            <p style="font-size:0.8rem; color:var(--color-info-dark);">Kalapp Resident 🛡️</p>
                         </div>
                     </div>
                     
@@ -401,7 +407,7 @@
                 </div>
                 <div>
                     <h3 id="mobile-modal-name-display" style="font-size: 1.1rem;">Citizen</h3>
-                    <p style="font-size:0.8rem; color:var(--color-info-dark);">Verified Resident 🛡️</p>
+                    <p style="font-size:0.8rem; color:var(--color-info-dark);">Kalapp Resident 🛡️</p>
                 </div>
             </div>
             <div class="profile-card-stats" style="margin-top: 0.5rem; border-top: 1px solid var(--color-light); padding-top: 1rem;">
@@ -429,7 +435,13 @@
             <div id="settings-main-view">
                 <button class="settings-menu-btn" onclick="openSettingsView('name')"><div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">badge</span> Change Name</div><span class="material-icons-sharp">chevron_right</span></button>
                 <button class="settings-menu-btn" onclick="openSettingsView('email')"><div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">email</span> Update Email Address</div><span class="material-icons-sharp">chevron_right</span></button>
-                <button class="settings-menu-btn" onclick="openSettingsView('password')"><div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">lock</span> Change Password</div><span class="material-icons-sharp">chevron_right</span></button>
+                <button class="settings-menu-btn" id="settings-pw-btn" onclick="openSettingsView('password')">
+                    <div style="display:flex; align-items:center; gap:0.8rem;">
+                        <span class="material-icons-sharp">lock</span> Change Password
+                    </div>
+                    <span class="material-icons-sharp">chevron_right</span>
+                </button>
+
             </div>
 
             <div id="settings-name-view" style="display:none; animation: fadeIn 0.3s ease;">
@@ -558,7 +570,16 @@
         function openMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'block'; }
         function closeMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'none'; }
         
-        function openSettingsModal() { document.getElementById('settings-modal').style.display = 'block'; backToSettingsMain(); }
+        function openSettingsModal() {
+        document.getElementById('settings-modal').style.display = 'block';
+        backToSettingsMain();
+    
+        // Hide password change for Google users
+        const authMethod = localStorage.getItem('kalapp_authmethod') || 'local';
+        const pwBtn = document.getElementById('settings-pw-btn');
+        if (pwBtn) pwBtn.style.display = authMethod === 'google' ? 'none' : 'flex';
+        }
+
         function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
 
         function openSettingsView(viewName) {
@@ -1080,6 +1101,15 @@
 
         document.getElementById('complaint-form').addEventListener('submit', function (e) {
             e.preventDefault();
+
+            const desc = document.getElementById('description').value.trim();
+            if (desc.length < 30) {
+            document.getElementById('form-msg').style.color = 'var(--color-danger)';
+            document.getElementById('form-msg').innerText = '✏️ Please write a more detailed description (minimum 30 characters).';
+            return;
+            }
+
+            
             const fileInput = document.getElementById('evidence'); const formMsg = document.getElementById('form-msg'); const submitBtn = document.querySelector('.btn-submit');
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
@@ -1175,6 +1205,23 @@
 
         sendChat.addEventListener('click', handleSendMessage);
         chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
+
+        function updateDescCounter() {
+    const val = document.getElementById('description').value;
+    const counter = document.getElementById('desc-counter');
+    const len = val.trim().length;
+    const MIN = 30;
+    counter.textContent = `${len} / ${MIN} min`;
+    counter.style.color = len >= MIN ? 'var(--color-success)' : 'var(--color-danger)';
+    
+    // existing lupon keyword check
+    const lower = val.toLowerCase();
+    document.getElementById('lupon-tip-box').style.display = 
+        luponKeywords.some(kw => lower.includes(kw)) ? 'block' : 'none';
+        
+    
+    
+    }
     </script>
 </body>
 </html>

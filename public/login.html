@@ -647,6 +647,7 @@
                 // ADDED: Saving kalapp_role here
                 localStorage.setItem('kalapp_username', data.username);
                 localStorage.setItem('kalapp_role', data.role);
+                localStorage.setItem('kalapp_authmethod', data.authMethod || 'local');
                 
                 // If backend gives back Google Name as full name
                 if(data.firstName && data.lastName) {
@@ -747,7 +748,7 @@
             });
         }
 
-        
+
     </script>
 </body>
 </html>
