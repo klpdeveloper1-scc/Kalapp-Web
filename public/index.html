@@ -494,34 +494,41 @@
         async function handleSendMessage() {
             const message = chatInput.value.trim();
             if (!message) return;
-
-            appendMessage(message, 'user-bubble');
-            chatInput.value = '';
-            const typingId = appendMessage('Thinking...', 'ai-bubble');
-
+            appendChatMessage(message, 'user-bubble'); 
+            chatInput.value = ''; 
+            const typingId = appendChatMessage('Thinking...', 'ai-bubble');
+            
             try {
-                // FIX: Use a relative URL to prevent CORS/SSL issues
-                const response = await fetch(`${BACKEND_URL}/api/ai-chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    // FIX: Ensure history array is mapped correctly for the backend
+                // Safely target the backend whether you are on index.html or the portal
+                const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'https://kalapp-web.onrender.com';
+                
+                const response = await fetch(`${backendUrl}/api/ai-chat`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ message: message, history: chatHistory }) 
                 });
                 
-                const data = await response.json();
+                // Read as text first to prevent JSON crashes from 502 pages
+                const textRes = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(textRes);
+                } catch(e) {
+                    throw new Error("Server crashed or is waking up. Please wait 30 seconds.");
+                }
+
                 document.getElementById(typingId).remove();
                 
                 if (response.ok && data.reply) {
-                    appendMessage(data.reply, 'ai-bubble'); 
-                    // FIX: Updated history object format to exactly match Gemini's requirements
-                    chatHistory.push({ role: "user", parts: [{ text: message }] });
+                    appendChatMessage(data.reply, 'ai-bubble');
+                    chatHistory.push({ role: "user", parts: [{ text: message }] }); 
                     chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
                 } else {
-                    appendMessage("Error: Could not reach Sumbong-Bot.", 'ai-bubble');
+                    appendChatMessage("Error: " + (data.error || "Could not reach Sumbong-Bot."), 'ai-bubble');
                 }
-            } catch (error) {
-                document.getElementById(typingId).remove();
-                appendMessage("Connection error. Is the Master Server running?", 'ai-bubble');
+            } catch (error) { 
+                document.getElementById(typingId).remove(); 
+                appendChatMessage("Connection error: " + error.message, 'ai-bubble'); 
             }
         }
 
