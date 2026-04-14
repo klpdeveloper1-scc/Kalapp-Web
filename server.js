@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
     otp: String,
     otpExpires: Date,
     strikes: { type: Number, default: 0 },
-    isAnonymous: { type: Boolean, default: false }
+    isAnonymous: { type: Boolean, default: false } // Privacy setting
 });
 
 const complaintSchema = new mongoose.Schema({
@@ -89,7 +89,7 @@ const complaintSchema = new mongoose.Schema({
     locationAddress: { type: String, default: '' },
     locationSource: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
-    isAnonymous: { type: Boolean, default: false }
+    isAnonymous: { type: Boolean, default: false } // Privacy setting
 });
 
 // NEW SCHEMA FOR FULL STACK ANNOUNCEMENTS
@@ -158,6 +158,7 @@ seedAdmin();
 
 // --- API ROUTES ---
 
+// --- 🔑 AUTHENTICATION & LOGIN ROUTES ---
 app.post('/api/request-otp', async (req, res) => {
     const { email, username, password, firstName, lastName } = req.body;
     
@@ -261,7 +262,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// --- SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
+// --- 2. SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -274,6 +275,56 @@ app.post('/api/admin/login', async (req, res) => {
         }
         res.json({ success: true, username: user.username, role: user.role });
     } catch (error) {
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+});
+
+// --- 🔑 FORGOT PASSWORD ROUTES ---
+
+// 1. Request Reset OTP
+app.post('/api/forgot-password-otp', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: 'No account associated with this email.' });
+        if (user.authMethod === 'google') return res.status(400).json({ message: 'You registered with Google. Please use Google Login.' });
+        if (user.status === 'blocked') return res.status(403).json({ message: 'This account is suspended.' });
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp = otp;
+        user.otpExpires = new Date(Date.now() + 10 * 60000); // 10 minutes expiry
+        await user.save();
+
+        await sendOTP(email, otp); // Reuses the Brevo function below
+        res.json({ message: 'Reset code sent to your email.' });
+    } catch (error) {
+        console.error('Forgot Password Error:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+});
+
+// 2. Verify OTP & Reset Password
+app.post('/api/reset-password', async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+    
+    if (!email || !otp || !newPassword) return res.status(400).json({ message: 'Missing required fields.' });
+
+    try {
+        const user = await User.findOne({ email, otp, otpExpires: { $gt: Date.now() } });
+        
+        if (!user) return res.status(400).json({ message: 'Invalid or expired reset code.' });
+
+        // Update password and clear OTP
+        user.password = newPassword;
+        user.otp = undefined;
+        user.otpExpires = undefined;
+        await user.save();
+
+        res.json({ message: 'Password has been updated successfully.' });
+    } catch (error) {
+        console.error('Reset Password Error:', error);
         res.status(500).json({ message: 'Internal server error.' });
     }
 });
@@ -447,7 +498,6 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
     } catch (error) { res.status(500).json({ success: false, error: error.message }); } 
 });
 
-// ✅ FIX: Removed duplicate res.json that was crashing the app in the original source
 app.get('/api/complaints', async (req, res) => {
     try {
         const complaints = await Complaint.find().sort({ createdAt: -1 });

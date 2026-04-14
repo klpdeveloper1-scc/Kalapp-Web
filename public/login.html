@@ -259,12 +259,45 @@
                 </div>
                 
                 <div style="text-align: right; margin-bottom: 20px;">
-                    <span class="toggle-text" style="font-size: 12px; font-weight: 600;" onclick="alert('Forgot password feature coming soon!')">Forgot Password?</span>
+                    <span class="toggle-text" style="font-size: 12px; font-weight: 600;" onclick="toggleView('forgot')">Forgot Password?</span>
                 </div>
 
                 <button type="submit" class="btn btn-orange">Sign In</button>
             </form>
-          
+            
+            <div id="forgot-section" style="display: none;">
+                <div class="otp-back" onclick="toggleView('login')">
+                    <i class="fa-solid fa-arrow-left" style="margin-right: 5px;"></i> Back to Login
+                </div>
+                
+                <form id="forgot-form">
+                    <div id="forgot-email-step">
+                        <p class="subtitle" style="margin-bottom: 20px;">Enter your registered email address to receive a password reset code.</p>
+                        <div class="form-group">
+                            <input type="email" id="forgot-email" placeholder=" " required>
+                            <label>Email Address</label>
+                        </div>
+                        <button type="submit" id="forgot-submit-btn" class="btn btn-orange">Send Reset Code</button>
+                    </div>
+    
+                    <div id="forgot-reset-step" style="display: none;">
+                        <p class="subtitle" style="margin-bottom: 20px;">Enter the 6-digit code sent to your email and your new password.</p>
+                        <div class="form-group">
+                            <input type="text" id="forgot-otp" placeholder=" " maxlength="6" required>
+                            <label>6-Digit Reset Code</label>
+                        </div>
+                        <div class="form-group">
+                            <div class="password-container">
+                                <input type="password" id="forgot-new-password" placeholder=" " required>
+                                <label>New Password</label>
+                                <span class="material-icons-sharp toggle-password" onclick="toggleVisibility('forgot-new-password', this)">visibility_off</span>
+                            </div>
+                        </div>
+                        <button type="button" id="reset-password-btn" class="btn btn-orange" onclick="submitNewPassword()">Update Password</button>
+                    </div>
+                </form>
+            </div>
+
             <p style="font-size: 13px; color: var(--text-muted);">No account? <span class="toggle-text" onclick="toggleView('signup')">Sign Up</span></p>
             <div class="divider"><span>Or continue with</span></div>
             <div class="social-btn-wrapper">
@@ -371,12 +404,20 @@
         function toggleView(view) {
             document.getElementById('login-section').style.display = view === 'login' ? 'block' : 'none';
             document.getElementById('signup-section').style.display = view === 'signup' ? 'block' : 'none';
+            document.getElementById('forgot-section').style.display = view === 'forgot' ? 'block' : 'none';
             errorMsg.innerText = '';
+            
             if (view === 'login') {
                 backToSignup();
                 document.getElementById('signup-form').reset();
+            } else if (view === 'forgot') {
+                document.getElementById('forgot-email-step').style.display = 'block';
+                document.getElementById('forgot-reset-step').style.display = 'none';
+                document.getElementById('forgot-form').reset();
             }
         }
+
+
 
         function toggleVisibility(inputId, icon) {
             const input = document.getElementById(inputId);
@@ -641,6 +682,72 @@
             if (localStorage.getItem('kalapp-theme') === 'dark') { document.body.classList.add('dark'); }
             updateThemeUI();
         };
+
+        // Handle sending the OTP for forgot password
+        document.getElementById('forgot-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const btn = document.getElementById('forgot-submit-btn');
+            
+            errorMsg.style.color = 'var(--text-muted)';
+            errorMsg.innerText = 'Sending reset code...';
+            btn.disabled = true; btn.innerText = 'Sending...';
+
+            fetch('/api/forgot-password-otp', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            })
+            .then(safeFetch)
+            .then(data => {
+                document.getElementById('forgot-email-step').style.display = 'none';
+                document.getElementById('forgot-reset-step').style.display = 'block';
+                errorMsg.style.color = 'var(--success-green)';
+                errorMsg.innerText = '✅ Reset code sent to your email.';
+            })
+            .catch(err => {
+                errorMsg.style.color = 'var(--error-red)';
+                errorMsg.innerText = `❌ ${err.message}`;
+            })
+            .finally(() => {
+                btn.disabled = false; btn.innerText = 'Send Reset Code';
+            });
+        });
+
+        // Handle verifying the OTP and setting the new password
+        function submitNewPassword() {
+            const email = document.getElementById('forgot-email').value;
+            const otp = document.getElementById('forgot-otp').value;
+            const newPassword = document.getElementById('forgot-new-password').value;
+            const btn = document.getElementById('reset-password-btn');
+
+            if (!otp || !newPassword) {
+                errorMsg.style.color = 'var(--error-red)';
+                errorMsg.innerText = 'Please fill out all fields.';
+                return;
+            }
+
+            errorMsg.style.color = 'var(--text-muted)';
+            errorMsg.innerText = 'Updating password...';
+            btn.disabled = true; btn.innerText = 'Updating...';
+
+            fetch('/api/reset-password', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, newPassword })
+            })
+            .then(safeFetch)
+            .then(data => {
+                errorMsg.style.color = 'var(--success-green)';
+                errorMsg.innerText = '✅ Password successfully updated! Redirecting to login...';
+                setTimeout(() => toggleView('login'), 2000);
+            })
+            .catch(err => {
+                errorMsg.style.color = 'var(--error-red)';
+                errorMsg.innerText = `❌ ${err.message}`;
+                btn.disabled = false; btn.innerText = 'Update Password';
+            });
+        }
+
+        
     </script>
 </body>
 </html>
