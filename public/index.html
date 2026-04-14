@@ -501,7 +501,7 @@
 
             try {
                 // FIX: Use a relative URL to prevent CORS/SSL issues
-                const response = await fetch('/api/ai-chat', {
+                const response = await fetch(`${BACKEND_URL}/api/ai-chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     // FIX: Ensure history array is mapped correctly for the backend
