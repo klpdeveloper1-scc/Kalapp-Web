@@ -127,7 +127,7 @@ async function verifyCaloocanBoundary(lat, lng) {
 async function scanImageBufferWithAI(buffer, mimeType, category) {
     try {
         const model = genAI.getGenerativeModel({ 
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',
             generationConfig: { responseMimeType: "application/json" } 
         });
 
@@ -900,7 +900,7 @@ app.post('/api/ai-chat', async (req, res) => {
     try {
         const { message, history } = req.body;
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',
             systemInstruction: `You are 'Sumbong-Bot', the official AI assistant of the Kalapp Barangay Complaint System.
 STRICT RULES YOU MUST FOLLOW:
 1. DOMAIN LIMITATION: You ONLY know about the Kalapp web app and barangay complaints (e.g., Infrastructure, Environment, Public Safety, Lupon/Mediation, Ordinance Violations). Do not answer questions outside of this topic.

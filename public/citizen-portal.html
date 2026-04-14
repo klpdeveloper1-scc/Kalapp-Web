@@ -1260,7 +1260,7 @@
             const message = chatInput.value.trim(); if (!message) return;
             appendChatMessage(message, 'user-bubble'); chatInput.value = ''; const typingId = appendChatMessage('Thinking...', 'ai-bubble');
             try {
-                const response = await fetch('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: message, history: chatHistory }) });
+                const response = await fetch('${BACKEND_URL}/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: message, history: chatHistory }) });
                 const data = await response.json(); document.getElementById(typingId).remove();
                 if (response.ok && data.reply) {
                     appendChatMessage(data.reply, 'ai-bubble'); 
