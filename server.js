@@ -1,5 +1,11 @@
 require('dotenv').config();
-const Brevo = require('@getbrevo/brevo').default;
+
+const BrevoLib = require('@getbrevo/brevo');
+const Brevo = BrevoLib.default || BrevoLib;
+
+const brevoApi = new Brevo.TransactionalEmailsApi();
+
+
 const express = require('express');
 const http = require('http');
 const { WebSocketServer, WebSocket } = require('ws');
@@ -23,7 +29,6 @@ const PORT = process.env.PORT || 3001;
 // --- API Configurations ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const brevoApi = new Brevo.TransactionalEmailsApi();
 
 brevoApi.setApiKey(
   Brevo.TransactionalEmailsApiApiKeys.apiKey,
