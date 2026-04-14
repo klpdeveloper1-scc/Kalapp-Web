@@ -55,11 +55,11 @@
         // ================= SESSION CONTROL =================
         const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
         
-        function setSession() {
+            // AFTER (correct key)
+            function setSession() {
             sessionStorage.setItem('superadmin_session', Date.now());
-            // FIX: Sets the local storage token so the dashboard recognizes the admin
-            localStorage.setItem('kalapp_superadmin', 'true');
-        }
+            localStorage.setItem('kalapp_role', 'superadmin');  // ✅ matches dashboard check
+            }
 
         function checkSession() {
             const session = sessionStorage.getItem('superadmin_session');
@@ -173,7 +173,7 @@
             throw new Error("ACCESS DENIED: Insufficient privileges.");
             }
             })
-            
+
             .catch(err => {
                 attempts++;
                 if (attempts >= 5) {
