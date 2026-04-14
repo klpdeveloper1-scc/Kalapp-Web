@@ -255,19 +255,17 @@ app.post('/api/login', async (req, res) => {
 });
 
 // --- 2. SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
+// --- SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ username, password });
-        
         if (!user) return res.status(400).json({ message: 'Invalid credentials.' });
         
-        // 🔒 This is the critical part that prevents the jump
+        // Block normal citizens from using the executive portal
         if (user.role !== 'superadmin') {
             return res.status(403).json({ message: 'ACCESS DENIED: Insufficient privileges.' });
         }
-
-        // Send back the role so the frontend knows to stay on the dashboard
         res.json({ success: true, username: user.username, role: user.role });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error.' });
@@ -275,9 +273,9 @@ app.post('/api/admin/login', async (req, res) => {
 });
 
 // --- SUPERADMIN BACKGROUND/STEALTH ROUTES ---
-app.post('/api/admin/logs', (req, res) => { res.json({ success: true }); });
-app.get('/api/refresh-session', (req, res) => { res.json({ success: true }); });
-app.get('/api/admin/ping', (req, res) => { res.json({ success: true }); });
+app.post('/api/admin/logs', (req, res) => res.json({ success: true }));
+app.get('/api/refresh-session', (req, res) => res.json({ success: true }));
+app.get('/api/admin/ping', (req, res) => res.json({ success: true }));
 
 // --- ⚙️ USER ACCOUNT SETTINGS ENDPOINTS ---
 
