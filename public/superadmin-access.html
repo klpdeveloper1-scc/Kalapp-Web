@@ -152,24 +152,28 @@
                 if (!res.ok) throw new Error(data.message || "Invalid credentials.");
                 return data;
             })
+
             .then(data => {
-                if (data.success && data.role === 'superadmin') {
-                    setSession();
-                    silentLog("✅ Superadmin login success: " + id);
-                    
-                    setInterval(() => {
-                        fetch('/api/refresh-session');
-                    }, 10 * 60 * 1000);
-                    
-                    setInterval(() => {
-                        fetch('/api/admin/ping');
-                    }, 300000);
-                    
-                    window.location.href = '/superadmin-dashboard.html';
-                } else {
-                    throw new Error("ACCESS DENIED: Insufficient privileges.");
-                }
+            if (data.success && data.role === 'superadmin') {
+
+            // ✅ keep your existing session
+            setSession();
+
+            // ✅ ADD THIS (VERY IMPORTANT)
+            localStorage.setItem('kalapp_role', 'superadmin');
+
+            // optional (you can keep or remove)
+            localStorage.setItem('kalapp_superadmin', 'true');
+
+            silentLog("✅ Superadmin login success: " + id);
+
+            // ✅ redirect to dashboard
+            window.location.href = '/superadmin-dashboard.html';
+            } else {
+            throw new Error("ACCESS DENIED: Insufficient privileges.");
+            }
             })
+            
             .catch(err => {
                 attempts++;
                 if (attempts >= 5) {
