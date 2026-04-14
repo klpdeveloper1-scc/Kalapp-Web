@@ -262,11 +262,12 @@ app.post('/api/admin/login', async (req, res) => {
         
         if (!user) return res.status(400).json({ message: 'Invalid credentials.' });
         
-        // 🔒 SECURITY: Block normal citizens from using the override portal
+        // 🔒 This is the critical part that prevents the jump
         if (user.role !== 'superadmin') {
             return res.status(403).json({ message: 'ACCESS DENIED: Insufficient privileges.' });
         }
 
+        // Send back the role so the frontend knows to stay on the dashboard
         res.json({ success: true, username: user.username, role: user.role });
     } catch (error) {
         res.status(500).json({ message: 'Internal server error.' });
