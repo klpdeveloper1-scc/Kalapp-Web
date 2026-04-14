@@ -1,4 +1,5 @@
 require('dotenv').config();
+const Brevo = require('@getbrevo/brevo').default;
 const express = require('express');
 const http = require('http');
 const { WebSocketServer, WebSocket } = require('ws');
@@ -7,12 +8,11 @@ const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-// 📧 Mailer Dependencies (NEW)
-const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
+
 // 🤖 Google Generative AI & Auth
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { OAuth2Client } = require('google-auth-library');
+
 // ☁️ Cloudinary Configuration for Permanent Storage
 const cloudinary = require('cloudinary').v2;
 
@@ -23,25 +23,28 @@ const PORT = process.env.PORT || 3001;
 // --- API Configurations ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const brevoApi = new Brevo.TransactionalEmailsApi();
+
+brevoApi.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
+
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-// --- Google Mailer Configuration ---
-const mailerOAuth2Client = new google.auth.OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_CLIENT_SECRET,
-    'https://developers.google.com/oauthplayground'
-);
-mailerOAuth2Client.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
 
 // --- Middleware ---
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
+
 // --- Temp Memory Storage (Used for both Preview AND Final Upload) ---
 const memoryUpload = multer({ storage: multer.memoryStorage() });
+
 // --- MongoDB Connection ---
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ Connected to MongoDB Atlas!'))
@@ -50,14 +53,14 @@ mongoose.connect(process.env.MONGODB_URI)
 // --- Schemas & Models ---
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true },
-    firstName: { type: String, default: '' }, // NEW: For Account Settings
-    lastName: { type: String, default: '' },  // NEW: For Account Settings
+    firstName: { type: String, default: '' },
+    lastName: { type: String, default: '' },
     email: { type: String },
     password: { type: String },
     role: { type: String, default: 'citizen' },
     status: { type: String, default: 'active' },
     authMethod: { type: String, default: 'local' },
-    profilePhotoUrl: { type: String, default: '' }, // ✅ FIX: Added for profile photos
+    profilePhotoUrl: { type: String, default: '' },
     otp: String,
     otpExpires: Date,
     strikes: { type: Number, default: 0 }
@@ -107,26 +110,31 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
             model: 'gemini-2.5-flash',
             generationConfig: { responseMimeType: "application/json" } 
         });
+
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
         Analyze the uploaded photo and determine if it is a legitimate barangay complaint image.
+        
         IMPORTANT RULES — BE LENIENT AND HELPFUL
         - ACCEPT the report if the photo shows ANY real-world scene (street, building, garbage, people, vehicles, damage, etc.).
         - Even blurry, dark, or low-quality photos are ACCEPTABLE as long as you can tell it is a real place or situation.
         - Only REJECT if the photo is CLEARLY a troll.
         - When in doubt, ACCEPT — it is better to forward a borderline report than to reject a real one.
         - Do not reject just because the photo is dark, blurry, or taken at night.
+        
         Respond ONLY with this valid JSON schema:
         {
           "accepted": boolean,
           "summary": string
         }`;
+
         const imagePart = {
             inlineData: {
                 data: buffer.toString('base64'),
                 mimeType: mimeType || 'image/jpeg'
             }
         };
+
         const result = await model.generateContent([prompt, imagePart]);
         const parsed = JSON.parse(result.response.text()); 
         
@@ -152,18 +160,24 @@ seedAdmin();
 
 app.post('/api/request-otp', async (req, res) => {
     const { email, username, password } = req.body;
+    
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     try {
         let user = await User.findOne({ email });
 
+        // 1. User Validation
         if (user) {
             if (user.status === 'blocked') return res.status(403).json({ message: 'Account is suspended.' });
             if (user.authMethod === 'google') return res.status(400).json({ message: 'Registered via Google. Please use Google Login.' });
             if (user.authMethod === 'local' && !user.otp) return res.status(400).json({ message: 'Email is already in use.' });
         }
 
-        // 🔥 FIX 1: Check if the username is already taken by someone else!
+        // 2. New User Creation
         if (!user) {
             const existingUsername = await User.findOne({ username });
             if (existingUsername) {
@@ -172,48 +186,21 @@ app.post('/api/request-otp', async (req, res) => {
             user = new User({ username: username || email.split('@')[0], email, password, role: 'citizen', authMethod: 'local' });
         }
 
+        // 3. Save OTP & Expiration to Database
         user.otp = otp;
-        user.otpExpires = new Date(Date.now() + 10 * 60000);
+        user.otpExpires = new Date(Date.now() + 10 * 60000); // 10 minutes expiration
         await user.save();
 
-        try {
-            const accessToken = await mailerOAuth2Client.getAccessToken();
-            const transport = nodemailer.createTransport({
-                host: 'smtp.gmail.com',
-                port: 465,
-                secure: true, // true for port 465, false for port 587
-                auth: {
-                    type: 'OAuth2',
-                    user: process.env.GMAIL_ADDRESS,
-                    clientId: process.env.GMAIL_CLIENT_ID,
-                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                    accessToken: accessToken.token,
-                },
-                // This tls object forces Node to be more lenient with the connection 
-                // and helps bypass strict IPv6 preference on some hosts
-                tls: {
-                    rejectUnauthorized: false
-                }
-            });
-            const mailOptions = {
-                from: `System Admin <${process.env.GMAIL_ADDRESS}>`,
-                to: email,
-                subject: "Your Kalapp Verification Code",
-                html: `<h2>Code: ${otp}</h2>`,
-            };
-            await transport.sendMail(mailOptions);
-            res.json({ message: 'OTP sent!' });
-            
-        } catch (error) {
-            console.error('GMAIL MAILER ERROR:', error);
-            // 🔥 FIX 2: If Gmail fails, print the OTP in the Render console so you aren't locked out!
-            console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`); 
-            res.status(500).json({ message: 'Failed to send OTP to email. Check Render logs.' });
+        // 4. Send Email using the Brevo SDK Helper
+        await sendOTP(email, otp);
+
+        res.json({ message: 'OTP sent!' });
+
+    } catch (error) { 
+        console.error('DATABASE/SERVER ERROR:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Failed to send OTP or internal server error.' });
         }
-    } catch (outerError) { 
-        console.error('DATABASE/SERVER ERROR:', outerError);
-        if (!res.headersSent) res.status(500).json({ message: 'Internal server error.' });
     } 
 });
 
@@ -237,7 +224,7 @@ app.post('/api/google-login', async (req, res) => {
 
         let user = await User.findOne({ email });
         if (user) {
-             if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });
+            if (user.status === 'blocked') return res.status(403).json({ message: 'Suspended.' });
             if (user.authMethod !== 'google') return res.status(400).json({ message: 'Use OTP Login.' });
             return res.json({ success: true, username: user.username, role: user.role });
         }
@@ -249,15 +236,6 @@ app.post('/api/google-login', async (req, res) => {
         console.error('Google Auth Error:', error);
         res.status(401).json({ message: 'Google login failed or token invalid.' }); 
     }
-});
-
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username, password });
-    if (user) {
-        if (user.status === 'blocked') return res.status(403).json({ message: 'Account suspended.' });
-        res.json({ success: true, username: user.username, role: user.role });
-    } else { res.status(401).json({ message: 'Invalid credentials.' }); }
 });
 
 // --- ⚙️ USER ACCOUNT SETTINGS ENDPOINTS ---
@@ -276,7 +254,6 @@ app.patch('/api/users/:username/email', async (req, res) => {
     try {
         const { email } = req.body;
         const existing = await User.findOne({ email });
-        // Make sure the new email isn't already used by someone else
         if (existing && existing.username !== req.params.username) {
             return res.status(400).json({ success: false, error: 'That email is already registered.' });
         }
@@ -292,9 +269,8 @@ app.patch('/api/users/:username/password', async (req, res) => {
         const user = await User.findOne({ username: req.params.username });
         if (!user) return res.status(404).json({ success: false, error: 'User not found.' });
         
-        // Security check: Must know old password to set new one
         if (user.password !== currentPassword) {
-             return res.status(400).json({ success: false, error: 'Incorrect current password.' });
+            return res.status(400).json({ success: false, error: 'Incorrect current password.' });
         }
         
         user.password = newPassword;
@@ -303,14 +279,13 @@ app.patch('/api/users/:username/password', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, error: 'Failed to update password.' }); }
 });
 
-// Update Profile Photo (✅ FIX: NEW ENDPOINT)
+// Update Profile Photo
 app.post('/api/users/:username/photo', memoryUpload.single('photo'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, error: 'No photo uploaded.' });
         }
 
-        // 1. Upload to Cloudinary securely using stream
         const photoUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'profile_photos' }, (error, result) => {
                 if (error) reject(error);
@@ -319,7 +294,6 @@ app.post('/api/users/:username/photo', memoryUpload.single('photo'), async (req,
             stream.end(req.file.buffer);
         });
 
-        // 2. Save the new URL to the Database
         await User.findOneAndUpdate({ username: req.params.username }, { profilePhotoUrl: photoUrl });
 
         res.json({ success: true, message: 'Profile photo updated!', photoUrl: photoUrl });
@@ -356,9 +330,11 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
            - LOW: Minor concern or informational
 
         3. Write a short AI summary (1-2 sentences) describing what you observe.
+
         IMPORTANT RULES — BE LENIENT AND HELPFUL
         - ACCEPT the report if the photo shows ANY real-world scene.
         - Only REJECT if the photo is CLEARLY a troll.
+
         Respond ONLY with this valid JSON schema:
         {
           "accepted": boolean,
@@ -366,12 +342,14 @@ app.post('/api/classify-preview', memoryUpload.single('evidence'), async (req, r
           "priority": string,
           "summary": string
         }`;
+
         const imagePart = {
             inlineData: {
                 data: req.file.buffer.toString('base64'),
                 mimeType: req.file.mimetype
             }
         };
+
         const result = await model.generateContent([prompt, imagePart]);
         const parsed = JSON.parse(result.response.text());
         
@@ -392,11 +370,11 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
         if (user && user.status === 'blocked') {
             return res.status(403).json({ success: false, message: 'Your account is BLOCKED.' });
         }
+   
         if (!req.file) {
             return res.status(400).json({ success: false, message: 'No photo uploaded.' });
         }
 
-        // 1. Instantly scan the image from memory
         const isApproved = await scanImageBufferWithAI(req.file.buffer, req.file.mimetype, issue);
         
         if (!isApproved) {
@@ -412,21 +390,19 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
         }
 
-        // 2. Upload to Cloudinary securely using stream 
         const imageUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
                 if (error) reject(error);
                 else resolve(result.secure_url);
-             });
+            });
             stream.end(req.file.buffer);
         });
 
-        // 3. Save to Database using the locked-in priority from the frontend
         const newComplaint = new Complaint({
             trackingId: 'KAL-' + Math.floor(1000 + Math.random() * 9000),
             citizenName: username, barangay, category: issue, description, imageUrl,
             status: 'Pending',
-            priority: priority || 'MEDIUM', // Uses exact priority from frontend preview
+            priority: priority || 'MEDIUM',
             contactNumber: contactNumber || '',
             locationLat: locationLat ? parseFloat(locationLat) : null,
             locationLng: locationLng ? parseFloat(locationLng) : null,
@@ -557,10 +533,9 @@ app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, ma
     
     const date = new Date(complaint.createdAt).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
     const today = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
-    const type = req.query.type || 'affidavit'; // Defaults to affidavit if no type is passed
+    const type = req.query.type || 'affidavit';
 
     if (type === 'proof') {
-        // --- 📝 FORMAL PROOF OF REPORT TEMPLATE ---
         res.send(`
             <!DOCTYPE html><html><head><title>Proof of Report - ${complaint.trackingId}</title>
             <style>
@@ -599,7 +574,6 @@ app.get('/api/complaints/:trackingId/affidavit', rateLimit({ windowMs: 60000, ma
             </body></html>
         `);
     } else {
-        // --- 📄 FORMAL SWORN AFFIDAVIT TEMPLATE ---
         res.send(`
             <!DOCTYPE html><html><head><title>Affidavit - ${complaint.trackingId}</title>
             <style>
@@ -695,7 +669,7 @@ app.post('/api/complaints/:id/refer-lupon', rateLimit({ windowMs: 60000, max: 10
         const analysis = await analyzeLuponEligibility(complaint.description || '');
 
         if (!analysis.eligible || !analysis.hasContact) {
-             return res.status(400).json({
+            return res.status(400).json({
                 success: false,
                 message: `⚖️ Lupon referral rejected: The complaint description must include the respondent's contact number (e.g., 09XXXXXXXXX) for Lupon to schedule mediation. No strike added.`
             });
@@ -758,7 +732,7 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
 
         const photoUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
-                 if (error) reject(error);
+                if (error) reject(error);
                 else resolve(result.secure_url);
             });
             stream.end(req.file.buffer);
@@ -775,7 +749,6 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
 });
 
 // Chat endpoint
-// Chat endpoint
 app.post('/api/ai-chat', async (req, res) => {
     try {
         const { message, history } = req.body;
@@ -783,11 +756,12 @@ app.post('/api/ai-chat', async (req, res) => {
             model: 'gemini-2.5-flash',
             systemInstruction: `You are 'Sumbong-Bot', the official AI assistant of Kalapp (Citywide Centralized Barangay Complaint Center of Caloocan).
             Tone: Empathetic, helpful, uses 'po/opo', conversational Taglish.
-            
+  
             CRITICAL FORMATTING RULES (NEVER BREAK THESE):
             1. BE EXTREMELY CONCISE. Maximum of 2 to 3 short sentences per response. 
             2. Do not over-explain. Give the direct answer immediately.
             3. Keep it plain text. Strictly NO Markdown (no **, #, or *).
+    
             4. If listing items, use bullet points (•) and use line breaks (Enter) to separate them cleanly.
 
             YOUR CORE KNOWLEDGE (ONLY answer based on this):
@@ -800,7 +774,6 @@ app.post('/api/ai-chat', async (req, res) => {
               • Business & Ordinance Violations (walang permit, illegal parking)
             - To file a report: Log in, use the 'File Complaint' form, provide a photo, description, and contact number.
             - To track a report: Use the Tracking ID (e.g., KAL-1234) on the homepage.
-
             STRICT RULES & GUARDRAILS:
             1. DOMAIN LOCK: You only know about Kalapp and barangay complaints.
             2. NO CODING: NEVER write, explain, or output code. 
@@ -879,6 +852,35 @@ function broadcast(type, payload) {
     });
 }
 
+async function sendOTP(email, otp) {
+    try {
+        await brevoApi.sendTransacEmail({
+            sender: {
+                email: process.env.BREVO_SENDER_EMAIL,
+                name: "Kalapp"
+            },
+            to: [{ email }],
+            subject: "Your OTP Code",
+            htmlContent: `
+                <div style="font-family: Arial; text-align: center;">
+                    <h2>🔐 Your OTP Code</h2>
+                    <p style="font-size: 24px; font-weight: bold;">${otp}</p>
+                    <p>This code will expire in 5 minutes.</p>
+                </div>
+            `
+        });
+
+        console.log("✅ OTP email sent via Brevo");
+
+    } catch (error) {
+        console.error("❌ Brevo error:", error.message);
+
+        // fallback (so you can still test)
+        console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`);
+        throw new Error("Email failed");
+    }
+}
+
 setInterval(() => {
     wss.clients.forEach(ws => {
         if (!ws.isAlive) return ws.terminate();
@@ -887,4 +889,5 @@ setInterval(() => {
     });
 }, 30000);
 
+console.log("BREVO KEY:", process.env.BREVO_API_KEY ? "Loaded" : "Missing");
 server.listen(PORT, () => console.log(`🚀 Master Server running on port ${PORT}`));
