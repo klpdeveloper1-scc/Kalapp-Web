@@ -105,6 +105,23 @@ const User = mongoose.model('User', userSchema);
 const Complaint = mongoose.model('Complaint', complaintSchema);
 const Announcement = mongoose.model('Announcement', announcementSchema);
 
+// Relaxed Geofence: Only checks if the map pin is in Caloocan
+async function verifyCaloocanBoundary(lat, lng) {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+        const data = await response.json();
+        
+        const fullAddress = (data.display_name || "").toLowerCase();
+
+        // If the address doesn't contain "caloocan", reject it
+        if (!fullAddress.includes('caloocan')) {
+            return false; 
+        }
+        return true;
+    } catch (error) {
+        return true; // If the map API is down, let it pass so users can still report
+    }
+}
 
 // --- 🚀 FAST AI MODERATOR ---
 async function scanImageBufferWithAI(buffer, mimeType, category) {
@@ -464,10 +481,6 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
     try {
         const { username, barangay, issue, description, contactNumber, locationLat, locationLng, locationAddress, locationSource, priority } = req.body;
         
-        // ----------------------------------------------------
-        // --- ADDED VALIDATION & ANTI-TROLL CHECKS HERE ---
-        // ----------------------------------------------------
-        
         // 1. Text Validation
         const trollPatterns = [/^(.)\1{4,}$/, /^[^a-zA-Z]*$/, /asdf|qwerty|aaaa|1234/i];
         const words = (description || '').split(/\s+/).filter(w => w.length > 2);
@@ -475,31 +488,39 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: '✏️ Your description looks incomplete or invalid. Please describe the issue clearly.' });
         }
 
-        // 2. Duplicate Submission Check (Last 10 mins)
+        // 2. Duplicate Submission Check
         const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
         const recentDuplicate = await Complaint.findOne({
-            citizenName: username,
-            category: issue,
-            barangay: barangay,
-            createdAt: { $gte: tenMinutesAgo }
+            citizenName: username, category: issue, barangay: barangay, createdAt: { $gte: tenMinutesAgo }
         });
         if (recentDuplicate) {
             return res.status(429).json({ success: false, message: '⚠️ You already submitted a similar complaint recently. Please wait before resubmitting.' });
         }
 
-        // 3. Daily Limit Check (Max 5 per day)
+        // 3. Daily Limit Check
         const today = new Date(); today.setHours(0,0,0,0);
         const todayCount = await Complaint.countDocuments({ citizenName: username, createdAt: { $gte: today } });
         if (todayCount >= 5) {
             return res.status(429).json({ success: false, message: '⚠️ Daily report limit reached (5 per day). Please try again tomorrow.' });
         }
-        // ----------------------------------------------------
 
+        // 4. --- RELAXED GEOFENCE CHECK (HAPPENS BEFORE AI SCAN) ---
+        if (locationLat && locationLng) {
+            const isInsideCaloocan = await verifyCaloocanBoundary(locationLat, locationLng);
+            if (!isInsideCaloocan) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `❌ Location Error: Please pin a valid location inside Caloocan City.` 
+                });
+            }
+        }
+
+        // 5. Check if user is blocked or file is missing
         const user = await User.findOne({ username });
-
         if (user && user.status === 'blocked') return res.status(403).json({ success: false, message: 'Your account is BLOCKED.' });
         if (!req.file) return res.status(400).json({ success: false, message: 'No photo uploaded.' });
 
+        // 6. --- AI IMAGE SCAN (Only runs if the geofence check passed) ---
         const isApproved = await scanImageBufferWithAI(req.file.buffer, req.file.mimetype, issue);
         
         if (!isApproved) {
@@ -512,6 +533,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             return res.status(400).json({ success: false, message: '❌ AI Rejected: Photo mismatch.' });
         }
 
+        // 7. Upload to Cloudinary
         const imageUrl = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream({ folder: 'evidence_uploads' }, (error, result) => {
                 if (error) reject(error);
@@ -520,6 +542,7 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
             stream.end(req.file.buffer);
         });
 
+        // 8. Save to Database
         const newComplaint = new Complaint({
             trackingId: 'KAL-' + Math.floor(1000 + Math.random() * 9000),
             citizenName: username, barangay, category: issue, description, imageUrl,
