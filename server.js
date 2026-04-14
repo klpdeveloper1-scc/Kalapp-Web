@@ -151,7 +151,8 @@ seedAdmin();
 // --- API ROUTES ---
 
 app.post('/api/request-otp', async (req, res) => {
-    const { email, username, password } = req.body;
+    // Now accepting firstName and lastName from the frontend
+    const { email, username, password, firstName, lastName } = req.body;
     
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
@@ -175,7 +176,17 @@ app.post('/api/request-otp', async (req, res) => {
             if (existingUsername) {
                 return res.status(400).json({ message: 'Username is already taken. Please choose another.' });
             }
-            user = new User({ username: username || email.split('@')[0], email, password, role: 'citizen', authMethod: 'local' });
+            
+            // Saving the names here
+            user = new User({ 
+                username: username || email.split('@')[0], 
+                email, 
+                password, 
+                firstName: firstName || '', 
+                lastName: lastName || '',
+                role: 'citizen', 
+                authMethod: 'local' 
+            });
         }
 
         // 3. Save OTP & Expiration to Database
@@ -183,7 +194,7 @@ app.post('/api/request-otp', async (req, res) => {
         user.otpExpires = new Date(Date.now() + 10 * 60000); // 10 minutes expiration
         await user.save();
 
-        // 4. Send Email using the Native Fetch
+        // 4. Send Email using the Native Fetch helper
         await sendOTP(email, otp);
 
         res.json({ message: 'OTP sent!' });

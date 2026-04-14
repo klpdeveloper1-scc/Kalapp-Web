@@ -646,11 +646,12 @@
         }
 
         const username = localStorage.getItem('kalapp_username') || 'Anonymous';
-        
+        const fullName = localStorage.getItem('kalapp_fullname') || username; // Fallback to username if name isn't set yet
+
         // Setup Usernames
-        document.getElementById('desktop-citizen-name-display').innerText = username;
-        document.getElementById('mobile-username-header').innerText = username;
-        document.getElementById('mobile-modal-name-display').innerText = username;
+        document.getElementById('desktop-citizen-name-display').innerText = fullName;
+        document.getElementById('mobile-username-header').innerText = fullName;
+        document.getElementById('mobile-modal-name-display').innerText = fullName;
 
         /* ── DYNAMIC AVATAR LOGIC (Initials vs Photo) ── */
         function updateAllAvatars(username, photoUrl) {
@@ -775,6 +776,15 @@
                     msgBox.style.color = 'var(--color-success)';
                     msgBox.innerText = '✅ ' + data.message;
                     setTimeout(backToSettingsMain, 1500);
+
+                    // --- ADD THIS TO INSTANTLY UPDATE THE UI ---
+                    const newFullName = fname + ' ' + lname;
+                    localStorage.setItem('kalapp_fullname', newFullName);
+                    document.getElementById('desktop-citizen-name-display').innerText = newFullName;
+                    document.getElementById('mobile-username-header').innerText = newFullName;
+                    document.getElementById('mobile-modal-name-display').innerText = newFullName;
+                    // ------------------------------------------
+                    
                 } else {
                     msgBox.style.color = 'var(--color-danger)';
                     msgBox.innerText = '❌ ' + data.error;

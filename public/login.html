@@ -11,7 +11,7 @@
     
     <style>
         :root {
-            --bg-body: #1e3a8a;           /* Dark Blue Base */
+            --bg-body: #1e3a8a; /* Dark Blue Base */
             --bg-card: #ffffff;
             --text-main: #000000;
             --orange: #ff8c00; 
@@ -23,9 +23,9 @@
             --error-red: #ef4444;
             --success-green: #10b981;
             --dropdown-text: #1e293b;
-            --gradient-1: #1e3a8a;        /* Deep Royal Blue */
-            --gradient-2: #1e40af;        /* Blue accent */
-            --gradient-3: #172554;        /* Midnight Blue shadow */
+            --gradient-1: #1e3a8a; /* Deep Royal Blue */
+            --gradient-2: #1e40af; /* Blue accent */
+            --gradient-3: #172554; /* Midnight Blue shadow */
         }
         
         body.dark {
@@ -95,7 +95,8 @@
             padding: 40px; border-radius: 24px; 
             box-shadow: var(--card-shadow); width: 100%; max-width: 400px; 
             text-align: center; position: relative; border-top: 6px solid var(--orange);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 10;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); z-index: 10;
         }
         
         #mode-toggle { 
@@ -210,13 +211,11 @@
         #resend-link { display: none; }
 
         #reg-sex {
-            background-color: rgba(255, 255, 255, 0.1) !important; color: inherit;
-            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.1) !important; color: inherit; cursor: pointer;
         }
 
         #reg-sex option {
-            background-color: #003262; color: white;
-            padding: 10px;
+            background-color: #003262; color: white; padding: 10px;
         }
 
         body:not(.dark) #reg-sex option {
@@ -479,9 +478,14 @@
             })
             .then(safeFetch)
             .then(data => {
-                // ADDED: Saving kalapp_role here
+                // ADDED: Saving kalapp_role and name here
                 localStorage.setItem('kalapp_username', data.username);
                 localStorage.setItem('kalapp_role', data.role);
+                
+                // If your backend returns firstName and lastName upon login, save it:
+                if(data.firstName && data.lastName) {
+                    localStorage.setItem('kalapp_fullname', data.firstName + ' ' + data.lastName);
+                }
                 
                 if (data.role === 'superadmin') window.location.href = '/superadmin-dashboard.html';
                 else if (data.role === 'lgu') window.location.href = '/lgu-dashboard.html';
@@ -503,6 +507,11 @@
                 const confirmPassword = document.getElementById('reg-confirm-password').value;
                 const email = document.getElementById('reg-email').value;
                 const username = document.getElementById('reg-username').value;
+                
+                // ADDED THIS: Grab the names
+                const fname = document.getElementById('reg-fname').value;
+                const lname = document.getElementById('reg-lname').value;
+
                 const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])/;
 
                 if (!regex.test(password) || password.length < 8) {
@@ -520,9 +529,16 @@
                 errorMsg.innerText = 'Sending code to your email...';
                 submitBtn.disabled = true; submitBtn.innerText = 'Sending...';
 
+                // ADDED THIS: Included firstName and lastName in the request
                 fetch('/api/request-otp', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, username: username, password: password })
+                    body: JSON.stringify({ 
+                        email: email, 
+                        username: username, 
+                        password: password,
+                        firstName: fname,
+                        lastName: lname
+                    })
                 })
                 .then(safeFetch)
                 .then(data => {
@@ -561,9 +577,13 @@
                     errorMsg.style.color = 'var(--success-green)';
                     errorMsg.innerText = '✅ Account created & verified! Redirecting...';
                     
-                    // ADDED: Saving kalapp_role here
+                    // ADDED: Saving kalapp_role and full name immediately so the portal uses it
                     localStorage.setItem('kalapp_username', data.username);
                     localStorage.setItem('kalapp_role', data.role);
+                    
+                    const fname = document.getElementById('reg-fname').value;
+                    const lname = document.getElementById('reg-lname').value;
+                    localStorage.setItem('kalapp_fullname', fname + ' ' + lname);
                     
                     setTimeout(() => { window.location.href = '/citizen-portal.html'; }, 1500);
                 })
@@ -586,6 +606,11 @@
                 // ADDED: Saving kalapp_role here
                 localStorage.setItem('kalapp_username', data.username);
                 localStorage.setItem('kalapp_role', data.role);
+                
+                // If backend gives back Google Name as full name
+                if(data.firstName && data.lastName) {
+                    localStorage.setItem('kalapp_fullname', data.firstName + ' ' + data.lastName);
+                }
                 
                 if (data.role === 'superadmin') window.location.href = '/superadmin-dashboard.html';
                 else if (data.role === 'lgu') window.location.href = '/lgu-dashboard.html';
