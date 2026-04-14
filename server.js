@@ -227,6 +227,57 @@ app.post('/api/google-login', async (req, res) => {
     } catch (error) { res.status(401).json({ message: 'Google login failed.' }); }
 });
 
+// --- 1. PUBLIC LOGIN ROUTE (Citizens & LGU ONLY) ---
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = await User.findOne({ username, password });
+        
+        if (!user) return res.status(400).json({ message: 'Invalid credentials.' });
+        if (user.status === 'blocked') return res.status(403).json({ message: 'Account suspended.' });
+
+        // 🔒 SECURITY: Block superadmin from logging in here
+        if (user.role === 'superadmin') {
+            return res.status(403).json({ message: 'Executive access not permitted here. Please use the secure portal.' });
+        }
+
+        res.json({ 
+            success: true, 
+            username: user.username, 
+            role: user.role,
+            firstName: user.firstName, 
+            lastName: user.lastName    
+        });
+    } catch (error) {
+        console.error('Login Error:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+});
+
+// --- 2. SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
+app.post('/api/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = await User.findOne({ username, password });
+        
+        if (!user) return res.status(400).json({ message: 'Invalid credentials.' });
+        
+        // 🔒 SECURITY: Block normal citizens from using the override portal
+        if (user.role !== 'superadmin') {
+            return res.status(403).json({ message: 'ACCESS DENIED: Insufficient privileges.' });
+        }
+
+        res.json({ success: true, username: user.username, role: user.role });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+});
+
+// --- SUPERADMIN BACKGROUND/STEALTH ROUTES ---
+app.post('/api/admin/logs', (req, res) => { res.json({ success: true }); });
+app.get('/api/refresh-session', (req, res) => { res.json({ success: true }); });
+app.get('/api/admin/ping', (req, res) => { res.json({ success: true }); });
+
 // --- ⚙️ USER ACCOUNT SETTINGS ENDPOINTS ---
 
 app.patch('/api/users/:username/name', async (req, res) => {
@@ -726,4 +777,5 @@ setInterval(() => {
     });
 }, 30000);
 
+console.log("BREVO KEY:", process.env.BREVO_API_KEY ? "Loaded" : "Missing");
 server.listen(PORT, () => console.log(`🚀 Master Server running on port ${PORT}`));
