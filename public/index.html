@@ -491,16 +491,47 @@
             return id;
         }
 
+        // --- SUMBONG-BOT LOGIC FOR INDEX.HTML ---
+        const chatbotToggle = document.getElementById('chatbot-toggle'); 
+        const chatbotWindow = document.getElementById('chatbot-window'); 
+        const closeChat = document.getElementById('close-chat'); 
+        const chatInput = document.getElementById('chat-input'); 
+        const sendChat = document.getElementById('send-chat');
+        const chatMessages = document.getElementById('chat-messages'); 
+        let chatHistory = [];
+
+        // 1. Toggle Chat Window
+        if (chatbotToggle && chatbotWindow) {
+            chatbotToggle.addEventListener('click', () => { chatbotWindow.classList.add('active'); chatbotToggle.style.opacity = '0'; chatbotToggle.style.pointerEvents = 'none'; });
+            closeChat.addEventListener('click', () => { chatbotWindow.classList.remove('active'); chatbotToggle.style.opacity = '1'; chatbotToggle.style.pointerEvents = 'auto'; });
+        }
+
+        // 2. THE MISSING FUNCTION: Draws the chat bubbles on the screen
+        function appendChatMessage(text, className) {
+            if (!chatMessages) return;
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${className}`; 
+            bubble.textContent = text;
+            const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+            bubble.id = id;
+            chatMessages.appendChild(bubble); 
+            chatMessages.scrollTop = chatMessages.scrollHeight; 
+            return id;
+        }
+
+        // 3. Send Message to Server
         async function handleSendMessage() {
+            if (!chatInput) return;
             const message = chatInput.value.trim();
             if (!message) return;
+            
             appendChatMessage(message, 'user-bubble'); 
             chatInput.value = ''; 
             const typingId = appendChatMessage('Thinking...', 'ai-bubble');
             
             try {
-                // Safely target the backend whether you are on index.html or the portal
-                const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'https://kalapp-web.onrender.com';
+                // Safely find the backend whether on local or Render
+                const backendUrl = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin;
                 
                 const response = await fetch(`${backendUrl}/api/ai-chat`, { 
                     method: 'POST', 
@@ -508,13 +539,12 @@
                     body: JSON.stringify({ message: message, history: chatHistory }) 
                 });
                 
-                // Read as text first to prevent JSON crashes from 502 pages
                 const textRes = await response.text();
                 let data;
                 try {
                     data = JSON.parse(textRes);
                 } catch(e) {
-                    throw new Error("Server crashed or is waking up. Please wait 30 seconds.");
+                    throw new Error("Server is waking up or busy. Please wait 10 seconds.");
                 }
 
                 document.getElementById(typingId).remove();
@@ -527,15 +557,17 @@
                     appendChatMessage("Error: " + (data.error || "Could not reach Sumbong-Bot."), 'ai-bubble');
                 }
             } catch (error) { 
-                document.getElementById(typingId).remove(); 
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove(); 
                 appendChatMessage("Connection error: " + error.message, 'ai-bubble'); 
             }
         }
 
-        sendChat.addEventListener('click', handleSendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSendMessage();
-        });
+        // 4. Enter Key and Click Listeners
+        if (sendChat && chatInput) {
+            sendChat.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
+        }
 
         // ==========================================
         // 4. PUBLIC REPORT TRACKER
