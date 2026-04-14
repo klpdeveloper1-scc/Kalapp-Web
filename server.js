@@ -903,7 +903,7 @@ app.post('/api/ai-chat', async (req, res) => {
         
         // THE CRITICAL FIX: Using the universally supported text model
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash' 
+            model: 'gemini-2.5-flash' 
         });
 
         // Inject the strict rules as the invisible first message
