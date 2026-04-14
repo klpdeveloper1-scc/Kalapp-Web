@@ -491,19 +491,24 @@
             return id;
         }
 
-        // --- SUMBONG-BOT LOGIC FOR INDEX.HTML ---
-        const chatbotToggle = document.getElementById('chatbot-toggle'); 
-        const chatbotWindow = document.getElementById('chatbot-window'); 
-        const closeChat = document.getElementById('close-chat'); 
-        const chatInput = document.getElementById('chat-input'); 
-        const sendChat = document.getElementById('send-chat');
-        const chatMessages = document.getElementById('chat-messages'); 
-        let chatHistory = [];
+        
+    
+
+       // --- SUMBONG-BOT LOGIC FOR INDEX.HTML ---
+        // (Variables already declared above — no re-declaration needed)
 
         // 1. Toggle Chat Window
         if (chatbotToggle && chatbotWindow) {
-            chatbotToggle.addEventListener('click', () => { chatbotWindow.classList.add('active'); chatbotToggle.style.opacity = '0'; chatbotToggle.style.pointerEvents = 'none'; });
-            closeChat.addEventListener('click', () => { chatbotWindow.classList.remove('active'); chatbotToggle.style.opacity = '1'; chatbotToggle.style.pointerEvents = 'auto'; });
+            chatbotToggle.addEventListener('click', () => { 
+                chatbotWindow.classList.add('active'); 
+                chatbotToggle.style.opacity = '0'; 
+                chatbotToggle.style.pointerEvents = 'none'; 
+            });
+            closeChat.addEventListener('click', () => { 
+                chatbotWindow.classList.remove('active'); 
+                chatbotToggle.style.opacity = '1'; 
+                chatbotToggle.style.pointerEvents = 'auto'; 
+            });
         }
 
         // 2. THE MISSING FUNCTION: Draws the chat bubbles on the screen
