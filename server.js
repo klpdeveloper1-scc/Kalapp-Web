@@ -33,7 +33,6 @@ cloudinary.config({
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
-
 const memoryUpload = multer({ storage: multer.memoryStorage() });
 
 // --- MongoDB Connection ---
@@ -55,7 +54,7 @@ const userSchema = new mongoose.Schema({
     otp: String,
     otpExpires: Date,
     strikes: { type: Number, default: 0 },
-    isAnonymous: { type: Boolean, default: false } // Privacy setting
+    isAnonymous: { type: Boolean, default: false }
 });
 
 const complaintSchema = new mongoose.Schema({
@@ -90,11 +89,21 @@ const complaintSchema = new mongoose.Schema({
     locationAddress: { type: String, default: '' },
     locationSource: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now },
-    isAnonymous: { type: Boolean, default: false } // Privacy setting
+    isAnonymous: { type: Boolean, default: false }
+});
+
+// NEW SCHEMA FOR FULL STACK ANNOUNCEMENTS
+const announcementSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    body: { type: String, required: true },
+    category: { type: String, default: 'General' },
+    barangay: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 const Complaint = mongoose.model('Complaint', complaintSchema);
+const Announcement = mongoose.model('Announcement', announcementSchema);
 
 // --- 🚀 FAST AI MODERATOR ---
 async function scanImageBufferWithAI(buffer, mimeType, category) {
@@ -107,7 +116,6 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
         const prompt = `You are a smart complaint classifier for a Philippine barangay complaint system called Kalapp.
         The citizen reported this under the category ${category}.
         Analyze the uploaded photo and determine if it is a legitimate barangay complaint image.
-
         IMPORTANT RULES — BE LENIENT AND HELPFUL
         - ACCEPT the report if the photo shows ANY real-world scene.
         - Even blurry, dark, or low-quality photos are ACCEPTABLE.
@@ -119,7 +127,7 @@ async function scanImageBufferWithAI(buffer, mimeType, category) {
           "accepted": boolean,
           "summary": string
         }`;
-
+        
         const imagePart = {
             inlineData: {
                 data: buffer.toString('base64'),
@@ -188,7 +196,6 @@ app.post('/api/request-otp', async (req, res) => {
 
         await sendOTP(email, otp);
         res.json({ message: 'OTP sent!' });
-
     } catch (error) { 
         console.error('DATABASE/SERVER ERROR:', error);
         if (!res.headersSent) res.status(500).json({ message: 'Internal server error.' });
@@ -254,7 +261,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// --- 2. SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
 // --- SECURE EXECUTIVE LOGIN ROUTE (Superadmin ONLY) ---
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
@@ -278,7 +284,6 @@ app.get('/api/refresh-session', (req, res) => res.json({ success: true }));
 app.get('/api/admin/ping', (req, res) => res.json({ success: true }));
 
 // --- ⚙️ USER ACCOUNT SETTINGS ENDPOINTS ---
-
 app.patch('/api/users/:username/name', async (req, res) => {
     try {
         const { firstName, lastName } = req.body;
@@ -333,46 +338,6 @@ app.post('/api/users/:username/photo', memoryUpload.single('photo'), async (req,
 });
 
 // --- 🛡️ PRIVACY & SECURITY ENDPOINTS ---
-
-// Get current privacy status
-app.get('/api/users/:username/privacy-status', async (req, res) => {
-    const user = await User.findOne({ username: req.params.username });
-    res.json({ isAnonymous: user ? user.isAnonymous : false });
-});
-
-// Toggle Anonymity
-app.patch('/api/users/:username/privacy', async (req, res) => {
-    try {
-        await User.findOneAndUpdate({ username: req.params.username }, { isAnonymous: req.body.isAnonymous });
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
-});
-
-// Request Data Export (Data Privacy Act Compliance)
-app.get('/api/users/:username/export', async (req, res) => {
-    try {
-        const user = await User.findOne({ username: req.params.username }, '-password -otp -otpExpires');
-        const complaints = await Complaint.find({ citizenName: req.params.username });
-        res.json({ success: true, data: { profile: user, reportHistory: complaints } });
-    } catch (error) { res.status(500).json({ success: false }); }
-});
-
-// Delete Account permanently
-app.delete('/api/users/:username', async (req, res) => {
-    try {
-        // 1. Delete the user
-        await User.findOneAndDelete({ username: req.params.username });
-        // 2. Anonymize their past complaints so LGU records aren't broken, but identity is scrubbed
-        await Complaint.updateMany(
-            { citizenName: req.params.username }, 
-            { $set: { citizenName: 'Deleted Account', isAnonymous: true } }
-        );
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ success: false }); }
-});
-
-// --- 🛡️ PRIVACY & SECURITY ENDPOINTS ---
-
 app.get('/api/users/:username/privacy-status', async (req, res) => {
     const user = await User.findOne({ username: req.params.username });
     res.json({ isAnonymous: user ? user.isAnonymous : false });
@@ -482,18 +447,14 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
     } catch (error) { res.status(500).json({ success: false, error: error.message }); } 
 });
 
+// ✅ FIX: Removed duplicate res.json that was crashing the app in the original source
 app.get('/api/complaints', async (req, res) => {
-    const complaints = await Complaint.find().sort({ createdAt: -1 });
-    res.json({ complaints });
-
-    // Mask names for anonymous users before sending to frontend
-    const maskedFeed = feed.map(c => {
-        const obj = c.toObject();
-        if (obj.isAnonymous) obj.citizenName = 'Anonymous Resident';
-        return obj;
-    });
-    
-    res.json({ feed: maskedFeed, total, page, pages: Math.ceil(total / limit) });
+    try {
+        const complaints = await Complaint.find().sort({ createdAt: -1 });
+        res.json({ complaints });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch complaints' });
+    }
 });
 
 app.patch('/api/complaints/:id/status', async (req, res) => {
@@ -618,6 +579,45 @@ app.patch('/api/admin/users/:id/reset-strikes', async (req, res) => {
         }
     } catch (error) { res.status(500).json({ success: false }); }
 });
+
+// --- NEW ANNOUNCEMENT API ENDPOINTS ---
+app.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.json({ announcements });
+    } catch(e) {
+        res.status(500).json({ error: 'Failed to retrieve announcements' });
+    }
+});
+
+app.post('/api/admin/announcements', async (req, res) => {
+    try {
+        const newAnnounce = new Announcement(req.body);
+        await newAnnounce.save();
+        res.json({ success: true, announcement: newAnnounce });
+    } catch(e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.put('/api/admin/announcements/:id', async (req, res) => {
+    try {
+        await Announcement.findByIdAndUpdate(req.params.id, req.body);
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.delete('/api/admin/announcements/:id', async (req, res) => {
+    try {
+        await Announcement.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).json({ success: false });
+    }
+});
+// ----------------------------------------
 
 app.get('/api/complaints/:trackingId/history', rateLimit({ windowMs: 60000, max: 30 }), async (req, res) => {
     const complaint = await Complaint.findOne({ trackingId: req.params.trackingId });
@@ -818,7 +818,6 @@ app.get('/api/complaints/feed', rateLimit({ windowMs: 60000, max: 60 }), async (
             status: { $nin: ['Rejected & Flagged'] },
             category: { $nin: ['Inter-Personal Disputes (Lupon / Mediation)'] }
         });
-        
         res.json({ feed: maskedFeed, total, page, pages: Math.ceil(total / limit) });
     } catch (error) { res.status(500).json({ error: 'Failed to load feed.' }); }
 });
@@ -873,7 +872,7 @@ async function sendOTP(email, otp) {
         if (!response.ok) throw new Error('Brevo API rejected the request');
         console.log("✅ OTP email sent");
     } catch (error) {
-        console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`); 
+        console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`);
     }
 }
 
