@@ -880,39 +880,105 @@
         }
 
         document.getElementById('evidence').addEventListener('change', async function () {
-            const file = this.files[0]; const box  = document.getElementById('ai-preview-box'); const txt  = document.getElementById('ai-preview-text');
-            if (!file) { box.style.display = 'none'; return; }
+            const file = this.files[0]; 
+            const box  = document.getElementById('ai-preview-box'); 
+            const txt  = document.getElementById('ai-preview-text');
+            
+            // 1. CLEAN RESET: Wipe previous AI memory when a new photo is selected
+            aiSuggestedCategory = null;
+            document.getElementById('aiPriority').value = 'MEDIUM';
+            
+            if (!file) { 
+                box.style.display = 'none'; 
+                return; 
+            }
 
+            // 2. EXIF Data extraction (Keep existing map logic)
             EXIF.getData(file, function () {
-                const latDMS = EXIF.getTag(this, 'GPSLatitude'); const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-                const lngDMS = EXIF.getTag(this, 'GPSLongitude'); const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
-                const lat = dmsToDecimal(latDMS, latRef); const lng = dmsToDecimal(lngDMS, lngRef);
+                const latDMS = EXIF.getTag(this, 'GPSLatitude'); 
+                const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+                const lngDMS = EXIF.getTag(this, 'GPSLongitude'); 
+                const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+                const lat = dmsToDecimal(latDMS, latRef); 
+                const lng = dmsToDecimal(lngDMS, lngRef);
                 if (lat !== null && lng !== null && locationMap && locationMarker) {
-                    locationMap.setView([lat, lng], 16); locationMarker.setLatLng([lat, lng]);
-                    document.getElementById('locationLat').value = lat.toFixed(6); document.getElementById('locationLng').value = lng.toFixed(6);
+                    locationMap.setView([lat, lng], 16); 
+                    locationMarker.setLatLng([lat, lng]);
+                    document.getElementById('locationLat').value = lat.toFixed(6); 
+                    document.getElementById('locationLng').value = lng.toFixed(6);
                     document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                    document.getElementById('locationSource').value = 'exif'; document.getElementById('exif-location-label').style.display = 'block';
+                    document.getElementById('locationSource').value = 'exif'; 
+                    document.getElementById('exif-location-label').style.display = 'block';
                 }
             });
 
-            box.style.display = 'block'; box.className = 'scanning'; txt.innerText  = '🤖 Gemini AI is scanning your photo...';
+            // 3. UI Loading State
+            box.style.display = 'block'; 
+            box.className = 'scanning';
+            txt.innerHTML  = '🤖 <strong>Gemini AI is scanning your photo...</strong>';
+            
             try {
-                const fd = new FormData(); fd.append('evidence', file);
+                const fd = new FormData();
+                fd.append('evidence', file);
+                
                 const res = await fetch(`${BACKEND_URL}/api/classify-preview`, { method:'POST', body: fd });
                 const result = await res.json();
-                aiSuggestedCategory = result.category; const selected = document.getElementById('issue').value;
+                
+                aiSuggestedCategory = result.category;
+                const selected = document.getElementById('issue').value;
                 document.getElementById('aiPriority').value = result.priority || 'MEDIUM';
 
-                if (result.accepted === false) { box.className = 'mismatch'; txt.innerHTML = `❌ <strong>AI rejected this photo.</strong> ${result.summary || 'Please upload a real photo.'}`; }
-                else if (!aiSuggestedCategory) { box.className = 'mismatch'; txt.innerHTML = `⚠️ <strong>AI could not identify a known issue type.</strong> You may still submit.`; }
-                else if (selected && aiSuggestedCategory !== selected) { box.className = 'mismatch'; txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${selected}</strong>".<br><small style="opacity:0.7">${result.summary||''}</small>`; }
-                else if (selected && aiSuggestedCategory === selected) { box.className = 'match'; txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Priority: ${result.priority||'MEDIUM'}.<br><small style="opacity:0.7">${result.summary||''}</small>`; }
-                else {
-                    box.className = 'match'; txt.innerHTML = `🤖 <strong>AI suggests:</strong> "<strong>${aiSuggestedCategory}</strong>" — select matching category above.<br><small style="opacity:0.7">${result.summary||''}</small>`;
-                    const sel = document.getElementById('issue');
-                    for (let o of sel.options) { if (o.value === aiSuggestedCategory) { sel.value = aiSuggestedCategory; break; } }
+                // 4. Handle all possible AI outcomes
+                if (result.accepted === false) { 
+                    box.className = 'mismatch';
+                    txt.innerHTML = `❌ <strong>AI rejected this photo.</strong> ${result.summary || 'Please upload a clear, real-world photo.'}`;
                 }
-            } catch { box.className = 'scanning'; txt.innerText = '⚠️ AI preview unavailable. You can still submit.'; }
+                else if (!aiSuggestedCategory) { 
+                    box.className = 'scanning'; // Orange warning
+                    txt.innerHTML = `⚠️ <strong>AI could not identify a specific issue.</strong> You may still submit.`;
+                }
+                else if (selected && aiSuggestedCategory !== selected) { 
+                    box.className = 'mismatch';
+                    txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${selected}</strong>".<br><small style="opacity:0.8">${result.summary||''}</small>`;
+                }
+                else if (selected && aiSuggestedCategory === selected) { 
+                    box.className = 'match';
+                    txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Priority: ${result.priority||'MEDIUM'}.<br><small style="opacity:0.8">${result.summary||''}</small>`;
+                }
+                else {
+                    box.className = 'match';
+                    txt.innerHTML = `🤖 <strong>AI Suggestion:</strong> "<strong>${aiSuggestedCategory}</strong>" — auto-selecting category.<br><small style="opacity:0.8">${result.summary||''}</small>`;
+                    
+                    // Auto-select the dropdown for the user
+                    const sel = document.getElementById('issue');
+                    for (let o of sel.options) { 
+                        if (o.value === aiSuggestedCategory) { 
+                            sel.value = aiSuggestedCategory; 
+                            break;
+                        } 
+                    }
+                }
+            } catch (e) { 
+                console.error('Preview Error:', e);
+                box.className = 'scanning'; 
+                txt.innerHTML = '⚠️ <strong>AI preview unavailable.</strong> You can still submit your complaint.'; 
+            }
+        });
+
+        // 5. Check if user changes the dropdown AFTER the AI scanned the photo
+        document.getElementById('issue').addEventListener('change', function () {
+            const box = document.getElementById('ai-preview-box'); 
+            const txt = document.getElementById('ai-preview-text');
+            
+            if (!aiSuggestedCategory || box.style.display === 'none') return;
+            
+            if (aiSuggestedCategory === this.value) { 
+                box.className = 'match'; 
+                txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Good to go.`; 
+            } else { 
+                box.className = 'mismatch'; 
+                txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${this.value}</strong>". This may be flagged by the LGU.`; 
+            }
         });
 
         document.getElementById('issue').addEventListener('change', function () {
