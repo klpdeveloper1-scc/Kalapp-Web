@@ -335,6 +335,45 @@ app.post('/api/users/:username/photo', memoryUpload.single('photo'), async (req,
 
 // --- 🛡️ PRIVACY & SECURITY ENDPOINTS ---
 
+// Get current privacy status
+app.get('/api/users/:username/privacy-status', async (req, res) => {
+    const user = await User.findOne({ username: req.params.username });
+    res.json({ isAnonymous: user ? user.isAnonymous : false });
+});
+
+// Toggle Anonymity
+app.patch('/api/users/:username/privacy', async (req, res) => {
+    try {
+        await User.findOneAndUpdate({ username: req.params.username }, { isAnonymous: req.body.isAnonymous });
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// Request Data Export (Data Privacy Act Compliance)
+app.get('/api/users/:username/export', async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username }, '-password -otp -otpExpires');
+        const complaints = await Complaint.find({ citizenName: req.params.username });
+        res.json({ success: true, data: { profile: user, reportHistory: complaints } });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// Delete Account permanently
+app.delete('/api/users/:username', async (req, res) => {
+    try {
+        // 1. Delete the user
+        await User.findOneAndDelete({ username: req.params.username });
+        // 2. Anonymize their past complaints so LGU records aren't broken, but identity is scrubbed
+        await Complaint.updateMany(
+            { citizenName: req.params.username }, 
+            { $set: { citizenName: 'Deleted Account', isAnonymous: true } }
+        );
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false }); }
+});
+
+// --- 🛡️ PRIVACY & SECURITY ENDPOINTS ---
+
 app.get('/api/users/:username/privacy-status', async (req, res) => {
     const user = await User.findOne({ username: req.params.username });
     res.json({ isAnonymous: user ? user.isAnonymous : false });
@@ -447,6 +486,15 @@ app.post('/api/complaints', memoryUpload.single('evidence'), async (req, res) =>
 app.get('/api/complaints', async (req, res) => {
     const complaints = await Complaint.find().sort({ createdAt: -1 });
     res.json({ complaints });
+
+    // Mask names for anonymous users before sending to frontend
+    const maskedFeed = feed.map(c => {
+        const obj = c.toObject();
+        if (obj.isAnonymous) obj.citizenName = 'Anonymous Resident';
+        return obj;
+    });
+    
+    res.json({ feed: maskedFeed, total, page, pages: Math.ceil(total / limit) });
 });
 
 app.patch('/api/complaints/:id/status', async (req, res) => {
@@ -480,6 +528,67 @@ app.patch('/api/complaints/:id/status', async (req, res) => {
 app.get('/api/admin/users', async (req, res) => {
     const users = await User.find({ role: { $ne: 'superadmin' } });
     res.json({ users });
+});
+
+// --- 📊 SUPERADMIN ANALYTICS & MONITORING ---
+app.get('/api/admin/analytics', async (req, res) => {
+    try {
+        const totalComplaints = await Complaint.countDocuments();
+        const pending = await Complaint.countDocuments({ status: 'Pending' });
+        const resolved = await Complaint.countDocuments({ status: 'Resolved' });
+        const rejected = await Complaint.countDocuments({ status: 'Rejected & Flagged' });
+        const activeUsers = await User.countDocuments({ role: 'citizen', status: 'active' });
+
+        // Calculate reports today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const reportsToday = await Complaint.countDocuments({ createdAt: { $gte: today } });
+
+        // Aggregate most reported barangays
+        const topBarangays = await Complaint.aggregate([
+            { $group: { _id: "$barangay", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 3 }
+        ]);
+
+        res.json({ totalComplaints, pending, resolved, rejected, activeUsers, reportsToday, topBarangays });
+    } catch (error) { res.status(500).json({ error: 'Failed to load analytics' }); }
+});
+
+// --- 🛠️ SUPERADMIN USER MANAGEMENT ---
+
+// Edit User Info
+app.patch('/api/admin/users/:id/edit', async (req, res) => {
+    try {
+        const { firstName, lastName, email } = req.body;
+        await User.findByIdAndUpdate(req.params.id, { firstName, lastName, email });
+        res.json({ success: true, message: "User updated successfully." });
+    } catch (error) { res.status(500).json({ error: 'Failed to update user.' }); }
+});
+
+// Delete User Account
+app.delete('/api/admin/users/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: "User not found." });
+        
+        // Anonymize their complaints before deleting the user to keep LGU data intact
+        await Complaint.updateMany(
+            { citizenName: user.username }, 
+            { $set: { citizenName: 'Deleted User', isAnonymous: true } }
+        );
+        
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "User permanently deleted." });
+    } catch (error) { res.status(500).json({ error: 'Failed to delete user.' }); }
+});
+
+// View Specific User's Activity
+app.get('/api/admin/users/:username/activity', async (req, res) => {
+    try {
+        const complaints = await Complaint.find({ citizenName: req.params.username }).sort({ createdAt: -1 });
+        res.json({ complaints, total: complaints.length });
+    } catch (error) { res.status(500).json({ error: 'Failed to fetch activity.' }); }
 });
 
 app.post('/api/admin/create-lgu', async (req, res) => {

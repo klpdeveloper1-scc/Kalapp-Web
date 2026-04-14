@@ -3,201 +3,471 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>City Hall Command Center</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>City Hall - Executive Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
     <style>
-        body { margin: 0; background: #f1f5f9; font-family: 'Poppins', sans-serif; color: #0f172a; }
-        .header { background: #0f172a; color: white; padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #ef4444; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
-        .logout { color: #cbd5e1; text-decoration: none; font-weight: 600; font-size: 14px; }
-        .logouSt:hover { color: white; }
+        :root {
+            --bg-sidebar: #372873; /* Deep Purple */
+            --bg-sidebar-hover: #4e3a9c;
+            --bg-main: #fbf8f1; /* Light Cream/Beige */
+            --bg-card: #ffffff;
+            --text-main: #333333;
+            --text-muted: #888888;
+            --primary: #ff8c00;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: var(--bg-main); color: var(--text-main); overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 260px; background-color: var(--bg-sidebar); color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 25px 20px; font-size: 24px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+        .sidebar-header img { width: 30px; border-radius: 6px; }
         
-        .tabs { background: white; padding: 0 5%; display: flex; gap: 20px; border-bottom: 1px solid #e2e8f0; }
-        .tab { padding: 15px 20px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; }
-        .tab.active { color: #ef4444; border-bottom-color: #ef4444; }
+        .nav-links { list-style: none; padding: 20px 0; flex: 1; }
+        .nav-links li { padding: 12px 20px; margin: 5px 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #d1d5db; transition: 0.2s; font-weight: 500; }
+        .nav-links li:hover { background-color: var(--bg-sidebar-hover); color: white; }
+        .nav-links li.active { background-color: rgba(255, 255, 255, 0.15); color: white; border-left: 4px solid var(--primary); }
+        .nav-links li .material-icons-sharp { font-size: 20px; }
         
-        .container { padding: 40px 5%; max-width: 1400px; margin: 0 auto; }
-        .view-section { display: none; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-footer div { display: flex; align-items: center; gap: 10px; cursor: pointer; color: #d1d5db; font-size: 14px; }
+        .sidebar-footer div:hover { color: var(--danger); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        /* TOPBAR */
+        .topbar { background-color: var(--bg-main); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+        .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; color: var(--bg-sidebar); }
+        .search-bar { background: white; border: 1px solid #cbd5e1; padding: 8px 15px; border-radius: 20px; width: 300px; display: flex; align-items: center; }
+        .search-bar input { border: none; outline: none; width: 100%; font-size: 14px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; }
+        .user-profile .icons { display: flex; gap: 15px; color: var(--text-muted); cursor: pointer; }
+        .user-profile .avatar { display: flex; align-items: center; gap: 10px; }
+        .user-profile img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--primary); }
+
+        /* VIEW CONTAINER */
+        .view-section { padding: 30px 40px; display: none; animation: fadeIn 0.3s ease; }
         .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .metric-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-left: 5px solid #3b82f6; }
-        .metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; text-transform: uppercase; }
-        .metric-card .number { font-size: 36px; font-weight: 800; margin: 0; }
-        
-        .card-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-header h1 { font-size: 24px; color: var(--bg-sidebar); display: flex; align-items: center; gap: 10px; }
+        .badge { background: #e2e8f0; padding: 3px 10px; border-radius: 12px; font-size: 12px; color: var(--text-muted); }
+
+        /* --- DASHBOARD STATS --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
+        .stat-card h3 { color: var(--text-muted); font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+        .stat-card h2 { font-size: 28px; color: var(--bg-sidebar); }
+        .stat-card .icon { padding: 10px; border-radius: 8px; background: rgba(55, 40, 115, 0.1); color: var(--bg-sidebar); }
+
+        /* --- LAYOUT WRAPPER (Table + Chart Side-by-Side) --- */
+        .content-wrapper { display: flex; gap: 20px; align-items: flex-start; }
+        .table-container { flex: 1; background: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); padding: 20px; overflow-x: auto; }
+        .side-panel { width: 320px; background: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); padding: 20px; }
+
+        /* --- TABLES --- */
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 15px; border-bottom: 2px solid #e2e8f0; color: #475569; }
-        td { padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { padding: 15px 10px; border-bottom: 2px solid var(--border); color: var(--text-muted); font-weight: 600; font-size: 13px; }
+        td { padding: 15px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        tbody tr:hover { background: #f8fafc; }
+        .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .pill-active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .pill-blocked { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-citizen { background: #e0f2fe; color: #0369a1; }
-        .badge-lgu { background: #fef08a; color: #854d0e; }
-        .badge-active { background: #dcfce3; color: #16a34a; }
-        .badge-blocked { background: #fee2e2; color: #dc2626; }
+        /* Action Menu */
+        .action-menu { position: relative; display: inline-block; }
+        .action-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); font-weight: bold; font-size: 18px; }
+        .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .action-menu:hover .dropdown-content { display: block; }
+        .dropdown-content button { color: black; padding: 12px 16px; text-decoration: none; display: block; width: 100%; text-align: left; border: none; background: white; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+        .dropdown-content button:hover { background-color: #f1f5f9; }
+        .dropdown-content button.danger { color: var(--danger); }
 
-        button { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-family: 'Poppins'; font-size: 12px; }
-        .btn-block { background: #fee2e2; color: #dc2626; }
-        .btn-unblock { background: #dcfce3; color: #16a34a; }
-        .btn-reset { background: #e0f2fe; color: #0369a1; margin-right: 5px; }
-        .btn-primary { background: #ef4444; color: white; padding: 10px 20px; font-size: 14px; }
+        /* --- RING CHART (CSS ONLY) --- */
+        .chart-container { display: flex; flex-direction: column; align-items: center; margin: 20px 0; }
+        .donut-chart { width: 150px; height: 150px; border-radius: 50%; background: conic-gradient(var(--bg-sidebar) 0% 40%, var(--success) 40% 75%, var(--primary) 75% 100%); display: flex; justify-content: center; align-items: center; }
+        .donut-inner { width: 110px; height: 110px; border-radius: 50%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .donut-inner h3 { font-size: 24px; color: var(--bg-sidebar); }
+        .donut-inner span { font-size: 10px; color: var(--text-muted); }
+        .chart-legend { width: 100%; margin-top: 20px; }
+        .legend-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 10px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
 
-        .create-form { display: flex; gap: 10px; margin-top: 15px; }
-        .create-form input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: 'Poppins'; }
+        /* MODAL STYLES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal { background: white; padding: 30px; border-radius: 12px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal h2 { margin-bottom: 20px; font-size: 18px; color: var(--bg-sidebar); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+        .btn-save { background: var(--bg-sidebar); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; margin-top: 10px; }
+        .btn-cancel { background: white; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; margin-top: 10px; }
+        
+        /* LOGS */
+        .log-box { background: #1e293b; color: #34d399; padding: 20px; border-radius: 8px; font-family: monospace; height: 400px; overflow-y: auto; font-size: 13px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Caloocan City Command Center</h1>
-        <a href="#" class="logout" onclick="logout()">Terminate Session</a>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="logokalapp.png" alt="K" onerror="this.style.display='none'"> Kalapp
+        </div>
+        <ul class="nav-links">
+            <li class="active" onclick="switchTab('dashboard', this)"><span class="material-icons-sharp">dashboard</span> Dashboard</li>
+            <li onclick="switchTab('users', this)"><span class="material-icons-sharp">people</span> Users</li>
+            <li onclick="switchTab('complaints', this)"><span class="material-icons-sharp">report_problem</span> Moderation</li>
+            <li onclick="switchTab('content', this)"><span class="material-icons-sharp">campaign</span> Announcements</li>
+            <li onclick="switchTab('system', this)"><span class="material-icons-sharp">memory</span> System Logs</li>
+        </ul>
+        <div class="sidebar-footer">
+            <div onclick="logout()"><span class="material-icons-sharp">logout</span> Sign Out</div>
+        </div>
     </div>
 
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('metrics')">City Metrics</div>
-        <div class="tab" onclick="switchTab('accounts')">Identity Management (IAM)</div>
-    </div>
-
-    <div class="container">
-        <div id="metrics" class="view-section active">
-            <h2 style="margin-top: 0;">City-Wide Performance</h2>
-            <div class="metrics-grid">
-                <div class="metric-card" style="border-color: #3b82f6;"><h3>Total Complaints</h3><p class="number" id="total-complaints">0</p></div>
-                <div class="metric-card" style="border-color: #16a34a;"><h3>Resolved</h3><p class="number" id="total-resolved">0</p></div>
-                <div class="metric-card" style="border-color: #ef4444;"><h3>Pending Action</h3><p class="number" id="total-pending">0</p></div>
+    <div class="main-content">
+        <div class="topbar">
+            <div class="brand">City Hall LGU Hub</div>
+            <div class="search-bar">
+                <span class="material-icons-sharp" style="color: #94a3b8; margin-right: 5px;">search</span>
+                <input type="text" placeholder="Search tracking ID or username...">
             </div>
-            <div class="card-container">
-                <h2>LGU Oversight Log</h2>
+            <div class="user-profile">
+                <div class="icons">
+                    <span class="material-icons-sharp">mail_outline</span>
+                    <span class="material-icons-sharp">notifications_none</span>
+                </div>
+                <div class="avatar">
+                    <img src="https://ui-avatars.com/api/?name=City+Hall&background=ff8c00&color=fff" alt="Admin">
+                    <div style="font-size: 14px;">
+                        <strong>City Hall Exec</strong><br>
+                        <small style="color: var(--text-muted);">Superadmin</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-dashboard" class="view-section active">
+            <div class="page-header">
+                <h1>System Overview</h1>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div><h3>Total Reports</h3><h2 id="stat-total">0</h2></div>
+                    <div class="icon"><span class="material-icons-sharp">folder</span></div>
+                </div>
+                <div class="stat-card">
+                    <div><h3>Pending Action</h3><h2 id="stat-pending" style="color: var(--primary);">0</h2></div>
+                    <div class="icon"><span class="material-icons-sharp">pending_actions</span></div>
+                </div>
+                <div class="stat-card">
+                    <div><h3>Resolved</h3><h2 id="stat-resolved" style="color: var(--success);">0</h2></div>
+                    <div class="icon"><span class="material-icons-sharp">check_circle</span></div>
+                </div>
+                <div class="stat-card">
+                    <div><h3>Active Citizens</h3><h2 id="stat-users">0</h2></div>
+                    <div class="icon"><span class="material-icons-sharp">groups</span></div>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="table-container">
+                    <h3 style="margin-bottom: 20px; color: var(--bg-sidebar);">Top Highlight: Most Reported Barangays</h3>
+                    <table>
+                        <thead><tr><th>Barangay</th><th>Total Reports Filed</th><th>Status Focus</th></tr></thead>
+                        <tbody id="top-barangay-list">
+                            <tr><td colspan="3">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="side-panel">
+                    <h3 style="margin-bottom: 10px; color: var(--bg-sidebar);">Resolution Rate</h3>
+                    <div class="chart-container">
+                        <div class="donut-chart">
+                            <div class="donut-inner">
+                                <h3 id="chart-total">0</h3>
+                                <span>Reports</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item"><span style="color: var(--text-muted);"><span class="legend-dot" style="background: var(--bg-sidebar);"></span> Pending</span> <strong id="leg-pending">0</strong></div>
+                        <div class="legend-item"><span style="color: var(--text-muted);"><span class="legend-dot" style="background: var(--success);"></span> Resolved</span> <strong id="leg-resolved">0</strong></div>
+                        <div class="legend-item"><span style="color: var(--text-muted);"><span class="legend-dot" style="background: var(--primary);"></span> In Progress/Other</span> <strong id="leg-other">0</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-users" class="view-section">
+            <div class="page-header">
+                <h1>Citizen Management <span class="badge" id="user-badge-count">0</span></h1>
+            </div>
+
+            <div class="table-container">
                 <table>
-                    <thead><tr><th>ID</th><th>Barangay</th><th>Issue Category</th><th>Status</th><th>Date</th></tr></thead>
-                    <tbody id="oversight-body"></tbody>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Strikes</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <tr><td colspan="6">Loading users...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <div id="accounts" class="view-section">
-            <div class="card-container" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                <h2 style="margin-top:0;">Provision New LGU Account</h2>
-                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Create official credentials for new Barangay Captains.</p>
-                <div class="create-form">
-                    <input type="text" id="new-lgu-user" placeholder="Username (e.g., brgy1_admin)">
-                    <input type="email" id="new-lgu-email" placeholder="Official Email">
-                    <input type="password" id="new-lgu-pass" placeholder="Initial Password">
-                    <button class="btn-primary" onclick="createLgu()">Create Official Account</button>
-                </div>
+        <div id="view-complaints" class="view-section">
+            <div class="page-header"><h1>Moderation & Reports</h1></div>
+            <div class="table-container">
+                <p style="color: var(--text-muted);">View the list of active complaints here. Integration with main dashboard updating features coming soon.</p>
             </div>
+        </div>
 
-            <div class="card-container">
-                <h2 style="margin-top:0;">System User Database</h2>
-                <table>
-                    <thead><tr><th>Role</th><th>Username</th><th>Email</th><th>Status</th><th>Security Actions</th></tr></thead>
-                    <tbody id="users-body"></tbody>
-                </table>
+        <div id="view-content" class="view-section">
+            <div class="page-header"><h1>Content Management</h1></div>
+            <div class="table-container">
+                <p style="color: var(--text-muted);">Post barangay news and upload public documents here. (Module in development).</p>
             </div>
+        </div>
+
+        <div id="view-system" class="view-section">
+            <div class="page-header"><h1>System Monitoring & Logs</h1></div>
+            <div class="log-box" id="system-logs">
+                > System initialized.<br>
+                > Database connected successfully.<br>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-user-modal">
+        <div class="modal">
+            <h2>Edit Citizen Details</h2>
+            <input type="hidden" id="edit-userid">
+            <div class="form-group"><label>First Name</label><input type="text" id="edit-fname"></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="edit-lname"></div>
+            <div class="form-group"><label>Email Address</label><input type="email" id="edit-email"></div>
+            <button class="btn-save" onclick="submitEditUser()">Save Changes</button>
+            <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="history-modal">
+        <div class="modal" style="width: 600px; max-height: 80vh; overflow-y: auto;">
+            <h2>Citizen Activity History</h2>
+            <p id="history-subtitle" style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;"></p>
+            <div id="history-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            <button class="btn-cancel" onclick="document.getElementById('history-modal').style.display='none'">Close</button>
         </div>
     </div>
 
     <script>
-        if (!localStorage.getItem('kalapp_superadmin')) window.location.href = '/superadmin-access.html';
+        const BACKEND_URL = window.location.origin;
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-            if(tabId === 'accounts') loadUsers();
+        // Ensure only Superadmin accesses this page
+        if (localStorage.getItem('kalapp_role') !== 'superadmin') {
+            window.location.href = '/login.html';
         }
 
-        // --- DASHBOARD DATA ---
-        fetch('/api/complaints').then(res => res.json()).then(data => {
-            document.getElementById('total-complaints').innerText = data.complaints.length;
-            document.getElementById('total-resolved').innerText = data.complaints.filter(c => c.status === 'Resolved').length;
-            document.getElementById('total-pending').innerText = data.complaints.filter(c => c.status === 'Pending').length;
-            const tbody = document.getElementById('oversight-body');
-            data.complaints.forEach(c => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td><strong>${c.id}</strong></td><td>${c.barangay}</td><td>${c.issue}</td><td><b>${c.status}</b></td><td>${c.date}</td>`;
-                tbody.appendChild(row);
-            });
-        });
+        // Tab Switching Logic
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+            document.getElementById('view-' + tabId).classList.add('active');
+            el.classList.add('active');
 
-        
-        // --- ACCOUNT MANAGEMENT ---
-        function loadUsers() {
-            fetch('/api/admin/users')
-            .then(res => {
-                if (!res.ok) throw new Error("Server route not found.");
-                return res.json();
-            })
-            .then(data => {
-                const tbody = document.getElementById('users-body');
-                tbody.innerHTML = '';
-                if (data.users && data.users.length > 0) {
-                    data.users.forEach(u => {
-                        const row = document.createElement('tr');
-                        const roleBadge = u.role === 'lgu' ? `<span class="badge badge-lgu">LGU Official</span>` : `<span class="badge badge-citizen">Citizen</span>`;
-                        const statusBadge = u.status === 'blocked' ? `<span class="badge badge-blocked">Suspended</span>` : `<span class="badge badge-active">Active</span>`;
-                        const blockBtn = u.status === 'blocked' 
-                            ? `<button class="btn-unblock" onclick="toggleBlock('${u._id}')">Unblock User</button>`
-                            : `<button class="btn-block" onclick="toggleBlock('${u._id}')">Suspend Account</button>`;
-                        
-                        row.innerHTML = `<td>${roleBadge}</td><td><strong>${u.username}</strong></td><td>${u.email}</td><td>${statusBadge}</td>
-                            <td>
-                                <button class="btn-reset" onclick="resetPassword('${u._id}')">Reset</button>
-                                ${blockBtn}
-                            </td>`;
-                        tbody.appendChild(row);
-                    });
+            if(tabId === 'dashboard') loadAnalytics();
+            if(tabId === 'users') loadUsers();
+            if(tabId === 'system') appendLog('Admin checked system logs.');
+        }
+
+        // System Logger
+        function appendLog(msg) {
+            const logBox = document.getElementById('system-logs');
+            const time = new Date().toLocaleTimeString();
+            logBox.innerHTML += `> [${time}] ${msg}<br>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // --- DASHBOARD ANALYTICS ---
+        async function loadAnalytics() {
+            try {
+                const res = await fetch('/api/admin/analytics');
+                const data = await res.json();
+                
+                document.getElementById('stat-total').innerText = data.totalComplaints;
+                document.getElementById('stat-pending').innerText = data.pending;
+                document.getElementById('stat-resolved').innerText = data.resolved;
+                document.getElementById('stat-users').innerText = data.activeUsers;
+
+                // Update Chart Legend
+                document.getElementById('chart-total').innerText = data.totalComplaints;
+                document.getElementById('leg-pending').innerText = data.pending;
+                document.getElementById('leg-resolved').innerText = data.resolved;
+                const otherCount = data.totalComplaints - (data.pending + data.resolved);
+                document.getElementById('leg-other').innerText = otherCount;
+
+                // Update Top Barangays Table
+                const tbody = document.getElementById('top-barangay-list');
+                if(data.topBarangays.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">No complaints filed yet.</td></tr>';
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No users found in database.</td></tr>';
+                    tbody.innerHTML = data.topBarangays.map(b => `
+                        <tr>
+                            <td><strong>${b._id || 'Unknown'}</strong></td>
+                            <td>${b.count} Reports</td>
+                            <td><span style="color: var(--danger); font-size: 12px; font-weight: bold;">Needs Attention</span></td>
+                        </tr>
+                    `).join('');
                 }
-            })
-            .catch(err => console.error("Failed to load users:", err));
+            } catch(e) { console.error('Failed to load analytics'); }
         }
 
-        function createLgu() {
-            const user = document.getElementById('new-lgu-user').value;
-            const email = document.getElementById('new-lgu-email').value;
-            const pass = document.getElementById('new-lgu-pass').value;
-            
-            if(!user || !email || !pass) return alert('⚠️ Please fill out all fields.');
+        // --- USER MANAGEMENT ---
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/admin/users');
+                const data = await res.json();
+                
+                // Filter out LGU and Superadmins from this citizen list
+                const citizens = data.users.filter(u => u.role === 'citizen');
+                document.getElementById('user-badge-count').innerText = citizens.length;
 
-            fetch('/api/admin/create-lgu', {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user, email: email, password: pass })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('✅ Official LGU Account Created Successfully!');
-                    document.getElementById('new-lgu-user').value = ''; 
-                    document.getElementById('new-lgu-email').value = ''; 
-                    document.getElementById('new-lgu-pass').value = '';
-                    loadUsers(); // Refresh the table
-                } else {
-                    alert('❌ Server Error: Could not save to database.');
-                }
-            })
-            .catch(err => {
-                alert('❌ Connection Error: Is the server running?');
-            });
-        }
-
-        function toggleBlock(id) {
-            fetch(`/api/admin/users/${id}/toggle-block`, { method: 'PATCH' }).then(() => loadUsers());
-        }
-
-        function resetPassword(id) {
-            const newPass = prompt("Enter the new temporary password for this user:");
-            if(newPass) {
-                fetch(`/api/admin/users/${id}/reset-password`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ newPassword: newPass })
-                }).then(() => alert("Password reset successfully."));
+                const tbody = document.getElementById('users-table-body');
+                tbody.innerHTML = citizens.map(u => {
+                    const statusClass = u.status === 'active' ? 'pill-active' : 'pill-blocked';
+                    const strikeColor = u.strikes >= 3 ? 'color: var(--danger); font-weight: bold;' : '';
+                    
+                    return `
+                    <tr>
+                        <td><strong>${u._id.substring(u._id.length - 6).toUpperCase()}</strong></td>
+                        <td>${u.firstName} ${u.lastName}</td>
+                        <td>${u.email}</td>
+                        <td><span class="status-pill ${statusClass}">${u.status.toUpperCase()}</span></td>
+                        <td style="${strikeColor}">${u.strikes} / 3</td>
+                        <td>
+                            <div class="action-menu">
+                                <button class="action-btn">...</button>
+                                <div class="dropdown-content">
+                                    <button onclick="viewUserHistory('${u.username}')">View Activity History</button>
+                                    <button onclick="openEditModal('${u._id}', '${u.firstName}', '${u.lastName}', '${u.email}')">Edit User Info</button>
+                                    <button onclick="toggleBlock('${u._id}')">${u.status === 'blocked' ? 'Unblock User' : 'Block User'}</button>
+                                    <button onclick="resetStrikes('${u._id}')">Reset Strikes</button>
+                                    <button class="danger" onclick="deleteUser('${u._id}', '${u.username}')">Permanently Delete</button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            } catch (e) {
+                document.getElementById('users-table-body').innerHTML = '<tr><td colspan="6" style="color:red;">Error loading users.</td></tr>';
             }
         }
 
-        function logout() { localStorage.removeItem('kalapp_superadmin'); window.location.href = '/superadmin-access.html'; }
+        // User Actions
+        async function toggleBlock(id) {
+            if(!confirm("Toggle block status for this user?")) return;
+            await fetch(`/api/admin/users/${id}/toggle-block`, { method: 'PATCH' });
+            appendLog(`Toggled block status for user ID: ${id}`);
+            loadUsers();
+        }
+
+        async function resetStrikes(id) {
+            if(!confirm("Reset strikes to 0 for this user?")) return;
+            await fetch(`/api/admin/users/${id}/reset-strikes`, { method: 'PATCH' });
+            appendLog(`Reset strikes for user ID: ${id}`);
+            loadUsers();
+        }
+
+        async function deleteUser(id, username) {
+            const code = prompt(`WARNING: This permanently deletes the user and anonymizes their past reports.\nType "DELETE" to confirm for user: ${username}`);
+            if (code !== "DELETE") return;
+
+            try {
+                await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+                appendLog(`Permanently deleted user: ${username}`);
+                loadUsers();
+                loadAnalytics();
+            } catch(e) { alert("Failed to delete user."); }
+        }
+
+        // View User History
+        async function viewUserHistory(username) {
+            document.getElementById('history-modal').style.display = 'flex';
+            document.getElementById('history-list').innerHTML = "Loading...";
+            try {
+                const res = await fetch(`/api/admin/users/${username}/activity`);
+                const data = await res.json();
+                document.getElementById('history-subtitle').innerText = `Total Reports Submitted: ${data.total}`;
+                
+                if(data.total === 0) {
+                    document.getElementById('history-list').innerHTML = "<p>No complaints submitted by this user.</p>";
+                    return;
+                }
+
+                document.getElementById('history-list').innerHTML = data.complaints.map(c => `
+                    <div style="padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                        <strong>${c.trackingId}</strong> - ${c.category} <span style="float:right; font-size:12px; color:var(--text-muted);">${new Date(c.createdAt).toLocaleDateString()}</span>
+                        <p style="font-size: 13px; margin-top: 5px;">Status: <strong>${c.status}</strong></p>
+                    </div>
+                `).join('');
+            } catch(e) { document.getElementById('history-list').innerHTML = "Error loading history."; }
+        }
+
+        // Edit Modal Logic
+        function openEditModal(id, fname, lname, email) {
+            document.getElementById('edit-userid').value = id;
+            document.getElementById('edit-fname').value = fname !== 'undefined' ? fname : '';
+            document.getElementById('edit-lname').value = lname !== 'undefined' ? lname : '';
+            document.getElementById('edit-email').value = email !== 'undefined' ? email : '';
+            document.getElementById('edit-user-modal').style.display = 'flex';
+        }
+
+        function closeEditModal() { document.getElementById('edit-user-modal').style.display = 'none'; }
+
+        async function submitEditUser() {
+            const id = document.getElementById('edit-userid').value;
+            const fname = document.getElementById('edit-fname').value;
+            const lname = document.getElementById('edit-lname').value;
+            const email = document.getElementById('edit-email').value;
+
+            try {
+                await fetch(`/api/admin/users/${id}/edit`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName: fname, lastName: lname, email: email })
+                });
+                appendLog(`Updated profile info for user ID: ${id}`);
+                closeEditModal();
+                loadUsers();
+            } catch(e) { alert("Update failed."); }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+
+        // Init
+        loadAnalytics();
+        appendLog('Superadmin Dashboard session started.');
     </script>
 </body>
 </html>
