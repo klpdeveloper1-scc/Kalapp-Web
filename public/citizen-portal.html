@@ -1109,7 +1109,7 @@
             return;
             }
 
-            
+
             const fileInput = document.getElementById('evidence'); const formMsg = document.getElementById('form-msg'); const submitBtn = document.querySelector('.btn-submit');
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
@@ -1218,9 +1218,11 @@
     const lower = val.toLowerCase();
     document.getElementById('lupon-tip-box').style.display = 
         luponKeywords.some(kw => lower.includes(kw)) ? 'block' : 'none';
-        
-    
-    
+    }
+
+    function logout() {
+    localStorage.clear(); // This wipes the previous user's name
+    window.location.href = 'login.html';
     }
     </script>
 </body>

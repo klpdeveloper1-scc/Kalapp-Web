@@ -524,9 +524,13 @@
                 localStorage.setItem('kalapp_role', data.role);
                 
                 // If your backend returns firstName and lastName upon login, save it:
-                if(data.firstName && data.lastName) {
-        localStorage.setItem('kalapp_fullname', data.firstName + ' ' + data.lastName);
-    }
+                // Force overwrite the name on every login to prevent overlapping accounts
+                if (data.firstName || data.lastName) {
+                localStorage.setItem('kalapp_fullname', (data.firstName + ' ' + data.lastName).trim());
+                } else {
+                // Fallback to the username if they don't have a first/last name (like LGU or Superadmin)
+                localStorage.setItem('kalapp_fullname', data.username);
+                }
                 
                 if (data.role === 'superadmin') window.location.href = '/superadmin-dashboard.html';
                 else if (data.role === 'lgu') window.location.href = '/lgu-dashboard.html';
