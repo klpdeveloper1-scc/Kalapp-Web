@@ -901,6 +901,7 @@ app.post('/api/ai-chat', async (req, res) => {
         const { message, history } = req.body;
         // ADD THIS - log what's coming in
         console.log('💬 Chat request received:', { message, historyLength: history?.length });
+        
         const model = genAI.getGenerativeModel({
             model: 'gemini-1.5-flash',
             systemInstruction: `You are 'Sumbong-Bot', the official AI assistant of the Kalapp Barangay Complaint System.
@@ -913,13 +914,18 @@ STRICT RULES YOU MUST FOLLOW:
 
         const chat = model.startChat({ history: history || [] });
         const result = await chat.sendMessage(message);
+        
         // ADD THIS - log the response
         console.log('✅ Gemini responded successfully');
-        res.json({ reply: result.response.text() });
         
+        // ONLY send the success response here
+        res.json({ reply: result.response.text() });
+
+    } catch (error) { 
+        // ALL error handling must go down here in the catch block
         console.error('❌ AI Chat Error:', error.message, error.stack);
-        res.status(500).json({ error: error.message });
-    } catch (error) { res.status(500).json({ error: 'AI Error' }); }
+        res.status(500).json({ error: error.message || 'Sumbong-Bot encountered an internal error.' }); 
+    }
 });
 
 // --- COMMUNITY FEED (WITH MASKING) ---
