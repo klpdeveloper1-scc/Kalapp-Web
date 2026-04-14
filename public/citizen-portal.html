@@ -17,7 +17,8 @@
             --color-light: rgba(132, 139, 200, 0.18);
             --color-background: #f6f6f9;
             --color-chat: #2563eb;
-            --card-border-radius: 1.5rem; --border-radius-1: 0.8rem; --card-padding: 1.5rem; --box-shadow: 0 2rem 3rem var(--color-light);
+            --card-border-radius: 1.5rem;
+            --border-radius-1: 0.8rem; --card-padding: 1.5rem; --box-shadow: 0 2rem 3rem var(--color-light);
         }
         .dark-theme {
             --color-background: #181a1e;
@@ -26,16 +27,10 @@
         }
         * { margin: 0; padding: 0; outline: 0; border: 0; text-decoration: none; list-style: none; box-sizing: border-box; }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.95rem; background: var(--color-background);
-            color: var(--color-dark); overflow-x: hidden; transition: all 300ms ease;
-        }
+        body { font-family: 'Poppins', sans-serif; font-size: 0.95rem; background: var(--color-background); color: var(--color-dark); overflow-x: hidden; transition: all 300ms ease; }
 
-        /* ── DESKTOP LAYOUT ── */
         .container { display: grid; width: 96%; margin: 0 auto; gap: 1.8rem; grid-template-columns: 14rem auto 23rem; min-height: 100vh; }
 
-        /* SIDEBAR */
         aside { height: 100vh; position: sticky; top: 0; }
         aside .top { display: flex; align-items: center; justify-content: space-between; margin-top: 1.4rem; }
         aside .logo { display: flex; gap: 0.8rem; align-items: center; font-size: 1.2rem; font-weight: bold; }
@@ -47,12 +42,10 @@
         aside .sidebar a:hover { color: var(--color-primary); }
         aside .sidebar a:hover span { margin-left: 0.5rem; }
 
-        /* MAIN */
-        main { margin-top: 1.4rem; min-width: 0; padding-bottom: 2rem; }
+        main { margin-top: 1.4rem; min-width: 0; }
         .card { background: var(--color-white); padding: var(--card-padding); border-radius: var(--card-border-radius); margin-top: 1rem; margin-bottom: 1.5rem; box-shadow: var(--box-shadow); transition: all 300ms ease; }
         main h1 { margin-bottom: 0.8rem; color: var(--color-dark); font-size: 1.5rem; }
 
-        /* FORM */
         .form-group { margin-bottom: 1.2rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-dark); font-size: 0.9rem; }
         .form-control { width: 100%; padding: 1rem; border-radius: var(--border-radius-1); border: 1.5px solid var(--color-info-light); background: var(--color-background); color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 1rem; transition: border-color 0.2s; }
@@ -61,7 +54,6 @@
         .btn-submit:hover { background: #e67e00; }
         .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* STATUS */
         .status-pending   { color: var(--color-danger); font-weight: bold; }
         .status-inprogress{ color: var(--color-warning); font-weight: bold; }
         .status-resolved  { color: var(--color-success); font-weight: bold; }
@@ -71,7 +63,6 @@
         .status-lupon-settled   { color: #00bc7d; font-weight: bold; }
         .status-lupon-unresolved{ color: #ff6467; font-weight: bold; text-decoration: line-through; }
 
-        /* AI PREVIEW BOX */
         #ai-preview-box { display: none; margin-top: 0.8rem; padding: 1rem; border-radius: var(--border-radius-1); border: 1.5px solid var(--color-info-light); background: var(--color-background); font-size: 0.88rem; line-height: 1.5; animation: fadeIn 0.4s ease; }
         #ai-preview-box.match   { border-color: #41f1b6; background: rgba(65,241,182,0.07); }
         #ai-preview-box.mismatch{ border-color: #ff7782; background: rgba(255,119,130,0.07); }
@@ -79,59 +70,17 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* RIGHT PANEL & PROFILE CARD (DESKTOP) */
         .right { margin-top: 1.4rem; }
         .right .header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 1.2rem; }
         .right .theme-toggler { background: var(--color-light); display: flex; align-items: center; height: 1.6rem; width: 4.2rem; cursor: pointer; border-radius: var(--border-radius-1); }
         .right .theme-toggler span { font-size: 1.2rem; width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .right .theme-toggler span.active { background: var(--color-primary); color: white; border-radius: var(--border-radius-1); }
         
-        .profile-card {
-            background: var(--color-white);
-            border-radius: var(--card-border-radius);
-            padding: var(--card-padding);
-            box-shadow: var(--box-shadow);
-            margin-bottom: 1.5rem;
-            width: 100%;
-            transition: all 300ms ease;
-        }
+        .profile-card { background: var(--color-white); border-radius: var(--card-border-radius); padding: var(--card-padding); box-shadow: var(--box-shadow); margin-bottom: 1.5rem; width: 100%; transition: all 300ms ease; }
         
-        /* ── DYNAMIC AVATAR & EDIT ICON STYLES ── */
-        .avatar-holder {
-            position: relative;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .avatar-circle {
-            width: 100%;
-            height: 100%;
-            aspect-ratio: 1 / 1;
-            border-radius: 50%;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            background: var(--color-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        
-        .profile-photo {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .avatar-holder { position: relative; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .avatar-circle { width: 100%; height: 100%; aspect-ratio: 1 / 1; border-radius: 50%; position: relative; overflow: hidden; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: var(--color-primary); display: flex; align-items: center; justify-content: center; color: white; font-family: 'Poppins', sans-serif; font-weight: 700; text-transform: uppercase; }
+        .profile-photo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         
         .header-actions .avatar-holder { width: 45px; height: 45px; margin-right: 0.6rem; cursor: pointer; }
         .header-actions .avatar-circle { font-size: 1.2rem; }
@@ -142,11 +91,7 @@
         .mobile-profile-content .avatar-holder { width: 75px; height: 75px; margin-right: 1rem; }
         .mobile-profile-content .avatar-circle { font-size: 2rem; }
 
-        .edit-photo-btn {
-            position: absolute; bottom: -5px; right: -5px; background: var(--color-dark); color: white; border-radius: 50%;
-            width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer;
-            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s;
-        }
+        .edit-photo-btn { position: absolute; bottom: -5px; right: -5px; background: var(--color-dark); color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: 0.2s; }
         .edit-photo-btn:hover { background: var(--color-primary); }
         .edit-photo-btn span { font-size: 15px !important; }
 
@@ -166,77 +111,39 @@
         #mobile-search-card { display: none; }
         @media screen and (max-width: 768px) { #mobile-search-card { display: block; margin-bottom: 1rem; } }
 
-        /* ── MOBILE HEADER & NAV ── */
         .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 65px; background: var(--color-white); align-items: center; justify-content: space-between; padding: 0 1rem; z-index: 999; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
         .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--color-white); justify-content: space-around; align-items: center; padding: 0.4rem 0 0.6rem; z-index: 999; box-shadow: 0 -2px 12px rgba(0,0,0,0.1); border-top: 1px solid var(--color-light); }
-        .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.6rem; border-radius: 12px; transition: color 0.2s; }
+        .mobile-nav button { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; font-family: 'Poppins', sans-serif; color: var(--color-info-dark); cursor: pointer; gap: 0.15rem; padding: 0.3rem 0.8rem; border-radius: 12px; transition: color 0.2s; }
         .mobile-nav button span.material-icons-sharp { font-size: 1.5rem; }
         .mobile-nav button.active { color: var(--color-primary); }
 
-        /* ── MOBILE PROFILE MODAL DROPDOWN ── */
-        #mobile-profile-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease;
-        }
+        #mobile-profile-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; backdrop-filter: blur(2px); animation: fadeIn 0.2s ease; }
 
         @media (max-width: 768px) {
-            .mobile-profile-content {
-                position: absolute;
-                top: 70px;
-                right: 5%;
-                width: 90vw;
-                max-width: 320px;
-            }
+            .mobile-profile-content { position: absolute; top: 70px; right: 5%; width: 90vw; max-width: 320px; }
         }
 
-        .mobile-profile-content {
-            position: absolute; top: 70px; right: 5%; width: 90vw; max-width: 320px; background: var(--color-white); border-radius: var(--card-border-radius);
-            padding: 1.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideDown 0.3s ease;
-        }
+        .mobile-profile-content { position: absolute; top: 70px; right: 5%; width: 90vw; max-width: 320px; background: var(--color-white); border-radius: var(--card-border-radius); padding: 1.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: slideDown 0.3s ease; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ── SETTINGS MENU BUTTONS ── */
-        .settings-menu-btn {
-            display: flex; justify-content: space-between; align-items: center; width: 100%;
-            padding: 1.2rem; background: var(--color-background); border: 1px solid var(--color-light);
-            border-radius: var(--border-radius-1); cursor: pointer; transition: all 0.2s ease;
-            color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 500;
-            margin-bottom: 0.8rem;
-        }
+        .settings-menu-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 1.2rem; background: var(--color-background); border: 1px solid var(--color-light); border-radius: var(--border-radius-1); cursor: pointer; transition: all 0.2s ease; color: var(--color-dark); font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 500; margin-bottom: 0.8rem; }
         .settings-menu-btn:hover { border-color: var(--color-primary); background: rgba(255,140,0,0.05); transform: translateX(5px); }
         .settings-menu-btn .material-icons-sharp { color: var(--color-info-dark); transition: 0.2s; }
         .settings-menu-btn:hover .material-icons-sharp { color: var(--color-primary); }
 
-        /* ── DEDICATED CHAT PAGE UI ── */
-        .chat-container {
-            background: var(--color-white);
-            border-radius: var(--card-border-radius);
-            box-shadow: var(--box-shadow);
-            border: 1px solid var(--color-light);
-            display: flex;
-            flex-direction: column;
-            height: 70vh; /* Adjusts height inside the main tab */
-            overflow: hidden;
-            margin-top: 1rem;
-        }
-        .chat-header { 
-            background: var(--color-chat); 
-            color: white; 
-            padding: 1.2rem 1.5rem; 
-            font-weight: 700; 
-            font-size: 1.1rem;
-            display: flex; 
-            align-items: center; 
-            gap: 10px;
-        }
-        #chat-messages { 
-            flex: 1; 
-            padding: 1.5rem; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            background: var(--color-background); 
-        }
+        #chatbot-toggle { position: fixed; bottom: 30px; right: 30px; width: 75px; height: 75px; border-radius: 50%; background: var(--color-chat); color: white; font-size: 35px; border: none; cursor: pointer; z-index: 2000; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6); transition: 0.3s ease; display: flex; align-items: center; justify-content: center; }
+        #chatbot-toggle:hover { transform: scale(1.1); background: var(--color-primary); }
+        .pulse-anim { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        
+        #chatbot-window { position: fixed; bottom: 120px; right: 30px; width: 380px; height: 550px; max-width: calc(100% - 40px); z-index: 2000; overflow: hidden; display: flex; flex-direction: column; background: var(--color-white); border-radius: var(--card-border-radius); box-shadow: var(--box-shadow); border: 1px solid var(--color-light); transform: translateY(20px) scale(0.95); opacity: 0; pointer-events: none; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #chatbot-window.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+        
+        .chat-header { background: var(--color-chat); color: white; padding: 18px 24px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+        .close-chat-btn { background: none; border: none; color: white; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.2s;}
+        .close-chat-btn:hover { transform: scale(1.2); color: var(--color-danger); }
+        
+        #chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: var(--color-background); }
         .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; color: var(--color-dark); white-space: pre-wrap; }
         .user-bubble { background: var(--color-chat); color: white; align-self: flex-end; border-bottom-right-radius: 4px;}
         .ai-bubble { background: var(--color-white); border: 1px solid var(--color-light); align-self: flex-start; border-bottom-left-radius: 4px;}
@@ -246,7 +153,6 @@
         #send-chat { background: var(--color-chat); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-weight: bold; transition: 0.2s;}
         #send-chat:hover { background: var(--color-primary); transform: scale(1.05);}
 
-        /* ── TABLET & MOBILE RESPONSIVENESS ── */
         @media screen and (max-width: 1200px) {
             .container { grid-template-columns: 7rem auto 20rem; width: 98%; }
             aside .sidebar h3 { display: none; }
@@ -258,12 +164,17 @@
             main { display: block; width: 100% !important; margin-top: 65px !important; padding: 1rem 1rem 5rem; }
             .card { border-radius: 1rem; padding: 1rem; }
             .mobile-header, .mobile-nav { display: flex; }
-            .chat-container { height: calc(100vh - 220px); } /* Fills available mobile space perfectly */
+            #chatbot-window { height: 65vh; right: 15px; bottom: 85px; width: calc(100% - 30px);}
+            #chatbot-toggle { width: 60px; height: 60px; font-size: 26px; bottom: 85px; right: 15px; }
         }
 
-        /* ── LOCATION MAP ── */
         #location-map { height: 280px; border-radius: 12px; border: 1.5px solid var(--color-info-light); margin-bottom: 0.8rem; z-index: 1; }
         .leaflet-container { font-family: 'Poppins', sans-serif; }
+        
+        /* Privacy Toggle Style */
+        #anon-toggle:checked + #anon-slider { background-color: #00bc7d; }
+        #anon-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
+        #anon-toggle:checked + #anon-slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body>
@@ -275,7 +186,6 @@
             <img src="logokalapp.png" alt="Kalapp" style="width:34px; height:34px; border-radius:8px;">
             <strong style="font-size:1.2rem;">KAL<span style="color:var(--color-primary)">APP</span></strong>
         </div>
-        
         <div style="display:flex; align-items:center; cursor:pointer;" onclick="openMobileProfile()">
             <div style="text-align:right; display:flex; flex-direction:column; justify-content:center; margin-right:0.6rem;">
                 <span id="mobile-username-header" style="font-size:0.85rem; font-weight:700; color:var(--color-dark); line-height:1.2;"></span>
@@ -291,10 +201,7 @@
 
         <aside>
             <div class="top">
-                <div class="logo">
-                    <img src="logokalapp.png" alt="Logo" style="width:40px; height:40px; border-radius:8px;">
-                    KAL<span style="color:var(--color-primary)">APP</span>
-                </div>
+                <div class="logo"><img src="logokalapp.png" alt="Logo" style="width:40px; height:40px; border-radius:8px;">KAL<span style="color:var(--color-primary)">APP</span></div>
             </div>
             <div class="sidebar">
                 <a href="#" class="active" onclick="showPage('complaint')"><span class="material-icons-sharp">add_circle_outline</span><h3>File Complaint</h3></a>
@@ -302,7 +209,6 @@
                 <a href="#" onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span><h3>My Documents</h3></a>
                 <a href="#" onclick="showPage('directory')"><span class="material-icons-sharp">location_on</span><h3>Barangay Directory</h3></a>
                 <a href="#" onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span><h3>Hotline</h3></a>
-                <a href="#" onclick="showPage('chat')"><span class="material-icons-sharp">smart_toy</span><h3>Ask AI</h3></a>
             </div>
         </aside>
 
@@ -324,7 +230,6 @@
                             <option value="">-- Choose your Barangay --</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
                         <label>Issue Category</label>
                         <select class="form-control" id="issue" required>
@@ -336,7 +241,6 @@
                             <option value="Business &amp; Ordinance Violations">Business &amp; Ordinance Violations</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label>Detailed Description</label>
                         <textarea class="form-control" id="description" rows="4" placeholder="Describe the issue in detail..." required></textarea>
@@ -344,20 +248,15 @@
                             ⚖️ <strong>Tip:</strong> If this involves a neighbor dispute that may go to Lupon mediation, include the respondent's contact number (e.g., 09XXXXXXXXX) in your description so authorities can reach them.
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label>Upload Photo Evidence</label>
                         <input type="file" class="form-control" id="evidence" accept="image/*" required>
-                        <div id="ai-preview-box">
-                            <span id="ai-preview-text">🤖 Analyzing photo with Gemini AI...</span>
-                        </div>
+                        <div id="ai-preview-box"><span id="ai-preview-text">🤖 Analyzing photo with Gemini AI...</span></div>
                     </div>
-
                     <div class="form-group">
                         <label>📞 Contact Number <span style="color:var(--color-danger);">*</span></label>
                         <input type="tel" class="form-control" id="contactNumber" placeholder="e.g. 09XX-XXX-XXXX" required>
                     </div>
-
                     <div class="form-group">
                         <label>📍 Incident Location</label>
                         <div id="exif-location-label" style="display:none; margin-bottom:0.6rem; font-size:0.85rem; color:var(--color-success); font-weight:600;">📷 Location auto-detected from photo</div>
@@ -389,17 +288,13 @@
         <main id="history-page" style="display:none;">
             <h1>My Complaints</h1>
             <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">Track the status of your reports. Tap a card to view LGU feedback and request legal affidavits.</p>
-            
-            <div id="history-container" style="display:flex; flex-direction:column; gap:1rem;">
-                <p style="text-align:center; padding:2rem; color:var(--color-info-dark);">Loading records...</p>
-            </div>
+            <div id="history-container" style="display:flex; flex-direction:column; gap:1rem;"><p style="text-align:center; padding:2rem; color:var(--color-info-dark);">Loading records...</p></div>
         </main>
 
         <main id="affidavits-page" style="display:none;">
             <h1>My Documents</h1>
             <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">List of approved affidavits available for download based on your resolved reports.</p>
-            <div id="affidavits-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-                </div>
+            <div id="affidavits-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
         </main>
 
         <main id="hotline-page" style="display:none;">
@@ -430,30 +325,11 @@
             </div>
         </main>
 
-        <main id="chat-page" style="display:none;">
-            <h1>Sumbong-Bot AI</h1>
-            <p style="color:var(--color-info-dark); margin-bottom:1rem; font-size:0.88rem;">Need help? Ask our AI assistant about Kalapp and how to report barangay issues.</p>
-            
-            <div class="chat-container">
-                <div class="chat-header">
-                    <span class="material-icons-sharp">smart_toy</span> Sumbong-Bot
-                </div>
-                <div id="chat-messages">
-                    <div class="chat-bubble ai-bubble">Hello po! I am Sumbong-Bot, your AI assistant. Do you have any questions about the system or how to file a complaint?</div>
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
-                    <button id="send-chat" type="button">✓</button>
-                </div>
-            </div>
-        </main>
-
         <div class="right">
             <div class="header-actions">
                 <div style="display:flex; justify-content:flex-end; width:100%; margin-bottom:1rem;">
                     <div class="theme-toggler" id="theme-toggler">
-                        <span class="material-icons-sharp active">light_mode</span>
-                        <span class="material-icons-sharp">dark_mode</span>
+                        <span class="material-icons-sharp active">light_mode</span><span class="material-icons-sharp">dark_mode</span>
                     </div>
                 </div>
 
@@ -461,9 +337,7 @@
                     <div class="profile-card-header">
                         <div class="avatar-holder">
                             <div class="avatar-circle" id="desktop-avatar-circle"></div>
-                            <div class="edit-photo-btn" onclick="document.getElementById('quick-profile-photo-upload').click()">
-                                <span class="material-icons-sharp">photo_camera</span>
-                            </div>
+                            <div class="edit-photo-btn" onclick="document.getElementById('quick-profile-photo-upload').click()"><span class="material-icons-sharp">photo_camera</span></div>
                         </div>
                         <div>
                             <h3 id="desktop-citizen-name-display" style="font-size: 1.1rem;">Citizen</h3>
@@ -472,26 +346,15 @@
                     </div>
                     
                     <div class="profile-card-stats">
-                        <div class="stat-item">
-                            <p>Reports</p>
-                            <h4 class="stat-reports-count">0</h4>
-                        </div>
-                        <div class="stat-item">
-                            <p>Vouches</p>
-                            <h4 class="stat-vouches-count">0</h4>
-                        </div>
-                        <div class="stat-item">
-                            <p>Strikes</p>
-                            <h4 style="color:var(--color-danger);">0</h4>
-                        </div>
+                        <div class="stat-item"><p>Reports</p><h4 class="stat-reports-count">0</h4></div>
+                        <div class="stat-item"><p>Vouches</p><h4 class="stat-vouches-count">0</h4></div>
+                        <div class="stat-item"><p>Strikes</p><h4 style="color:var(--color-danger);">0</h4></div>
                     </div>
 
                     <div class="profile-card-menu">
                         <a href="#" onclick="openSettingsModal()"><span class="material-icons-sharp">settings</span> Account Settings</a>
-                        <a href="#"><span class="material-icons-sharp">security</span> Privacy & Security</a>
-                        <a href="#" onclick="logout()" style="color: var(--color-danger); margin-top: 0.5rem; border-top: 1px solid var(--color-light); border-radius: 0; padding-top: 1rem;">
-                            <span class="material-icons-sharp" style="color: var(--color-danger);">logout</span> Log Out
-                        </a>
+                        <a href="#" onclick="openPrivacyModal()"><span class="material-icons-sharp">security</span> Privacy & Security</a>
+                        <a href="#" onclick="logout()" style="color: var(--color-danger); margin-top: 0.5rem; border-top: 1px solid var(--color-light); border-radius: 0; padding-top: 1rem;"><span class="material-icons-sharp" style="color: var(--color-danger);">logout</span> Log Out</a>
                     </div>
                 </div>
 
@@ -514,105 +377,116 @@
         <button onclick="showPage('complaint')"><span class="material-icons-sharp">add_circle_outline</span>File</button>
         <button onclick="showPage('history')"><span class="material-icons-sharp">history</span>History</button>
         <button onclick="showPage('feed')"><span class="material-icons-sharp">dynamic_feed</span>Feed</button>
-        <button onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span>Docs</button>
-        <button onclick="showPage('chat')"><span class="material-icons-sharp">smart_toy</span>Ask AI</button>
+        <button onclick="showPage('affidavits')"><span class="material-icons-sharp">folder_shared</span>Documents</button>
+        <button onclick="showPage('hotline')"><span class="material-icons-sharp">contact_emergency</span>Hotline</button>
     </nav>
+
+    <button id="chatbot-toggle" class="pulse-anim" type="button" title="Chat with Sumbong-Bot">💬</button>
+
+    <div id="chatbot-window">
+        <div class="chat-header"><span>Sumbong-Bot 🤖</span><button id="close-chat" class="close-chat-btn" type="button">✕</button></div>
+        <div id="chat-messages"><div class="chat-bubble ai-bubble">Hello po! I am Sumbong-Bot, your AI assistant. Do you have any questions about the system or how to file a complaint?</div></div>
+        <div class="chat-input-area"><input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off"><button id="send-chat" type="button">✓</button></div>
+    </div>
 
     <div id="mobile-profile-modal" onclick="if(event.target===this) closeMobileProfile()">
         <div class="mobile-profile-content">
-            
             <div onclick="toggleTheme()" style="position: absolute; top: 1.5rem; right: 1.5rem; cursor: pointer; color: var(--color-info-dark); background: var(--color-light); padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <span class="material-icons-sharp" id="mobile-theme-icon">light_mode</span>
             </div>
-
             <div class="profile-card-header" style="border-bottom:none;">
                 <div class="avatar-holder">
                     <div class="avatar-circle" id="modal-avatar-circle"></div>
-                    <div class="edit-photo-btn" onclick="document.getElementById('quick-profile-photo-upload').click()">
-                        <span class="material-icons-sharp">photo_camera</span>
-                    </div>
+                    <div class="edit-photo-btn" onclick="document.getElementById('quick-profile-photo-upload').click()"><span class="material-icons-sharp">photo_camera</span></div>
                 </div>
                 <div>
                     <h3 id="mobile-modal-name-display" style="font-size: 1.1rem;">Citizen</h3>
                     <p style="font-size:0.8rem; color:var(--color-info-dark);">Verified Resident 🛡️</p>
                 </div>
             </div>
-            
             <div class="profile-card-stats" style="margin-top: 0.5rem; border-top: 1px solid var(--color-light); padding-top: 1rem;">
                 <div class="stat-item"><p>Reports</p><h4 class="stat-reports-count">0</h4></div>
                 <div class="stat-item"><p>Vouches</p><h4 class="stat-vouches-count">0</h4></div>
                 <div class="stat-item"><p>Strikes</p><h4 style="color:var(--color-danger);">0</h4></div>
             </div>
-
             <div class="profile-card-menu">
                 <a href="#" onclick="closeMobileProfile(); openSettingsModal()"><span class="material-icons-sharp">settings</span> Account Settings</a>
-                <a href="#"><span class="material-icons-sharp">security</span> Privacy & Security</a>
-                <a href="#" onclick="logout()" style="color: var(--color-danger); margin-top: 0.5rem; border-top: 1px solid var(--color-light); border-radius: 0; padding-top: 1rem;">
-                    <span class="material-icons-sharp" style="color: var(--color-danger);">logout</span> Log Out
-                </a>
+                <a href="#" onclick="closeMobileProfile(); openPrivacyModal()"><span class="material-icons-sharp">security</span> Privacy & Security</a>
+                <a href="#" onclick="logout()" style="color: var(--color-danger); margin-top: 0.5rem; border-top: 1px solid var(--color-light); border-radius: 0; padding-top: 1rem;"><span class="material-icons-sharp" style="color: var(--color-danger);">logout</span> Log Out</a>
             </div>
         </div>
     </div>
 
     <div id="settings-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem; backdrop-filter: blur(2px);">
         <div style="background:var(--color-white); max-width:480px; width:100%; margin:10% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
-            
             <span onclick="closeSettingsModal()" style="position:absolute; top:1.2rem; right:1.5rem; cursor:pointer; font-size:1.8rem; color:var(--color-info-dark); line-height:1;">&times;</span>
-            
             <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.2rem;">
                 <span id="settings-back-btn" class="material-icons-sharp" style="display:none; cursor:pointer; color:var(--color-dark);" onclick="backToSettingsMain()">arrow_back</span>
                 <h2 id="settings-title-text" style="color:var(--color-dark); font-size: 1.3rem; margin:0;">⚙️ Account Settings</h2>
             </div>
-            
             <div id="settings-msg" style="margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600; text-align: center;"></div>
 
             <div id="settings-main-view">
-                <button class="settings-menu-btn" onclick="openSettingsView('name')">
-                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">badge</span> Change Name</div>
-                    <span class="material-icons-sharp">chevron_right</span>
-                </button>
-                <button class="settings-menu-btn" onclick="openSettingsView('email')">
-                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">email</span> Update Email Address</div>
-                    <span class="material-icons-sharp">chevron_right</span>
-                </button>
-                <button class="settings-menu-btn" onclick="openSettingsView('password')">
-                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">lock</span> Change Password</div>
-                    <span class="material-icons-sharp">chevron_right</span>
-                </button>
+                <button class="settings-menu-btn" onclick="openSettingsView('name')"><div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">badge</span> Change Name</div><span class="material-icons-sharp">chevron_right</span></button>
+                <button class="settings-menu-btn" onclick="openSettingsView('email')"><div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">email</span> Update Email Address</div><span class="material-icons-sharp">chevron_right</span></button>
+                <button class="settings-menu-btn" onclick="openSettingsView('password')"><div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp">lock</span> Change Password</div><span class="material-icons-sharp">chevron_right</span></button>
             </div>
 
             <div id="settings-name-view" style="display:none; animation: fadeIn 0.3s ease;">
-                <div class="form-group" style="margin-bottom: 1.2rem;">
-                    <label>New First Name</label>
-                    <input type="text" id="settings-fname" class="form-control" placeholder="Enter first name">
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>New Last Name</label>
-                    <input type="text" id="settings-lname" class="form-control" placeholder="Enter last name">
-                </div>
+                <div class="form-group" style="margin-bottom: 1.2rem;"><label>New First Name</label><input type="text" id="settings-fname" class="form-control" placeholder="Enter first name"></div>
+                <div class="form-group" style="margin-bottom: 1.5rem;"><label>New Last Name</label><input type="text" id="settings-lname" class="form-control" placeholder="Enter last name"></div>
                 <button class="btn-submit" onclick="saveSettingsName(this)">Save Name</button>
             </div>
 
             <div id="settings-email-view" style="display:none; animation: fadeIn 0.3s ease;">
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>New Email Address</label>
-                    <input type="email" id="settings-email" class="form-control" placeholder="e.g. new.email@example.com">
-                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;"><label>New Email Address</label><input type="email" id="settings-email" class="form-control" placeholder="e.g. new.email@example.com"></div>
                 <button class="btn-submit" onclick="saveSettingsEmail(this)">Update Email</button>
             </div>
 
             <div id="settings-password-view" style="display:none; animation: fadeIn 0.3s ease;">
-                <div class="form-group" style="margin-bottom: 1.2rem;">
-                    <label>Current Password</label>
-                    <input type="password" id="settings-current-pw" class="form-control" placeholder="Enter current password">
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label>New Password</label>
-                    <input type="password" id="settings-new-pw" class="form-control" placeholder="Enter new password">
-                </div>
+                <div class="form-group" style="margin-bottom: 1.2rem;"><label>Current Password</label><input type="password" id="settings-current-pw" class="form-control" placeholder="Enter current password"></div>
+                <div class="form-group" style="margin-bottom: 1.5rem;"><label>New Password</label><input type="password" id="settings-new-pw" class="form-control" placeholder="Enter new password"></div>
                 <button class="btn-submit" onclick="saveSettingsPassword(this)">Update Password</button>
             </div>
+        </div>
+    </div>
 
+    <div id="privacy-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:3000; overflow-y:auto; padding:1rem; backdrop-filter: blur(2px);">
+        <div style="background:var(--color-white); max-width:480px; width:100%; margin:10% auto; padding:2rem; border-radius:var(--card-border-radius); position:relative; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+            <span onclick="closePrivacyModal()" style="position:absolute; top:1.2rem; right:1.5rem; cursor:pointer; font-size:1.8rem; color:var(--color-info-dark); line-height:1;">&times;</span>
+            <h2 style="color:var(--color-dark); font-size: 1.3rem; margin-bottom: 1.5rem;">🛡️ Privacy & Security</h2>
+
+            <div style="background:var(--color-background); border: 1px solid var(--color-light); border-radius:var(--border-radius-1); padding:1rem; margin-bottom:1rem;">
+                <h4 style="margin-bottom: 0.5rem; color:var(--color-dark);">Identity & Anonymity</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <p style="font-size:0.85rem; color:var(--color-info-dark); width: 80%;">Hide my real name on the public Community Feed</p>
+                    <label style="position: relative; display: inline-block; width: 40px; height: 20px;">
+                        <input type="checkbox" id="anon-toggle" style="opacity: 0; width: 0; height: 0;" onchange="toggleAnonymity(this)">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px;" id="anon-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="background:var(--color-background); border: 1px solid var(--color-light); border-radius:var(--border-radius-1); padding:1rem; margin-bottom:1rem;">
+                <h4 style="margin-bottom: 0.5rem; color:var(--color-dark);">Account Security</h4>
+                <p style="font-size:0.85rem; margin-bottom: 0.5rem; color:var(--color-info-dark);"><strong>Active Session:</strong> Kalapp Web App (Verified ✅)</p>
+                <button class="settings-menu-btn" style="margin-bottom:0; padding:0.8rem;" onclick="closePrivacyModal(); openSettingsModal(); openSettingsView('password');">
+                    <div style="display:flex; align-items:center; gap:0.8rem;"><span class="material-icons-sharp" style="font-size: 1.2rem;">lock</span> Change Password</div>
+                    <span class="material-icons-sharp">chevron_right</span>
+                </button>
+            </div>
+
+            <div style="background:var(--color-background); border: 1px solid var(--color-light); border-radius:var(--border-radius-1); padding:1rem; margin-bottom:1rem;">
+                <h4 style="margin-bottom: 0.5rem; color:var(--color-dark);">Data Management</h4>
+                <p style="font-size:0.8rem; color:var(--color-info-dark); margin-bottom:1rem;">Manage your data in accordance with the Data Privacy Act of 2012.</p>
+                <button onclick="requestDataExport()" style="width:100%; background:var(--color-primary); color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:600; margin-bottom: 10px;">📥 Request My Data File</button>
+                <button onclick="deleteAccount()" style="width:100%; background:transparent; color:var(--color-danger); border:1px solid var(--color-danger); padding:10px; border-radius:8px; cursor:pointer; font-weight:600;">🗑️ Delete Account</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="#" style="font-size: 0.8rem; color: var(--color-info-dark); margin-right: 15px;" onclick="alert('Privacy Policy: Kalapp encrypts and stores your data solely for LGU complaint resolution and will not sell your data to third parties.')">Privacy Policy</a>
+                <a href="#" style="font-size: 0.8rem; color: var(--color-info-dark);" onclick="alert('Terms of Service: By using Kalapp, you agree to submit truthful reports. False reporting may result in a permanent account ban.')">Terms of Service</a>
+            </div>
         </div>
     </div>
 
@@ -637,7 +511,6 @@
     <script>
         const BACKEND_URL = window.location.origin;
         
-        // --- SECURITY ROLE CHECK (THE BOUNCER) ---
         const userRole = localStorage.getItem('kalapp_role');
         if (userRole && userRole !== 'citizen') {
             localStorage.removeItem('kalapp_username');
@@ -646,20 +519,18 @@
         }
 
         const username = localStorage.getItem('kalapp_username') || 'Anonymous';
-        const fullName = localStorage.getItem('kalapp_fullname') || username; // Fallback to username if name isn't set yet
-
-        // Setup Usernames
+        // --- NAME FIX ---
+        const fullName = localStorage.getItem('kalapp_fullname') || username;
+        
         document.getElementById('desktop-citizen-name-display').innerText = fullName;
         document.getElementById('mobile-username-header').innerText = fullName;
         document.getElementById('mobile-modal-name-display').innerText = fullName;
 
-        /* ── DYNAMIC AVATAR LOGIC (Initials vs Photo) ── */
         function updateAllAvatars(username, photoUrl) {
             const containers = ['header-avatar-circle', 'desktop-avatar-circle', 'modal-avatar-circle'];
             containers.forEach(id => {
                 const el = document.getElementById(id);
                 if(!el) return;
-                
                 if (photoUrl) {
                     el.innerHTML = `<img src="${photoUrl}" class="profile-photo" alt="${escAttr(username)}">`;
                     el.style.background = 'none';
@@ -671,56 +542,33 @@
             });
         }
         
-        // Check browser storage on page load
         const savedPhoto = localStorage.getItem('kalapp_profile_photo_' + username);
         updateAllAvatars(username, savedPhoto); 
 
-        // Upload photo to backend
         async function handleQuickPhotoUpload(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                
                 const reader = new FileReader();
                 reader.onload = function(e) { updateAllAvatars(username, e.target.result); }
                 reader.readAsDataURL(file);
-
                 const fd = new FormData();
                 fd.append('photo', file);
-                
                 try {
-                    const res = await fetch(`${BACKEND_URL}/api/users/${username}/photo`, {
-                        method: 'POST',
-                        body: fd
-                    });
+                    const res = await fetch(`${BACKEND_URL}/api/users/${username}/photo`, { method: 'POST', body: fd });
                     const data = await res.json();
-                    
                     if(data.success && data.photoUrl) {
                         localStorage.setItem('kalapp_profile_photo_' + username, data.photoUrl);
                         updateAllAvatars(username, data.photoUrl);
-                    } else {
-                        console.error('Photo upload failed:', data.error);
-                        alert('Failed to save profile photo.');
-                    }
-                } catch(err) {
-                    console.error('Error uploading photo:', err);
-                    alert('Network error while saving profile photo.');
-                }
+                    } else alert('Failed to save profile photo.');
+                } catch(err) { alert('Network error while saving profile photo.'); }
             }
         }
 
-        /* ── MOBILE PROFILE LOGIC ── */
         function openMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'block'; }
         function closeMobileProfile() { document.getElementById('mobile-profile-modal').style.display = 'none'; }
         
-        /* ── ACCOUNT SETTINGS MODAL LOGIC (FULLY HOOKED UP) ── */
-        function openSettingsModal() { 
-            document.getElementById('settings-modal').style.display = 'block'; 
-            backToSettingsMain(); 
-        }
-        
-        function closeSettingsModal() { 
-            document.getElementById('settings-modal').style.display = 'none'; 
-        }
+        function openSettingsModal() { document.getElementById('settings-modal').style.display = 'block'; backToSettingsMain(); }
+        function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
 
         function openSettingsView(viewName) {
             document.getElementById('settings-main-view').style.display = 'none';
@@ -728,8 +576,7 @@
             document.getElementById('settings-email-view').style.display = 'none';
             document.getElementById('settings-password-view').style.display = 'none';
             document.getElementById('settings-back-btn').style.display = 'inline-block';
-            document.getElementById('settings-msg').innerText = ''; 
-            
+            document.getElementById('settings-msg').innerText = '';
             if (viewName === 'name') {
                 document.getElementById('settings-title-text').innerText = 'Change Name';
                 document.getElementById('settings-name-view').style.display = 'block';
@@ -749,82 +596,48 @@
             document.getElementById('settings-password-view').style.display = 'none';
             document.getElementById('settings-title-text').innerText = '⚙️ Account Settings';
             document.getElementById('settings-back-btn').style.display = 'none';
-            document.getElementById('settings-msg').innerText = ''; 
+            document.getElementById('settings-msg').innerText = '';
         }
-
-        // --- BACKEND API CONNECTIONS FOR SETTINGS ---
 
         async function saveSettingsName(btn) {
             const fname = document.getElementById('settings-fname').value.trim();
             const lname = document.getElementById('settings-lname').value.trim();
             const msgBox = document.getElementById('settings-msg');
-            
-            if (!fname || !lname) {
-                msgBox.style.color = 'var(--color-danger)';
-                msgBox.innerText = 'Please enter both first and last names.';
-                return;
-            }
-            
+            if (!fname || !lname) { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = 'Please enter both first and last names.'; return; }
             btn.innerText = 'Saving...'; btn.disabled = true;
             try {
-                const res = await fetch(`${BACKEND_URL}/api/users/${username}/name`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ firstName: fname, lastName: lname })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/name`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName: fname, lastName: lname }) });
                 const data = await res.json();
                 if(data.success) {
                     msgBox.style.color = 'var(--color-success)';
                     msgBox.innerText = '✅ ' + data.message;
-                    setTimeout(backToSettingsMain, 1500);
-
-                    // --- ADD THIS TO INSTANTLY UPDATE THE UI ---
+                    
+                    // --- NAME FIX: UPDATE UI IMMEDIATELY ---
                     const newFullName = fname + ' ' + lname;
                     localStorage.setItem('kalapp_fullname', newFullName);
                     document.getElementById('desktop-citizen-name-display').innerText = newFullName;
                     document.getElementById('mobile-username-header').innerText = newFullName;
                     document.getElementById('mobile-modal-name-display').innerText = newFullName;
-                    // ------------------------------------------
                     
-                } else {
-                    msgBox.style.color = 'var(--color-danger)';
-                    msgBox.innerText = '❌ ' + data.error;
-                }
-            } catch(e) {
-                msgBox.style.color = 'var(--color-danger)';
-                msgBox.innerText = '❌ Network Error. Please try again.';
-            }
+                    setTimeout(backToSettingsMain, 1500);
+                } else { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = '❌ ' + data.error; }
+            } catch(e) { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = '❌ Network Error. Please try again.'; }
             btn.innerText = 'Save Name'; btn.disabled = false;
         }
 
         async function saveSettingsEmail(btn) {
             const email = document.getElementById('settings-email').value.trim();
             const msgBox = document.getElementById('settings-msg');
-            
-            if (!email || !email.includes('@')) {
-                msgBox.style.color = 'var(--color-danger)';
-                msgBox.innerText = 'Please enter a valid email address.';
-                return;
-            }
-            
+            if (!email || !email.includes('@')) { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = 'Please enter a valid email address.'; return; }
             btn.innerText = 'Updating...'; btn.disabled = true;
             try {
-                const res = await fetch(`${BACKEND_URL}/api/users/${username}/email`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/email`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email }) });
                 const data = await res.json();
                 if(data.success) {
-                    msgBox.style.color = 'var(--color-success)';
-                    msgBox.innerText = '✅ ' + data.message;
+                    msgBox.style.color = 'var(--color-success)'; msgBox.innerText = '✅ ' + data.message;
                     setTimeout(backToSettingsMain, 1500);
-                } else {
-                    msgBox.style.color = 'var(--color-danger)';
-                    msgBox.innerText = '❌ ' + data.error;
-                }
-            } catch(e) {
-                msgBox.style.color = 'var(--color-danger)';
-                msgBox.innerText = '❌ Network Error. Please try again.';
-            }
+                } else { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = '❌ ' + data.error; }
+            } catch(e) { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = '❌ Network Error. Please try again.'; }
             btn.innerText = 'Update Email'; btn.disabled = false;
         }
 
@@ -832,52 +645,80 @@
             const currentPw = document.getElementById('settings-current-pw').value;
             const newPw = document.getElementById('settings-new-pw').value;
             const msgBox = document.getElementById('settings-msg');
-            
-            if (!currentPw || !newPw) {
-                msgBox.style.color = 'var(--color-danger)';
-                msgBox.innerText = 'Please fill out both password fields.';
-                return;
-            }
-            
+            if (!currentPw || !newPw) { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = 'Please fill out both password fields.'; return; }
             btn.innerText = 'Updating...'; btn.disabled = true;
             try {
-                const res = await fetch(`${BACKEND_URL}/api/users/${username}/password`, {
-                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw })
-                });
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/password`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }) });
                 const data = await res.json();
                 if(data.success) {
-                    msgBox.style.color = 'var(--color-success)';
-                    msgBox.innerText = '✅ ' + data.message;
-                    document.getElementById('settings-current-pw').value = '';
-                    document.getElementById('settings-new-pw').value = '';
+                    msgBox.style.color = 'var(--color-success)'; msgBox.innerText = '✅ ' + data.message;
+                    document.getElementById('settings-current-pw').value = ''; document.getElementById('settings-new-pw').value = '';
                     setTimeout(backToSettingsMain, 1500);
-                } else {
-                    msgBox.style.color = 'var(--color-danger)';
-                    msgBox.innerText = '❌ ' + data.error;
-                }
-            } catch(e) {
-                msgBox.style.color = 'var(--color-danger)';
-                msgBox.innerText = '❌ Network Error. Please try again.';
-            }
+                } else { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = '❌ ' + data.error; }
+            } catch(e) { msgBox.style.color = 'var(--color-danger)'; msgBox.innerText = '❌ Network Error. Please try again.'; }
             btn.innerText = 'Update Password'; btn.disabled = false;
         }
 
-        /* ── PAGE NAVIGATION ── */
+        /* ── PRIVACY & SECURITY LOGIC ── */
+        async function openPrivacyModal() {
+            document.getElementById('privacy-modal').style.display = 'block';
+            if(document.getElementById('mobile-profile-modal')) closeMobileProfile(); 
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/privacy-status`);
+                const data = await res.json();
+                document.getElementById('anon-toggle').checked = data.isAnonymous;
+            } catch(e) { console.error("Failed to load privacy status."); }
+        }
+        
+        function closePrivacyModal() { document.getElementById('privacy-modal').style.display = 'none'; }
+
+        async function toggleAnonymity(cb) {
+            try {
+                await fetch(`${BACKEND_URL}/api/users/${username}/privacy`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isAnonymous: cb.checked }) });
+            } catch(e) { cb.checked = !cb.checked; alert("Network error: Failed to update privacy settings."); }
+        }
+
+        async function requestDataExport() {
+            try {
+                alert("Generating your data file... Please wait.");
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}/export`);
+                const data = await res.json();
+                if(data.success) {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data.data, null, 2));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", username + "_kalapp_data.json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                } else alert("Failed to export data.");
+            } catch(e) { alert("Network error: Failed to export data."); }
+        }
+
+        async function deleteAccount() {
+            const confirm1 = confirm("⚠️ WARNING: This will permanently delete your account and scrub your name from all records. This action CANNOT be undone. Are you sure?");
+            if (!confirm1) return;
+            const confirm2 = prompt(`To confirm deletion, please type your username: ${username}`);
+            if (confirm2 !== username) { alert("Username did not match. Deletion cancelled."); return; }
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/users/${username}`, { method: 'DELETE' });
+                if(res.ok) { alert("Your account has been successfully deleted. Thank you for using Kalapp."); logout(); } 
+                else alert("Failed to delete account.");
+            } catch(e) { alert("Network error: Failed to delete account."); }
+        }
+
         function showPage(pageId) {
             document.querySelectorAll('main[id]').forEach(m => m.style.display = 'none');
             const page = document.getElementById(pageId + '-page');
             if (page) page.style.display = 'block';
-
-            const iconMap = { complaint: 'add_circle_outline', history: 'history', feed: 'dynamic_feed', directory: 'location_on', hotline: 'contact_emergency', affidavits: 'folder_shared', chat: 'smart_toy' };
+            const iconMap = { complaint: 'add_circle_outline', history: 'history', feed: 'dynamic_feed', directory: 'location_on', hotline: 'contact_emergency', affidavits: 'folder_shared' };
             document.querySelectorAll('.sidebar a').forEach(a => {
                 const ic = a.querySelector('.material-icons-sharp');
                 a.classList.toggle('active', ic && ic.textContent.trim() === iconMap[pageId]);
             });
             document.querySelectorAll('.mobile-nav button').forEach((btn, i) => {
-                btn.classList.toggle('active', btn.textContent.includes(pageId === 'complaint' ? 'File' : pageId==='affidavits' ? 'Docs' : pageId==='chat' ? 'Ask AI' : pageId.charAt(0).toUpperCase() + pageId.slice(1)));
+                btn.classList.toggle('active', btn.textContent.includes(pageId === 'complaint' ? 'File' : pageId==='affidavits' ? 'Documents' : pageId.charAt(0).toUpperCase() + pageId.slice(1)));
             });
-            
             if (pageId === 'history') loadMyHistory();
             if (pageId === 'affidavits') loadMyAffidavits(); 
             if (pageId === 'hotline') renderHotlines(hotlineData);
@@ -886,11 +727,8 @@
             if (pageId === 'feed') { feedPageNum = 1; feedPageItems = []; loadFeedPage(); }
         }
 
-        function escAttr(str) {
-            return String(str).replace(/[&"'<>]/g, c => ({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[c]));
-        }
+        function escAttr(str) { return String(str).replace(/[&"'<>]/g, c => ({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[c])); }
 
-        /* ── HOTLINE DATA ── */
         const hotlineData = [
             { name: 'Kalapp Emergency Hotline', number: '911', icon: '🚨' },
             { name: 'Bureau of Fire Protection', number: '(02) 426-0219', icon: '🔥' },
@@ -898,49 +736,35 @@
             { name: 'Red Cross', number: '143', icon: '🏥' },
             { name: 'Calamity Hotline NDRRMC', number: '(02) 925-0274', icon: '🌊' },
             { name: 'DSWD Crisis Intervention', number: '(02) 931-8101', icon: '🤝' },
-            { name: 'Suicide Prevention Hotline', number: '1553', icon: '💙' },
+            { name: 'Suicide Prevention Hotline', number: '1553', icon: '💙' }
         ];
         function renderHotlines(list) {
             document.getElementById('hotline-list').innerHTML = list.map(h => `
                 <div style="display:flex; align-items:center; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--color-light);">
                     <span style="font-size:2rem; flex-shrink:0;">${h.icon}</span>
-                    <div>
-                        <strong style="display:block;">${h.name}</strong>
-                        <a href="tel:${h.number}" style="color:var(--color-primary); font-weight:600;">${h.number}</a>
-                    </div>
+                    <div><strong style="display:block;">${h.name}</strong><a href="tel:${h.number}" style="color:var(--color-primary); font-weight:600;">${h.number}</a></div>
                 </div>
             `).join('');
         }
-        function filterHotlines(q) {
-            renderHotlines(hotlineData.filter(h => h.name.toLowerCase().includes(q.toLowerCase())));
-        }
+        function filterHotlines(q) { renderHotlines(hotlineData.filter(h => h.name.toLowerCase().includes(q.toLowerCase()))); }
 
-        /* ── BARANGAY DIRECTORY DATA ── */
         const barangayDirectoryData = [
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Main Office', phone: '(02) 288-1031' },
             { brgy: 'Barangay 103', address: 'C-3 Road, Caloocan City', role: 'Tanod', phone: '0917-103-0001' },
             { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Main Office', phone: '(02) 288-1041' },
-            { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Tanod', phone: '0917-104-0002' },
+            { brgy: 'Barangay 104', address: 'Dagupan St., Caloocan City', role: 'Tanod', phone: '0917-104-0002' }
         ];
         function renderDirectory(list) {
             document.getElementById('directory-list').innerHTML = list.map(d => `
                 <div style="display:flex; align-items:center; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--color-light); flex-wrap:wrap;">
                     <span style="font-size:1.8rem; flex-shrink:0;">${d.role === 'Tanod' ? '🛡️' : '🏛️'}</span>
-                    <div style="flex:1; min-width:0;">
-                        <strong style="display:block;">${d.brgy} — ${d.role}</strong>
-                        <small style="color:var(--color-info-dark);">${d.address}</small>
-                    </div>
+                    <div style="flex:1; min-width:0;"><strong style="display:block;">${d.brgy} — ${d.role}</strong><small style="color:var(--color-info-dark);">${d.address}</small></div>
                     <a href="tel:${d.phone}" style="background:var(--color-primary);color:white;padding:8px 16px;border-radius:8px;font-weight:700;font-size:0.85rem;white-space:nowrap;">${d.phone}</a>
                 </div>
             `).join('');
         }
-        function filterDirectory(q) {
-            renderDirectory(barangayDirectoryData.filter(d =>
-                d.brgy.toLowerCase().includes(q.toLowerCase()) || d.role.toLowerCase().includes(q.toLowerCase()) || d.phone.includes(q)
-            ));
-        }
+        function filterDirectory(q) { renderDirectory(barangayDirectoryData.filter(d => d.brgy.toLowerCase().includes(q.toLowerCase()) || d.role.toLowerCase().includes(q.toLowerCase()) || d.phone.includes(q))); }
 
-        /* ── AUDIT TRAIL ── */
         function closeTrailModal() { document.getElementById('trail-modal').style.display = 'none'; }
         async function viewTrail(trackingId) {
             const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/history`);
@@ -961,53 +785,31 @@
             document.getElementById('trail-modal').style.display = 'block';
         }
 
-        /* ── BARANGAY DROPDOWN ── */
         const bgySelect = document.getElementById('barangay');
-        for (let i = 1; i <= 188; i++) {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = `Barangay ${i}`;
-            bgySelect.appendChild(opt);
-        }
+        for (let i = 1; i <= 188; i++) { const opt = document.createElement('option'); opt.value = opt.textContent = `Barangay ${i}`; bgySelect.appendChild(opt); }
 
-        /* ── THEME TOGGLER ── */
         function toggleTheme() {
             document.body.classList.toggle('dark-theme');
             const isDark = document.body.classList.contains('dark-theme');
             localStorage.setItem('kalapp-theme', isDark ? 'dark' : 'light');
-            
             const desktopToggler = document.getElementById('theme-toggler');
-            if(desktopToggler) {
-                desktopToggler.querySelector('span:nth-child(1)').classList.toggle('active', !isDark);
-                desktopToggler.querySelector('span:nth-child(2)').classList.toggle('active', isDark);
-            }
-            
+            if(desktopToggler) { desktopToggler.querySelector('span:nth-child(1)').classList.toggle('active', !isDark); desktopToggler.querySelector('span:nth-child(2)').classList.toggle('active', isDark); }
             const mobileIcon = document.getElementById('mobile-theme-icon');
-            if(mobileIcon) {
-                mobileIcon.textContent = isDark ? 'dark_mode' : 'light_mode';
-            }
+            if(mobileIcon) mobileIcon.textContent = isDark ? 'dark_mode' : 'light_mode';
         }
 
         if (localStorage.getItem('kalapp-theme') === 'dark') {
             document.body.classList.add('dark-theme');
             const desktopToggler = document.getElementById('theme-toggler');
-            if(desktopToggler) {
-                desktopToggler.querySelector('span:nth-child(1)').classList.remove('active');
-                desktopToggler.querySelector('span:nth-child(2)').classList.add('active');
-            }
+            if(desktopToggler) { desktopToggler.querySelector('span:nth-child(1)').classList.remove('active'); desktopToggler.querySelector('span:nth-child(2)').classList.add('active'); }
             const mobileIcon = document.getElementById('mobile-theme-icon');
             if(mobileIcon) mobileIcon.textContent = 'dark_mode';
         }
-        
         document.getElementById('theme-toggler').addEventListener('click', toggleTheme);
 
-        /* ── AI PHOTO PREVIEW & MAP ── */
         let aiSuggestedCategory = null;
-        let mapInitialized = false;
-        let locationMap = null;
-        let locationMarker = null;
-        const MAP_DEFAULT_LAT = 11.8;
-        const MAP_DEFAULT_LNG = 122.0;
-        const MAP_DEFAULT_ZOOM = 6;
+        let mapInitialized = false; let locationMap = null; let locationMarker = null;
+        const MAP_DEFAULT_LAT = 11.8; const MAP_DEFAULT_LNG = 122.0; const MAP_DEFAULT_ZOOM = 6;
 
         function dmsToDecimal(dms, ref) {
             if (!dms || dms.length < 3) return null;
@@ -1025,10 +827,8 @@
             locationMarker.bindPopup('<strong>📍 Drag me to the exact incident spot</strong>', { closeOnClick: false, autoClose: false }).openPopup();
             locationMarker.on('dragend', function () {
                 const latlng = locationMarker.getLatLng();
-                const lat = latlng.lat.toFixed(6);
-                const lng = latlng.lng.toFixed(6);
-                document.getElementById('locationLat').value = lat;
-                document.getElementById('locationLng').value = lng;
+                const lat = latlng.lat.toFixed(6); const lng = latlng.lng.toFixed(6);
+                document.getElementById('locationLat').value = lat; document.getElementById('locationLng').value = lng;
                 document.getElementById('pin-coords').textContent = lat + ', ' + lng;
                 const srcEl = document.getElementById('locationSource');
                 if (srcEl.value !== 'exif' && srcEl.value !== 'gps') srcEl.value = 'pinned';
@@ -1039,20 +839,15 @@
             if (!locationMap || !locationMarker) return;
             if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
             navigator.geolocation.getCurrentPosition(function (pos) {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-                locationMap.setView([lat, lng], 16);
-                locationMarker.setLatLng([lat, lng]);
-                document.getElementById('locationLat').value = lat.toFixed(6);
-                document.getElementById('locationLng').value = lng.toFixed(6);
+                const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+                locationMap.setView([lat, lng], 16); locationMarker.setLatLng([lat, lng]);
+                document.getElementById('locationLat').value = lat.toFixed(6); document.getElementById('locationLng').value = lng.toFixed(6);
                 document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                document.getElementById('locationSource').value = 'gps';
-                document.getElementById('exif-location-label').style.display = 'none';
+                document.getElementById('locationSource').value = 'gps'; document.getElementById('exif-location-label').style.display = 'none';
                 const toast = document.createElement('div');
                 toast.innerText = '✅ Map centered — now drag the orange pin to the exact incident spot';
                 toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:0.8rem 1.2rem;border-radius:12px;font-size:0.82rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:320px;text-align:center;';
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
+                document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000);
             }, function () { alert('Unable to retrieve your location. Please drag the pin manually.'); });
         }
 
@@ -1063,106 +858,65 @@
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Philippines')}&limit=1`);
                 const results = await res.json();
                 if (results.length > 0) {
-                    const lat = parseFloat(results[0].lat);
-                    const lng = parseFloat(results[0].lon);
-                    locationMap.setView([lat, lng], 16);
-                    locationMarker.setLatLng([lat, lng]);
-                    document.getElementById('locationLat').value = lat.toFixed(6);
-                    document.getElementById('locationLng').value = lng.toFixed(6);
+                    const lat = parseFloat(results[0].lat); const lng = parseFloat(results[0].lon);
+                    locationMap.setView([lat, lng], 16); locationMarker.setLatLng([lat, lng]);
+                    document.getElementById('locationLat').value = lat.toFixed(6); document.getElementById('locationLng').value = lng.toFixed(6);
                     document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
                     document.getElementById('locationSource').value = 'search';
-                } else { alert('Location not found. Try a different name.'); }
+                } else alert('Location not found. Try a different name.');
             } catch (e) { alert('Search failed. Please drag the pin manually.'); }
         }
 
         document.getElementById('evidence').addEventListener('change', async function () {
-            const file = this.files[0];
-            const box  = document.getElementById('ai-preview-box');
-            const txt  = document.getElementById('ai-preview-text');
+            const file = this.files[0]; const box  = document.getElementById('ai-preview-box'); const txt  = document.getElementById('ai-preview-text');
             if (!file) { box.style.display = 'none'; return; }
 
-            // Extract EXIF
             EXIF.getData(file, function () {
-                const latDMS = EXIF.getTag(this, 'GPSLatitude');
-                const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-                const lngDMS = EXIF.getTag(this, 'GPSLongitude');
-                const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
-                const lat = dmsToDecimal(latDMS, latRef);
-                const lng = dmsToDecimal(lngDMS, lngRef);
+                const latDMS = EXIF.getTag(this, 'GPSLatitude'); const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+                const lngDMS = EXIF.getTag(this, 'GPSLongitude'); const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+                const lat = dmsToDecimal(latDMS, latRef); const lng = dmsToDecimal(lngDMS, lngRef);
                 if (lat !== null && lng !== null && locationMap && locationMarker) {
-                    locationMap.setView([lat, lng], 16);
-                    locationMarker.setLatLng([lat, lng]);
-                    document.getElementById('locationLat').value = lat.toFixed(6);
-                    document.getElementById('locationLng').value = lng.toFixed(6);
+                    locationMap.setView([lat, lng], 16); locationMarker.setLatLng([lat, lng]);
+                    document.getElementById('locationLat').value = lat.toFixed(6); document.getElementById('locationLng').value = lng.toFixed(6);
                     document.getElementById('pin-coords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                    document.getElementById('locationSource').value = 'exif';
-                    document.getElementById('exif-location-label').style.display = 'block';
+                    document.getElementById('locationSource').value = 'exif'; document.getElementById('exif-location-label').style.display = 'block';
                 }
             });
 
-            box.style.display = 'block';
-            box.className = 'scanning';
-            txt.innerText  = '🤖 Gemini AI is scanning your photo...';
+            box.style.display = 'block'; box.className = 'scanning'; txt.innerText  = '🤖 Gemini AI is scanning your photo...';
             try {
-                const fd = new FormData();
-                fd.append('evidence', file);
-                const res    = await fetch(`${BACKEND_URL}/api/classify-preview`, { method:'POST', body: fd });
+                const fd = new FormData(); fd.append('evidence', file);
+                const res = await fetch(`${BACKEND_URL}/api/classify-preview`, { method:'POST', body: fd });
                 const result = await res.json();
-                aiSuggestedCategory = result.category;
-                const selected = document.getElementById('issue').value;
-
+                aiSuggestedCategory = result.category; const selected = document.getElementById('issue').value;
                 document.getElementById('aiPriority').value = result.priority || 'MEDIUM';
 
-                if (result.accepted === false) {
-                    box.className = 'mismatch';
-                    txt.innerHTML = `❌ <strong>AI rejected this photo.</strong> ${result.summary || 'Please upload a real photo.'}`;
-                } else if (!aiSuggestedCategory) {
-                    box.className = 'mismatch';
-                    txt.innerHTML = `⚠️ <strong>AI could not identify a known issue type.</strong> You may still submit.`;
-                } else if (selected && aiSuggestedCategory !== selected) {
-                    box.className = 'mismatch';
-                    txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${selected}</strong>".<br><small style="opacity:0.7">${result.summary||''}</small>`;
-                } else if (selected && aiSuggestedCategory === selected) {
-                    box.className = 'match';
-                    txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Priority: ${result.priority||'MEDIUM'}.<br><small style="opacity:0.7">${result.summary||''}</small>`;
-                } else {
-                    box.className = 'match';
-                    txt.innerHTML = `🤖 <strong>AI suggests:</strong> "<strong>${aiSuggestedCategory}</strong>" — select matching category above.<br><small style="opacity:0.7">${result.summary||''}</small>`;
+                if (result.accepted === false) { box.className = 'mismatch'; txt.innerHTML = `❌ <strong>AI rejected this photo.</strong> ${result.summary || 'Please upload a real photo.'}`; }
+                else if (!aiSuggestedCategory) { box.className = 'mismatch'; txt.innerHTML = `⚠️ <strong>AI could not identify a known issue type.</strong> You may still submit.`; }
+                else if (selected && aiSuggestedCategory !== selected) { box.className = 'mismatch'; txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${selected}</strong>".<br><small style="opacity:0.7">${result.summary||''}</small>`; }
+                else if (selected && aiSuggestedCategory === selected) { box.className = 'match'; txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Priority: ${result.priority||'MEDIUM'}.<br><small style="opacity:0.7">${result.summary||''}</small>`; }
+                else {
+                    box.className = 'match'; txt.innerHTML = `🤖 <strong>AI suggests:</strong> "<strong>${aiSuggestedCategory}</strong>" — select matching category above.<br><small style="opacity:0.7">${result.summary||''}</small>`;
                     const sel = document.getElementById('issue');
                     for (let o of sel.options) { if (o.value === aiSuggestedCategory) { sel.value = aiSuggestedCategory; break; } }
                 }
-            } catch {
-                box.className = 'scanning';
-                txt.innerText = '⚠️ AI preview unavailable. You can still submit.';
-            }
+            } catch { box.className = 'scanning'; txt.innerText = '⚠️ AI preview unavailable. You can still submit.'; }
         });
 
         document.getElementById('issue').addEventListener('change', function () {
-            const box = document.getElementById('ai-preview-box');
-            const txt = document.getElementById('ai-preview-text');
+            const box = document.getElementById('ai-preview-box'); const txt = document.getElementById('ai-preview-text');
             if (!aiSuggestedCategory || box.style.display === 'none') return;
-            if (aiSuggestedCategory === this.value) {
-                box.className = 'match';
-                txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Good to go.`;
-            } else {
-                box.className = 'mismatch';
-                txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${this.value}</strong>". This may be rejected.`;
-            }
+            if (aiSuggestedCategory === this.value) { box.className = 'match'; txt.innerHTML = `✅ <strong>Gemini AI verified:</strong> Photo matches "<strong>${aiSuggestedCategory}</strong>"! Good to go.`; }
+            else { box.className = 'mismatch'; txt.innerHTML = `⚠️ <strong>AI detected: "${aiSuggestedCategory}"</strong> — but you selected "<strong>${this.value}</strong>". This may be rejected.`; }
         });
 
-        /* ── LUPON TIP BOX ── */
         const luponKeywords = ['neighbor', 'kapitbahay', 'respondent', 'katabing bahay', 'tao', 'katabi'];
         document.getElementById('description').addEventListener('input', function () {
             const val = this.value.toLowerCase();
-            const hasKeyword = luponKeywords.some(kw => val.includes(kw));
-            document.getElementById('lupon-tip-box').style.display = hasKeyword ? 'block' : 'none';
+            document.getElementById('lupon-tip-box').style.display = luponKeywords.some(kw => val.includes(kw)) ? 'block' : 'none';
         });
 
-        /* ── COMMUNITY FEED & COMMENTS ── */
-        let citizenFeedPage = 1;
-        let feedPageNum = 1;
-        let currentCommentId = null;
-        const feedCommentStore = {};
+        let citizenFeedPage = 1; let feedPageNum = 1; let currentCommentId = null; const feedCommentStore = {};
 
         function buildFeedCard(c, compact = false) {
             const imgSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
@@ -1170,7 +924,6 @@
             const desc = compact ? ((c.description || '').substring(0, 100) + ((c.description || '').length > 100 ? '...' : '')) : (c.description || '');
             const commentCount = (c.comments || []).length;
             feedCommentStore[c.trackingId] = c.comments || [];
-            
             return `<div style="background:var(--color-white); border-radius:var(--border-radius-1); overflow:hidden; box-shadow:var(--box-shadow); margin-bottom:1rem; border:1px solid var(--color-light);">
                 ${imgSrc ? `<img src="${imgSrc}" style="width:100%; max-height:220px; object-fit:cover;" onerror="this.style.display='none'">` : ''}
                 <div style="padding:1rem;">
@@ -1187,17 +940,13 @@
         }
 
         async function loadCitizenFeedSidebar() {
-            const container = document.getElementById('citizen-feed-container');
-            const loadMoreBtn = document.getElementById('citizen-feed-load-more');
+            const container = document.getElementById('citizen-feed-container'); const loadMoreBtn = document.getElementById('citizen-feed-load-more');
             if (!container) return;
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${citizenFeedPage}&limit=5`);
                 const data = await res.json();
                 if (citizenFeedPage === 1) container.innerHTML = '';
-                if (!data.feed.length && citizenFeedPage === 1) {
-                    container.innerHTML = '<p style="font-size:0.82rem; color:var(--color-info-dark); text-align:center; padding:1rem;">No reports yet.</p>';
-                    loadMoreBtn.style.display = 'none'; return;
-                }
+                if (!data.feed.length && citizenFeedPage === 1) { container.innerHTML = '<p style="font-size:0.82rem; color:var(--color-info-dark); text-align:center; padding:1rem;">No reports yet.</p>'; loadMoreBtn.style.display = 'none'; return; }
                 data.feed.forEach(c => container.insertAdjacentHTML('beforeend', buildFeedCard(c, true)));
                 loadMoreBtn.style.display = data.pages > citizenFeedPage ? 'block' : 'none';
             } catch(e) {}
@@ -1205,18 +954,14 @@
         function loadMoreCitizenFeed() { citizenFeedPage++; loadCitizenFeedSidebar(); }
 
         async function loadFeedPage(append = false) {
-            const container = document.getElementById('feed-page-cards');
-            const loadMoreBtn = document.getElementById('feed-page-load-more');
+            const container = document.getElementById('feed-page-cards'); const loadMoreBtn = document.getElementById('feed-page-load-more');
             if (!container) return;
             if (!append) container.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">Loading...</p>';
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints/feed?page=${feedPageNum}&limit=10`);
                 const data = await res.json();
                 if (!append) container.innerHTML = '';
-                if (!data.feed.length && !append) {
-                    container.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">No community reports yet.</p>';
-                    loadMoreBtn.style.display = 'none'; return;
-                }
+                if (!data.feed.length && !append) { container.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--color-info-dark);">No community reports yet.</p>'; loadMoreBtn.style.display = 'none'; return; }
                 data.feed.forEach(c => container.insertAdjacentHTML('beforeend', buildFeedCard(c, false)));
                 loadMoreBtn.style.display = data.pages > feedPageNum ? 'block' : 'none';
             } catch(e) {}
@@ -1227,16 +972,13 @@
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/upvote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
                 const data = await res.json();
-                btn.textContent = data.success ? `👍 Vouched (${data.upvotes})` : '✅ Already vouched';
-                btn.disabled = true;
+                btn.textContent = data.success ? `👍 Vouched (${data.upvotes})` : '✅ Already vouched'; btn.disabled = true;
             } catch(e) {}
         }
 
         function openCommentModal(trackingId) {
-            currentCommentId = trackingId;
-            const arr = feedCommentStore[trackingId] || [];
-            document.getElementById('comment-list').innerHTML = arr.length ?
-            arr.map(c => `
+            currentCommentId = trackingId; const arr = feedCommentStore[trackingId] || [];
+            document.getElementById('comment-list').innerHTML = arr.length ? arr.map(c => `
                 <div style="padding:0.5rem 0; border-bottom:1px solid var(--color-light);">
                     <strong style="font-size:0.8rem; color:var(--color-primary);">${escAttr(c.authorName || 'Anonymous')}</strong>
                     <p style="font-size:0.85rem; margin-top:0.2rem;">${escAttr(c.text)}</p>
@@ -1248,9 +990,7 @@
         function closeCommentModal() { document.getElementById('comment-modal').style.display = 'none'; document.getElementById('comment-text').value = ''; currentCommentId = null; }
 
         async function submitComment() {
-            if (!currentCommentId) return;
-            const text = document.getElementById('comment-text').value.trim();
-            if (!text) return;
+            if (!currentCommentId) return; const text = document.getElementById('comment-text').value.trim(); if (!text) return;
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints/${currentCommentId}/comment`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, authorName: username }) });
                 const data = await res.json();
@@ -1258,17 +998,10 @@
             } catch(e) {}
         }
 
-        /* ── EXPANDABLE LIST FOR COMPLAINTS HISTORY ── */
         function toggleHistoryDetails(id) {
-            const details = document.getElementById(`details-${id}`);
-            const icon = document.querySelector(`.expand-icon-${id}`);
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                details.style.display = 'none';
-                icon.style.transform = 'rotate(0deg)';
-            }
+            const details = document.getElementById(`details-${id}`); const icon = document.querySelector(`.expand-icon-${id}`);
+            if (details.style.display === 'none') { details.style.display = 'block'; icon.style.transform = 'rotate(180deg)'; } 
+            else { details.style.display = 'none'; icon.style.transform = 'rotate(0deg)'; }
         }
 
         function loadMyHistory() {
@@ -1277,7 +1010,6 @@
             
             fetch(`${BACKEND_URL}/api/complaints`).then(r => r.json()).then(data => {
                 const mine = data.complaints.filter(c => c.citizenName === username);
-                
                 document.querySelectorAll('.stat-reports-count').forEach(el => el.innerText = mine.length);
                 const totalVouches = mine.reduce((sum, c) => sum + (c.upvotes || 0), 0);
                 document.querySelectorAll('.stat-vouches-count').forEach(el => el.innerText = totalVouches);
@@ -1288,166 +1020,97 @@
                     const statusMap = { 'In Progress':'status-inprogress', 'Resolved':'status-resolved', 'Rejected & Flagged':'status-flagged', 'Referred to Lupon':'status-lupon', 'Lupon: Scheduled':'status-lupon-scheduled', 'Lupon: Settled':'status-lupon-settled', 'Lupon: Unresolved':'status-lupon-unresolved' };
                     const sc = statusMap[c.status] || 'status-pending';
                     const date  = new Date(c.createdAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
-                    
                     const photoSrc = c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${BACKEND_URL}${c.imageUrl}`) : '';
-                    const photoHTML = photoSrc 
-                        ? `<img src="${photoSrc}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; flex-shrink:0;">` 
-                        : `<div style="width:55px; height:55px; border-radius:10px; background:var(--color-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><span class="material-icons-sharp" style="color:var(--color-info-dark);">image_not_supported</span></div>`;
-                    
+                    const photoHTML = photoSrc ? `<img src="${photoSrc}" style="width:55px; height:55px; border-radius:10px; object-fit:cover; flex-shrink:0;">` : `<div style="width:55px; height:55px; border-radius:10px; background:var(--color-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><span class="material-icons-sharp" style="color:var(--color-info-dark);">image_not_supported</span></div>`;
                     const note  = c.lguNote ? `<i>"${c.lguNote}"</i>` : '<span style="color:var(--color-info-dark);">Pending review</span>';
 
                     let affidavitBtn = '';
-                    if (c.affidavitApproved) {
-                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'affidavit')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
-                    } else if (c.affidavitRequested) {
-                        affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Official Affidavit Requested</div>`;
-                    } else if (c.status === 'Resolved') {
-                        affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Official Affidavit</button>`;
-                    } else if (c.status === 'In Progress') {
-                        affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'proof')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
-                    }
+                    if (c.affidavitApproved) affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'affidavit')" style="background:#00bc7d;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📥 Download Official Affidavit</button>`;
+                    else if (c.affidavitRequested) affidavitBtn = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Official Affidavit Requested</div>`;
+                    else if (c.status === 'Resolved') affidavitBtn = `<button onclick="event.stopPropagation(); requestAffidavit('${escAttr(c.trackingId)}', this)" style="background:var(--color-primary);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📄 Request Official Affidavit</button>`;
+                    else if (c.status === 'In Progress') affidavitBtn = `<button onclick="event.stopPropagation(); downloadAffidavit('${escAttr(c.trackingId)}', 'proof')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;margin-top:0.5rem;font-weight:600;">📝 Download Proof of Report</button>`;
 
                     return `
                     <div class="card" style="padding:1rem; margin-top:0; border:1px solid var(--color-light); cursor:pointer; transition:0.2s;" onclick="toggleHistoryDetails('${c.trackingId}')">
-                        
                         <div style="display:flex; align-items:center; gap:1rem;">
                             ${photoHTML}
                             <div style="flex:1; min-width:0;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <strong style="color:var(--color-primary); font-size:1rem;">${c.trackingId}</strong>
-                                    <small style="color:var(--color-info-dark); font-size:0.75rem;">${date}</small>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;">
-                                    <span style="font-size:0.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.category}</span>
-                                    <span class="${sc}" style="font-size:0.75rem; white-space:nowrap; margin-left:0.5rem;">${c.status||'Pending'}</span>
-                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;"><strong style="color:var(--color-primary); font-size:1rem;">${c.trackingId}</strong><small style="color:var(--color-info-dark); font-size:0.75rem;">${date}</small></div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem;"><span style="font-size:0.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.category}</span><span class="${sc}" style="font-size:0.75rem; white-space:nowrap; margin-left:0.5rem;">${c.status||'Pending'}</span></div>
                             </div>
                             <span class="material-icons-sharp expand-icon-${c.trackingId}" style="color:var(--color-info-dark); transition:transform 0.3s;">expand_more</span>
                         </div>
-                        
                         <div id="details-${c.trackingId}" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--color-light); animation: fadeIn 0.3s ease;">
                             <p style="font-size:0.85rem; margin-bottom:0.5rem;"><strong>📍 Location:</strong> ${c.barangay}</p>
                             <p style="font-size:0.85rem; margin-bottom:0.8rem; color:var(--color-dark);"><strong>📝 Description:</strong> ${c.description}</p>
-                            
-                            <div style="background:rgba(132, 139, 200, 0.08); padding:0.8rem; border-radius:8px; margin-bottom:0.8rem;">
-                                <p style="font-size:0.8rem; font-weight:600; margin-bottom:0.2rem;">LGU Feedback:</p>
-                                <p style="font-size:0.85rem;">${note}</p>
-                            </div>
-                            
+                            <div style="background:rgba(132, 139, 200, 0.08); padding:0.8rem; border-radius:8px; margin-bottom:0.8rem;"><p style="font-size:0.8rem; font-weight:600; margin-bottom:0.2rem;">LGU Feedback:</p><p style="font-size:0.85rem;">${note}</p></div>
                             <div style="display:flex; flex-direction:column; gap:0.5rem;">
                                 <button onclick="event.stopPropagation(); viewTrail('${escAttr(c.trackingId)}')" style="background:var(--color-info-dark);color:white;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:0.8rem;border:none;width:100%;font-weight:600;">🔍 View Full Trail</button>
                                 ${affidavitBtn}
                             </div>
                         </div>
-                    </div>
-                    `;
+                    </div>`;
                 }).join('');
             }).catch(() => { document.getElementById('history-container').innerHTML = `<p style="text-align:center;color:red;padding:2rem;">Error loading history.</p>`; });
         }
 
-        /* ── DEDICATED DOCUMENTS/AFFIDAVITS PAGE LOGIC ── */
         async function loadMyAffidavits() {
             const container = document.getElementById('affidavits-list');
             if (!container) return;
             container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:2rem; color:var(--color-info-dark);">Loading documents...</p>';
-
             try {
                 const res = await fetch(`${BACKEND_URL}/api/complaints`);
                 const data = await res.json();
-                
                 const approved = data.complaints.filter(c => c.citizenName === username && c.affidavitApproved);
-
                 if (approved.length === 0) {
                     container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding:2rem; color:var(--color-info-dark);">No approved affidavits are available for download yet.<br><small>If you have a Resolved case, the LGU will generate it soon.</small></p>';
                     return;
                 }
-
                 container.innerHTML = approved.map(c => {
                     const date = new Date(c.createdAt).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
                     const desc = (c.description || '').substring(0, 80);
-                    
                     return `
                         <div class="card affidavit-card" style="margin-top:0; border:1px solid var(--color-light);">
-                            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:0.8rem;">
-                                <strong style="color:var(--color-primary); font-size:1.1rem;">${c.trackingId}</strong>
-                                <small style="color:var(--color-info-dark);">${date}</small>
-                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:0.8rem;"><strong style="color:var(--color-primary); font-size:1.1rem;">${c.trackingId}</strong><small style="color:var(--color-info-dark);">${date}</small></div>
                             <p style="font-size:0.88rem; font-weight:600; margin-bottom:0.4rem; color:var(--color-dark);">${escAttr(c.category)}</p>
                             <p style="font-size:0.82rem; color:var(--color-info-dark); margin-bottom:1rem; line-height:1.4;">${escAttr(desc)}...</p>
                             <button onclick="downloadAffidavit('${escAttr(c.trackingId)}', 'affidavit')" class="btn-submit" style="padding:0.6rem; font-size:0.85rem; background:#00bc7d;">📥 Download Affidavit</button>
                         </div>
                     `;
                 }).join('');
-
-            } catch (e) {
-                container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red;">Error loading documents.</p>';
-            }
+            } catch (e) { container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red;">Error loading documents.</p>'; }
         }
 
         async function requestAffidavit(trackingId, btn) {
-            try { await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/request-affidavit`, { method: 'POST' });
-                btn.outerHTML = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested — Awaiting LGU Approval</div>`;
-            } catch(e) {}
+            try { await fetch(`${BACKEND_URL}/api/complaints/${trackingId}/request-affidavit`, { method: 'POST' }); btn.outerHTML = `<div style="font-size:0.8rem;color:var(--color-info-dark);text-align:center;margin-top:0.5rem;padding:8px;background:var(--color-light);border-radius:8px;">⏳ Affidavit Requested — Awaiting LGU Approval</div>`; } catch(e) {}
         }
         
-        function downloadAffidavit(trackingId, type = 'affidavit') { 
-            window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit?type=${type}`, '_blank'); 
-        }
+        function downloadAffidavit(trackingId, type = 'affidavit') { window.open(`${BACKEND_URL}/api/complaints/${trackingId}/affidavit?type=${type}`, '_blank'); }
 
-        /* ── FORM SUBMIT ── */
         document.getElementById('complaint-form').addEventListener('submit', function (e) {
             e.preventDefault();
-            const fileInput = document.getElementById('evidence');
-            const formMsg   = document.getElementById('form-msg');
-            const submitBtn = document.querySelector('.btn-submit');
+            const fileInput = document.getElementById('evidence'); const formMsg = document.getElementById('form-msg'); const submitBtn = document.querySelector('.btn-submit');
             if (!fileInput.files.length) return;
             const file = fileInput.files[0];
 
-            const lat = document.getElementById('locationLat').value;
-            const lng = document.getElementById('locationLng').value;
-            const address = document.getElementById('locationAddressInput').value;
+            const lat = document.getElementById('locationLat').value; const lng = document.getElementById('locationLng').value; const address = document.getElementById('locationAddressInput').value;
+            if (!lat && !lng && !address) { formMsg.style.color = 'var(--color-danger)'; formMsg.innerText = '📍 Action Required: Please provide the incident location.'; return; }
 
-            if (!lat && !lng && !address) {
-                formMsg.style.color = 'var(--color-danger)';
-                formMsg.innerText = '📍 Action Required: Please provide the incident location by dragging the map pin, clicking "Start from My Current Location", or typing a landmark.';
-                return;
-            }
-
-            formMsg.innerText = '';
-            document.getElementById('ai-preview-box').style.display = 'none';
-            document.getElementById('ai-preview-box').className = '';
-
-            submitBtn.innerText  = '⏳ Verifying & Submitting...';
-            submitBtn.disabled   = true;
+            formMsg.innerText = ''; document.getElementById('ai-preview-box').style.display = 'none'; document.getElementById('ai-preview-box').className = '';
+            submitBtn.innerText  = '⏳ Verifying & Submitting...'; submitBtn.disabled   = true;
 
             EXIF.getData(file, function () {
-                const make  = EXIF.getTag(this, 'Make');
-                const model = EXIF.getTag(this, 'Model');
+                const make  = EXIF.getTag(this, 'Make'); const model = EXIF.getTag(this, 'Model');
                 if (!make || !model) {
-                    formMsg.style.color = 'var(--color-danger)';
-                    formMsg.innerText   = '❌ Security Check Failed: Please take a real photo using a camera.';
-                    submitBtn.innerText = 'Submit Complaint to LGU';
-                    submitBtn.disabled  = false;
-                    return;
+                    formMsg.style.color = 'var(--color-danger)'; formMsg.innerText   = '❌ Security Check Failed: Please take a real photo using a camera.';
+                    submitBtn.innerText = 'Submit Complaint to LGU'; submitBtn.disabled  = false; return;
                 }
 
-                formMsg.style.color = 'var(--color-success)';
-                formMsg.innerText   = '✅ Authentic photo verified! Submitting...';
-
+                formMsg.style.color = 'var(--color-success)'; formMsg.innerText   = '✅ Authentic photo verified! Submitting...';
                 document.getElementById('locationAddress').value = document.getElementById('locationAddressInput').value;
                 
                 const fd = new FormData();
-                fd.append('username',         username);
-                fd.append('barangay',         document.getElementById('barangay').value);
-                fd.append('issue',            document.getElementById('issue').value);
-                fd.append('description',      document.getElementById('description').value);
-                fd.append('evidence',         file);
-                fd.append('contactNumber',    document.getElementById('contactNumber').value);
-                fd.append('locationLat',      document.getElementById('locationLat').value);
-                fd.append('locationLng',      document.getElementById('locationLng').value);
-                fd.append('locationAddress',  document.getElementById('locationAddress').value);
-                fd.append('locationSource',   document.getElementById('locationSource').value);
-                fd.append('priority',         document.getElementById('aiPriority').value);
+                fd.append('username', username); fd.append('barangay', document.getElementById('barangay').value); fd.append('issue', document.getElementById('issue').value); fd.append('description', document.getElementById('description').value); fd.append('evidence', file); fd.append('contactNumber', document.getElementById('contactNumber').value); fd.append('locationLat', document.getElementById('locationLat').value); fd.append('locationLng', document.getElementById('locationLng').value); fd.append('locationAddress', document.getElementById('locationAddress').value); fd.append('locationSource', document.getElementById('locationSource').value); fd.append('priority', document.getElementById('aiPriority').value);
 
                 fetch(`${BACKEND_URL}/api/complaints`, { method:'POST', body: fd })
                 .then(async r => {
@@ -1458,125 +1121,69 @@
                         return d;
                     } catch (err) {
                         console.error("🔥 RAW SERVER RESPONSE:", text);
-                        if (text.includes("503") || text.includes("Service Unavailable")) throw new Error("Google's AI servers are currently overloaded. Please try again in a minute.");
+                        if (text.includes("503") || text.includes("Service Unavailable")) throw new Error("Google's AI servers are currently overloaded. Please try again.");
                         if (text.includes("504") || text.includes("Gateway time-out")) throw new Error("The server timed out. Wait 1 minute and try again.");
                         throw new Error("Server crashed and returned an invalid response. Check console.");
                     }
                 })
                 .then(d => {
-                    formMsg.style.color = 'var(--color-success)';
-                    formMsg.innerHTML = `✅ Complaint submitted & verified by Gemini AI!<br>Your Tracking ID is <strong>${d.trackingId}</strong>.`;
-                    document.getElementById('complaint-form').reset();
-                    document.getElementById('locationAddressInput').value = '';
-                    document.getElementById('exif-location-label').style.display = 'none';
-                    document.getElementById('pin-coords').textContent = 'drag pin to set location';
-                    document.getElementById('ai-preview-box').style.display = 'none';
-                    aiSuggestedCategory = null;
-                    if (locationMap && locationMarker) {
-                        locationMap.setView([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], MAP_DEFAULT_ZOOM);
-                        locationMarker.setLatLng([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG]);
-                    }
+                    formMsg.style.color = 'var(--color-success)'; formMsg.innerHTML = `✅ Complaint submitted & verified by Gemini AI!<br>Your Tracking ID is <strong>${d.trackingId}</strong>.`;
+                    document.getElementById('complaint-form').reset(); document.getElementById('locationAddressInput').value = ''; document.getElementById('exif-location-label').style.display = 'none'; document.getElementById('pin-coords').textContent = 'drag pin to set location'; document.getElementById('ai-preview-box').style.display = 'none'; aiSuggestedCategory = null;
+                    if (locationMap && locationMarker) { locationMap.setView([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG], MAP_DEFAULT_ZOOM); locationMarker.setLatLng([MAP_DEFAULT_LAT, MAP_DEFAULT_LNG]); }
                     loadMyHistory();
                 })
-                .catch(err => {
-                    document.getElementById('ai-preview-box').style.display = 'none';
-                    formMsg.style.color = 'var(--color-danger)';
-                    formMsg.innerText   = err.message;
-                })
-                .finally(() => {
-                    submitBtn.innerText = 'Submit Complaint to LGU';
-                    submitBtn.disabled  = false;
-                });
+                .catch(err => { document.getElementById('ai-preview-box').style.display = 'none'; formMsg.style.color = 'var(--color-danger)'; formMsg.innerText = err.message; })
+                .finally(() => { submitBtn.innerText = 'Submit Complaint to LGU'; submitBtn.disabled  = false; });
             });
         });
 
-        function logout() { 
-            localStorage.removeItem('kalapp_username'); 
-            localStorage.removeItem('kalapp_role');
-            window.location.href = '/login.html'; 
-        }
+        function logout() { localStorage.removeItem('kalapp_username'); localStorage.removeItem('kalapp_role'); window.location.href = '/login.html'; }
 
-        // --- WEBSOCKET LIVE UPDATES ---
         let citizenWsReconnectDelay = 1000;
         function connectCitizenWebSocket() {
             const wsUrl = BACKEND_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
-            const badge = document.getElementById('citizen-ws-badge');
-            let ws;
+            const badge = document.getElementById('citizen-ws-badge'); let ws;
             try { ws = new WebSocket(wsUrl); } catch(e) { return; }
             ws.onopen = () => { citizenWsReconnectDelay = 1000; if (badge) { badge.textContent = '🟢 Live'; badge.style.display = 'inline-block'; } };
             ws.onmessage = () => {
-                const historyBody = document.getElementById('history-container');
-                if (historyBody && document.getElementById('history-page') && document.getElementById('history-page').style.display !== 'none') { loadMyHistory(); }
-                
-                const affidavitsList = document.getElementById('affidavits-list');
-                if (affidavitsList && document.getElementById('affidavits-page') && document.getElementById('affidavits-page').style.display !== 'none') { loadMyAffidavits(); }
+                const historyBody = document.getElementById('history-container'); if (historyBody && document.getElementById('history-page') && document.getElementById('history-page').style.display !== 'none') { loadMyHistory(); }
+                const affidavitsList = document.getElementById('affidavits-list'); if (affidavitsList && document.getElementById('affidavits-page') && document.getElementById('affidavits-page').style.display !== 'none') { loadMyAffidavits(); }
             };
             ws.onclose = () => {
                 if (badge) { badge.textContent = '🔴 Reconnecting...'; badge.style.cssText = 'font-size:0.72rem; padding:3px 8px; border-radius:12px; background:rgba(255,119,130,0.1); color:var(--color-danger); font-weight:600; display:inline-block;'; }
-                const delay = Math.min(citizenWsReconnectDelay, 30000);
-                citizenWsReconnectDelay = Math.min(citizenWsReconnectDelay * 2, 30000);
-                setTimeout(connectCitizenWebSocket, delay);
+                const delay = Math.min(citizenWsReconnectDelay, 30000); citizenWsReconnectDelay = Math.min(citizenWsReconnectDelay * 2, 30000); setTimeout(connectCitizenWebSocket, delay);
             };
             ws.onerror = () => ws.close();
         }
         
-        connectCitizenWebSocket();
-        renderHotlines(hotlineData);
-        loadCitizenFeedSidebar();
-        showPage('complaint');
+        connectCitizenWebSocket(); renderHotlines(hotlineData); loadCitizenFeedSidebar(); showPage('complaint');
 
-        /* ── IN-PAGE CHATBOT LOGIC ── */
-        const chatInput = document.getElementById('chat-input');
-        const sendChat = document.getElementById('send-chat');
-        const chatMessages = document.getElementById('chat-messages');
-        let chatHistory = [];
+        const chatbotToggle = document.getElementById('chatbot-toggle'); const chatbotWindow = document.getElementById('chatbot-window'); const closeChat = document.getElementById('close-chat'); const chatInput = document.getElementById('chat-input'); const sendChat = document.getElementById('send-chat'); const chatMessages = document.getElementById('chat-messages'); let chatHistory = [];
+
+        chatbotToggle.addEventListener('click', () => { chatbotWindow.classList.add('active'); chatbotToggle.style.opacity = '0'; chatbotToggle.style.pointerEvents = 'none'; });
+        closeChat.addEventListener('click', () => { chatbotWindow.classList.remove('active'); chatbotToggle.style.opacity = '1'; chatbotToggle.style.pointerEvents = 'auto'; });
 
         function appendChatMessage(text, className) {
-            const bubble = document.createElement('div');
-            bubble.className = `chat-bubble ${className}`;
-            bubble.textContent = text;
-            const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
-            bubble.id = id;
-            chatMessages.appendChild(bubble);
-            chatMessages.scrollTop = chatMessages.scrollHeight; 
-            return id;
+            const bubble = document.createElement('div'); bubble.className = `chat-bubble ${className}`; bubble.textContent = text;
+            const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 10000); bubble.id = id;
+            chatMessages.appendChild(bubble); chatMessages.scrollTop = chatMessages.scrollHeight; return id;
         }
 
         async function handleSendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
-
-            appendChatMessage(message, 'user-bubble');
-            chatInput.value = '';
-            const typingId = appendChatMessage('Thinking...', 'ai-bubble');
-
+            const message = chatInput.value.trim(); if (!message) return;
+            appendChatMessage(message, 'user-bubble'); chatInput.value = ''; const typingId = appendChatMessage('Thinking...', 'ai-bubble');
             try {
-                const response = await fetch('/api/ai-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message, history: chatHistory }) 
-                });
-                
-                const data = await response.json();
-                document.getElementById(typingId).remove();
-                
+                const response = await fetch('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: message, history: chatHistory }) });
+                const data = await response.json(); document.getElementById(typingId).remove();
                 if (response.ok && data.reply) {
                     appendChatMessage(data.reply, 'ai-bubble'); 
-                    chatHistory.push({ role: "user", parts: [{ text: message }] });
-                    chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
-                } else {
-                    appendChatMessage("Error: Could not reach Sumbong-Bot.", 'ai-bubble');
-                }
-            } catch (error) {
-                document.getElementById(typingId).remove();
-                appendChatMessage("Connection error. Is the Master Server running?", 'ai-bubble');
-            }
+                    chatHistory.push({ role: "user", parts: [{ text: message }] }); chatHistory.push({ role: "model", parts: [{ text: data.reply }] });
+                } else appendChatMessage("Error: Could not reach Sumbong-Bot.", 'ai-bubble');
+            } catch (error) { document.getElementById(typingId).remove(); appendChatMessage("Connection error. Is the Master Server running?", 'ai-bubble'); }
         }
 
         sendChat.addEventListener('click', handleSendMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleSendMessage();
-        });
+        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
     </script>
 </body>
 </html>
