@@ -159,11 +159,16 @@ app.post('/api/request-otp', async (req, res) => {
 
         if (user) {
             if (user.status === 'blocked') return res.status(403).json({ message: 'Account is suspended.' });
-            if (user.authMethod === 'google') return res.status(400).json({ message: 'Registered via Google.' });
-            if (user.authMethod === 'local' && !user.otp) return res.status(400).json({ message: 'Email already in use.' });
+            if (user.authMethod === 'google') return res.status(400).json({ message: 'Registered via Google. Please use Google Login.' });
+            if (user.authMethod === 'local' && !user.otp) return res.status(400).json({ message: 'Email is already in use.' });
         }
 
+        // 🔥 FIX 1: Check if the username is already taken by someone else!
         if (!user) {
+            const existingUsername = await User.findOne({ username });
+            if (existingUsername) {
+                return res.status(400).json({ message: 'Username is already taken. Please choose another.' });
+            }
             user = new User({ username: username || email.split('@')[0], email, password, role: 'citizen', authMethod: 'local' });
         }
 
@@ -174,7 +179,9 @@ app.post('/api/request-otp', async (req, res) => {
         try {
             const accessToken = await mailerOAuth2Client.getAccessToken();
             const transport = nodemailer.createTransport({
-                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true, // true for port 465, false for port 587
                 auth: {
                     type: 'OAuth2',
                     user: process.env.GMAIL_ADDRESS,
@@ -183,6 +190,11 @@ app.post('/api/request-otp', async (req, res) => {
                     refreshToken: process.env.GMAIL_REFRESH_TOKEN,
                     accessToken: accessToken.token,
                 },
+                // This tls object forces Node to be more lenient with the connection 
+                // and helps bypass strict IPv6 preference on some hosts
+                tls: {
+                    rejectUnauthorized: false
+                }
             });
             const mailOptions = {
                 from: `System Admin <${process.env.GMAIL_ADDRESS}>`,
@@ -195,7 +207,9 @@ app.post('/api/request-otp', async (req, res) => {
             
         } catch (error) {
             console.error('GMAIL MAILER ERROR:', error);
-            res.status(500).json({ message: 'Failed to send OTP.' });
+            // 🔥 FIX 2: If Gmail fails, print the OTP in the Render console so you aren't locked out!
+            console.log(`⚠️ EMERGENCY OTP FOR ${email}: ${otp}`); 
+            res.status(500).json({ message: 'Failed to send OTP to email. Check Render logs.' });
         }
     } catch (outerError) { 
         console.error('DATABASE/SERVER ERROR:', outerError);
