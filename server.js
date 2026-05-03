@@ -889,7 +889,14 @@ app.post('/api/complaints/:id/progress-photo', rateLimit({ windowMs: 60000, max:
             stream.end(req.file.buffer);
         });
 
-        await Complaint.findOneAndUpdate({ trackingId: req.params.id }, { $push: { history: { status: 'Progress Update', note: note || 'Update.', updatedBy: adminName || 'LGU Admin', photoUrl } } });
+        await Complaint.findOneAndUpdate(
+            { trackingId: req.params.id }, 
+            { 
+                $push: { history: { status: 'Progress Update', note: note || 'Update.', updatedBy: adminName || 'LGU Admin', photoUrl } },
+                $set: { lguNote: note || '📸 Progress photo uploaded. View Full Trail to see it.' } 
+            }
+        );
+        
         broadcast('complaint_update', { action: 'progress_photo' });
         res.json({ success: true, photoUrl });
     } catch (error) { res.status(500).json({ error: 'Failed.' }); }
